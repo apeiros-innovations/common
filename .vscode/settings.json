@@ -8,12 +8,14 @@
   "editor.guides.highlightActiveBracketPair": true,
   "editor.hover.delay": 1500,
   "editor.rulers": [100],
-  "editor.stickyScroll.enabled": false,
   "explorer.autoReveal": true,
   "files.trimTrailingWhitespace": true,
   "terminal.integrated.fontSize": 14,
   "window.zoomLevel": 0,
   "yaml.schemaStore.enable": true,
+  "files.associations": {
+    "**/*.json5": "json5",
+  },
   "[yaml]": {
     "editor.defaultFormatter": "bluebrown.yamlfmt"
   }
