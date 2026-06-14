@@ -1,0 +1,20 @@
+---
+version: "0.2"
+language: en
+caseSensitive: false
+allowCompoundWords: true
+ignoreRandomStrings: true
+useGitignore: true
+dictionaries:
+  - softwareTerms
+  - node
+  - html
+  - python
+  - bash
+  - filetypes
+ignorePaths:
+  - CHANGELOG.md
+  - .vscode/**
+  - "**/tests/**"
+words:
+  - apeiros
