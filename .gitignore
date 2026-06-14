@@ -1,0 +1,7 @@
+*.crt
+*.key
+.DS_Store
+/.private/
+/.task/
+/.venv/
+Thumbs.db

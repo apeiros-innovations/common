@@ -1,0 +1,143 @@
+assert_lefthook_installed: true
+skip_lfs: true
+
+output:
+  - meta
+  - summary
+  - jobs
+  - failure
+
+commit-msg:
+  commands:
+    commitlint:
+      run: commitlint --edit {1}
+      fail_text: |
+        Commit message failed conventional commit validation.
+        Example:
+          chore(deps): short description
+
+pre-commit:
+  parallel: true
+  skip:
+    - merge
+    - rebase
+
+scripts:
+  trailing-whitespaces.sh:
+    runner: bash
+    args: "{staged_files}"
+    exclude:
+      - "*.svg"
+      - "*.png"
+      - "*.jpg"
+      - "*.jpeg"
+      - "*.gif"
+      - "*.webp"
+      - "*.ico"
+      - "*.pdf"
+      - "*.lock"
+    stage_fixed: true
+    fail_text: |
+      Failed to trim trailing whitespace.
+    tags:
+      - format
+
+  eof-fixer.sh:
+    runner: bash
+    args: "{staged_files}"
+    exclude:
+      - "*.svg"
+      - "*.png"
+      - "*.jpg"
+      - "*.jpeg"
+      - "*.gif"
+      - "*.webp"
+      - "*.ico"
+      - "*.pdf"
+      - "*.lock"
+    stage_fixed: true
+    fail_text: |
+      Failed to normalize EOF newline.
+    tags:
+      - format
+
+  commands:
+    format-go:
+      glob:
+        - "*.go"
+      run: gofmt -s -w {staged_files}
+      stage_fixed: true
+
+    format-rust:
+      glob:
+        - "*.rs"
+      run: cargo fmt --all
+      stage_fixed: true
+
+    format-just:
+      glob:
+        - "*.just"
+        - ".justfile"
+      run: for f in {staged_files}; do just --justfile "$f" --fmt; done
+      stage_fixed: true
+
+    format-mise:
+      glob:
+        - ".mise.toml"
+        - ".mise/config.toml"
+      run: mise fmt
+      stage_fixed: true
+
+    format-json:
+      glob:
+        - "*.json"
+        - "*.json5"
+        - "*.jsonc"
+      run: oxfmt {staged_files}
+      stage_fixed: true
+
+    format-markdown:
+      glob:
+        - "*.md"
+        - "*.markdown"
+        - "*.mdx"
+      run: oxfmt {staged_files}
+      stage_fixed: true
+
+    format-yaml:
+      glob:
+        - "*.yaml"
+        - "*.yml"
+      run: oxfmt {staged_files}
+      stage_fixed: true
+
+    mise-lock:
+      glob:
+        - ".mise.toml"
+        - ".mise/config.toml"
+      run: mise lock && { for f in {staged_files}; do l="$(dirname "$f")/mise.lock"; [ -f "$l" ] && git add "$l"; done; true; }
+
+    shellcheck:
+      glob:
+        - "*.sh"
+      run: shellcheck {staged_files}
+
+    zizmor:
+      glob:
+        - ".github/workflows/*.yaml"
+        - ".github/actions/**/action.yaml"
+      run: zizmor --offline {staged_files}
+
+    gitleaks:
+      run: gitleaks git --pre-commit --redact --staged --verbose
+      fail_text: |
+        gitleaks detected a possible secret.
+        Remove the secret from the commit and rotate it if necessary.
+
+    spellcheck:
+      exclude:
+        - "*.svg"
+        - "*.png"
+      run: cspell lint --no-progress --no-must-find-files {staged_files}
+      fail_text: |
+        cspell found spelling issues.

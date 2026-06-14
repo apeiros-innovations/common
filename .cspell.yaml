@@ -1,4 +1,3 @@
----
 version: "0.2"
 language: en
 caseSensitive: false
@@ -18,3 +17,6 @@ ignorePaths:
   - "**/tests/**"
 words:
   - apeiros
+  - gofmt
+  - oxfmt
+  - zizmor
