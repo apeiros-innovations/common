@@ -22,119 +22,96 @@ pre-commit:
     - merge
     - rebase
 
-scripts:
-  trailing-whitespaces.sh:
-    runner: bash
-    args: "{staged_files}"
-    exclude:
-      - "*.svg"
-      - "*.png"
-      - "*.jpg"
-      - "*.jpeg"
-      - "*.gif"
-      - "*.webp"
-      - "*.ico"
-      - "*.pdf"
-      - "*.lock"
-    stage_fixed: true
-    fail_text: |
-      Failed to trim trailing whitespace.
-    tags:
-      - format
-
-  eof-fixer.sh:
-    runner: bash
-    args: "{staged_files}"
-    exclude:
-      - "*.svg"
-      - "*.png"
-      - "*.jpg"
-      - "*.jpeg"
-      - "*.gif"
-      - "*.webp"
-      - "*.ico"
-      - "*.pdf"
-      - "*.lock"
-    stage_fixed: true
-    fail_text: |
-      Failed to normalize EOF newline.
-    tags:
-      - format
-
-  commands:
-    format-go:
+  jobs:
+    - name: format go
       glob:
         - "*.go"
       run: gofmt -s -w {staged_files}
       stage_fixed: true
+      tags:
+        - format
 
-    format-rust:
+    - name: format rust
       glob:
         - "*.rs"
       run: cargo fmt --all
       stage_fixed: true
+      tags:
+        - format
 
-    format-just:
+    - name: format just
       glob:
         - "*.just"
         - ".justfile"
       run: for f in {staged_files}; do just --justfile "$f" --fmt; done
       stage_fixed: true
+      tags:
+        - format
 
-    format-mise:
+    - name: format mise
       glob:
         - ".mise.toml"
         - ".mise/config.toml"
       run: mise fmt
       stage_fixed: true
+      tags:
+        - format
 
-    format-json:
+    - name: format json
       glob:
         - "*.json"
         - "*.json5"
         - "*.jsonc"
       run: oxfmt {staged_files}
       stage_fixed: true
+      tags:
+        - format
 
-    format-markdown:
+    - name: format markdown
       glob:
         - "*.md"
         - "*.markdown"
         - "*.mdx"
       run: oxfmt {staged_files}
       stage_fixed: true
+      tags:
+        - format
 
-    format-yaml:
+    - name: format yaml
       glob:
         - "*.yaml"
         - "*.yml"
       run: oxfmt {staged_files}
       stage_fixed: true
+      tags:
+        - format
 
-    mise-lock:
+    - name: mise lock
       glob:
         - ".mise.toml"
         - ".mise/config.toml"
       run: mise lock && { for f in {staged_files}; do l="$(dirname "$f")/mise.lock"; [ -f "$l" ] && git add "$l"; done; true; }
 
-    shellcheck:
+    - name: shellcheck
       glob:
         - "*.sh"
       run: shellcheck {staged_files}
 
-    zizmor:
+    - name: zizmor
       glob:
         - ".github/workflows/*.yaml"
         - ".github/actions/**/action.yaml"
       run: zizmor --offline {staged_files}
 
-    gitleaks:
+    - name: gitleaks
       run: gitleaks git --pre-commit --redact --staged --verbose
       fail_text: |
         gitleaks detected a possible secret.
         Remove the secret from the commit and rotate it if necessary.
+      tags:
+        - security
 
-    spellcheck:
+    - name: spellcheck
       exclude:
         - "*.svg"
         - "*.png"
