@@ -93,6 +93,9 @@ pre-commit:
       run: mise lock && { for f in {staged_files}; do l="$(dirname "$f")/mise.lock"; [ -f "$l" ] && git add "$l"; done; true; }
 
     - name: shellcheck
+      exclude:
+        - ".mise/**"
+        - ".vscode/**"
       glob:
         - "*.sh"
       run: shellcheck {staged_files}
