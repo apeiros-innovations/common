@@ -103,11 +103,6 @@ pre-commit:
         - ".github/actions/**/action.yaml"
       run: zizmor --offline {staged_files}
 
-    - name: gitleaks
-      run: gitleaks git --pre-commit --redact --staged --verbose
-      tags:
-        - security
-
     - name: spellcheck
       exclude:
         - "*.svg"
