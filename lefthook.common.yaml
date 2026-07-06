@@ -105,7 +105,5 @@ pre-commit:
 
     - name: spellcheck
       glob:
-        - "*.md"
-        - "*.markdown"
-        - "*.mdx"
-      run: cspell lint --no-progress --no-must-find-files {staged_files}
+        - "**/*.{md,markdown,mdx}"
+      run: cspell lint --no-progress --no-must-find-files -- {staged_files}
