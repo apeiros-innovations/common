@@ -105,9 +105,6 @@ pre-commit:
 
     - name: gitleaks
       run: gitleaks git --pre-commit --redact --staged --verbose
-      fail_text: |
-        gitleaks detected a possible secret.
-        Remove the secret from the commit and rotate it if necessary.
       tags:
         - security
 
@@ -116,5 +113,3 @@ pre-commit:
         - "*.svg"
         - "*.png"
       run: cspell lint --no-progress --no-must-find-files {staged_files}
-      fail_text: |
-        cspell found spelling issues.
