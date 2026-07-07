@@ -1,3 +1,4 @@
+---
 name: Bug report
 description: Report a bug
 labels: ["bug"]
@@ -5,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to file a bug. Please read the [AI Usage Policy](https://github.com/apeiros-innovations/common/blob/main/CONTRIBUTING.md#ai-usage-policy) before submitting.
+        Thanks for taking the time to file a bug.
 
   - type: textarea
     id: what-happened
