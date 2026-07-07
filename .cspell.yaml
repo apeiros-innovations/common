@@ -1,41 +1,6 @@
 ---
 # yaml-language-server: $schema=https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
 version: "0.2"
-language: en
-caseSensitive: false
-allowCompoundWords: true
-ignoreRandomStrings: true
-useGitignore: true
-dictionaryDefinitions:
-  - name: apeiros
-    path: ./cspell/dictionaries/apeiros.txt
-    addWords: true
-  - name: tools
-    path: ./cspell/dictionaries/tools.txt
-    addWords: true
-dictionaries:
-  - softwareTerms
-  - node
-  - npm
-  - html
-  - python
-  - bash
-  - golang
-  - coding-compound-terms
-  - computing-acronyms
-  - filetypes
-  - software-tools
-  - k8s
-  - apeiros
-  - tools
-ignorePaths:
-  - CHANGELOG.md
-  - .vscode/**
-patterns:
-  - name: markdown-fenced-code-blocks
-    pattern: /^\s*(`{3,}|~{3,}).*[\s\S]*?^\s*\1/gm
-overrides:
-  - filename:
-      - "**/*.md"
-    ignoreRegExpList:
-      - markdown-fenced-code-blocks
+import:
+  - https://raw.githubusercontent.com/apeiros-innovations/common/main/.cspell.yaml
+words: []
