@@ -1,5 +1,5 @@
 [tools]
-node = "26.4.0"
+"core:node" = "26.4.0"
 "npm:oxfmt" = "0.58.0"
 "npm:cspell" = "10.0.1"
 "npm:@commitlint/cli" = "21.2.0"
@@ -10,6 +10,7 @@ node = "26.4.0"
 "aqua:evilmartians/lefthook" = "2.1.9"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:zizmorcore/zizmor" = "1.26.1"
+"aqua:google/yamlfmt" = "0.21.0"
 
 [hooks]
 postinstall = "lefthook install"
