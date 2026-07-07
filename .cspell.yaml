@@ -14,6 +14,8 @@ dictionaryDefinitions:
     path: ./cspell/dictionaries/tools.txt
     addWords: true
 dictionaries:
+  - apeiros
+  - tools
   - softwareTerms
   - node
   - npm
@@ -26,8 +28,7 @@ dictionaries:
   - filetypes
   - software-tools
   - k8s
-  - apeiros
-  - tools
+  - cpp-compound-words
 ignorePaths:
   - CHANGELOG.md
   - .vscode/**
