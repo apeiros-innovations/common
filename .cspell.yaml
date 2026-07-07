@@ -6,6 +6,13 @@ caseSensitive: false
 allowCompoundWords: true
 ignoreRandomStrings: true
 useGitignore: true
+dictionaryDefinitions:
+  - name: apeiros
+    path: ./cspell/dictionaries/apeiros.txt
+    addWords: true
+  - name: tools
+    path: ./cspell/dictionaries/tools.txt
+    addWords: true
 dictionaries:
   - softwareTerms
   - node
@@ -18,8 +25,9 @@ dictionaries:
   - computing-acronyms
   - filetypes
   - software-tools
-  - softwareTerms
   - k8s
+  - apeiros
+  - tools
 ignorePaths:
   - CHANGELOG.md
   - .vscode/**
@@ -31,9 +39,3 @@ overrides:
       - "**/*.md"
     ignoreRegExpList:
       - markdown-fenced-code-blocks
-words:
-  - apeiros
-  - gofmt
-  - oxfmt
-  - zizmor
-  - zizmorcore
