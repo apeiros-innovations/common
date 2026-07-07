@@ -5,30 +5,25 @@
   "yaml.schemaStore.enable": true,
   "json.schemaDownload.enable": true,
   "markdownlint.configFile": ".markdownlint.yaml",
-  "prettier.ignorePath": ".prettierignore",
   "files.associations": {
     "kics.config": "yaml",
+    "**/*.json5": "json5",
     "**/*.yaml": "yaml",
     "**/*.yml": "yaml",
-    "**/*.toml": "toml",
-    "fnox.toml": "toml",
-    "CODEOWNERS": "txt",
-    "**/*.json5": "json5",
     ".markdownlintignore": "ignore",
     ".prettierignore": "ignore",
     ".trivyignore": "ignore"
   },
-
-  "yaml.customTags": ["!reference sequence"],
-
-  "yaml.schemas": {
-    "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json": "**/.cspell.yaml"
-  },
-
   "json.schemas": [
     {
-      "fileMatch": ["mise.toml", ".mise.toml", "config.toml" ],
+      "fileMatch": ["**/.mise.toml", "**/.mise/config.toml"],
       "url": "https://mise.jdx.dev/schema/mise.json"
     }
-  ]
+  ],
+  "[json]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[yaml]": {
+    "editor.defaultFormatter": "bluebrown.yamlfmt"
+  }
 }
