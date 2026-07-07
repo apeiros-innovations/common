@@ -1,3 +1,4 @@
+---
 assert_lefthook_installed: true
 skip_lfs: true
 
@@ -81,7 +82,7 @@ pre-commit:
       glob:
         - "*.yaml"
         - "*.yml"
-      run: oxfmt {staged_files}
+      run: yamlfmt {staged_files}
       stage_fixed: true
       tags:
         - format
