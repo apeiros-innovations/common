@@ -22,8 +22,5 @@
   ],
   "[json]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
-  },
-  "[yaml]": {
-    "editor.defaultFormatter": "bluebrown.yamlfmt"
   }
 }
