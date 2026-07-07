@@ -1,3 +1,4 @@
+---
 version: "0.2"
 language: en
 caseSensitive: false
@@ -10,11 +11,23 @@ dictionaries:
   - html
   - python
   - bash
+  - coding-compound-terms
+  - computing-acronyms
   - filetypes
+  - software-tools
+  - softwareTerms
+  - k8s
 ignorePaths:
   - CHANGELOG.md
   - .vscode/**
-  - "**/tests/**"
+patterns:
+  - name: markdown-fenced-code-blocks
+    pattern: /^\s*(`{3,}|~{3,}).*[\s\S]*?^\s*\1/gm
+overrides:
+  - filename:
+      - "**/*.md"
+    ignoreRegExpList:
+      - markdown-fenced-code-blocks
 words:
   - apeiros
   - gofmt
