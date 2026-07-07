@@ -4,3 +4,4 @@ gofmt
 adrienverge
 fnox
 vfox
+lefthook
