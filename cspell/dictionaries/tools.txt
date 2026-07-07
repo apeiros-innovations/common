@@ -5,3 +5,4 @@ adrienverge
 fnox
 vfox
 lefthook
+xpkg
