@@ -1,0 +1,6 @@
+zizmor
+zizmorcore
+gofmt
+adrienverge
+fnox
+vfox
