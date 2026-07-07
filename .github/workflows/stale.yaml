@@ -13,7 +13,9 @@ permissions:
 jobs:
   stale:
     name: Stale
-    runs-on: ubuntu-latest
+    runs-on:
+      group: gha-shared
+      labels: gha-linux-k8s
     permissions:
       actions: write
       contents: write
