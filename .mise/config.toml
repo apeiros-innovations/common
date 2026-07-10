@@ -7,7 +7,7 @@
 "aqua:cli/cli" = "2.96.0"
 "aqua:casey/just" = "1.55.1"
 "aqua:gitleaks/gitleaks" = "8.30.1"
-"aqua:evilmartians/lefthook" = "2.1.9"
+"aqua:evilmartians/lefthook" = "2.1.10"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:zizmorcore/zizmor" = "1.26.1"
 "aqua:google/yamlfmt" = "0.21.0"
