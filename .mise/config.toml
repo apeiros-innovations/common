@@ -1,5 +1,5 @@
 [tools]
-"core:node" = "26.4.0"
+"core:node" = "26.5.0"
 "npm:oxfmt" = "0.58.0"
 "npm:cspell" = "10.0.1"
 "npm:@commitlint/cli" = "21.2.0"
