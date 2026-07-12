@@ -2,7 +2,7 @@
 "core:node" = "26.5.0"
 "npm:oxfmt" = "0.58.0"
 "npm:cspell" = "10.0.1"
-"npm:@commitlint/cli" = "21.2.0"
+"npm:@commitlint/cli" = "21.2.1"
 "npm:markdownlint-cli2" = "0.23.0"
 "aqua:cli/cli" = "2.96.0"
 "aqua:casey/just" = "1.56.0"
