@@ -15,9 +15,13 @@ dictionaryDefinitions:
     addWords: true
   - name: pmp
     path: ./cspell/dictionaries/pmp.txt
+  - name: government
+    path: ./cspell/dictionaries/government.txt
 dictionaries:
   - apeiros
   - tools
+  - pmp
+  - government
   - softwareTerms
   - node
   - npm
