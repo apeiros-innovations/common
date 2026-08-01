@@ -13,6 +13,8 @@ dictionaryDefinitions:
   - name: tools
     path: ./cspell/dictionaries/tools.txt
     addWords: true
+  - name: pmp
+    path: ./cspell/dictionaries/pmp.txt
 dictionaries:
   - apeiros
   - tools
