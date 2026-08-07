@@ -7,3 +7,7 @@ vfox
 lefthook
 xpkg
 kyverno
+oxlint
+apko
+wolfi
+traefik
