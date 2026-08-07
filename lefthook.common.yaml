@@ -78,6 +78,17 @@ pre-commit:
       tags:
         - format
 
+    - name: format js/mjs/ts/tsx
+      glob:
+        - "*.js"
+        - "*.mjs"
+        - "*.ts"
+        - "*.tsx"
+      run: oxfmt {staged_files}
+      stage_fixed: true
+      tags:
+        - format
+
     - name: format yaml
       glob:
         - "*.yaml"
