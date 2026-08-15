@@ -287,6 +287,8 @@ pre-commit:
               - shell
 
           - name: cspell
+            exclude:
+              - "**/*.svg"
             file_types:
               - text
               - not symlink
@@ -423,6 +425,8 @@ pre-push:
         parallel: true
         jobs:
           - name: cspell repository
+            exclude:
+              - "**/*.svg"
             run: |
               git ls-files -z |
                 xargs -0 -r cspell lint \

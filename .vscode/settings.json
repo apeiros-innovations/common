@@ -1,26 +1,53 @@
 {
   "editor.bracketPairColorization.enabled": true,
   "editor.formatOnSave": true,
+  "editor.formatOnSaveMode": "file",
   "files.trimTrailingWhitespace": true,
   "yaml.schemaStore.enable": true,
   "json.schemaDownload.enable": true,
   "markdownlint.configFile": ".markdownlint.yaml",
+
   "files.associations": {
     "kics.config": "yaml",
-    "**/*.json5": "json5",
     "**/*.yaml": "yaml",
     "**/*.yml": "yaml",
+    "**/*.toml": "toml",
+    "mise.toml": "toml",
+    ".mise.toml": "toml",
     ".markdownlintignore": "ignore",
     ".prettierignore": "ignore",
-    ".trivyignore": "ignore"
+    ".trivyignore": "ignore",
+    "**/*.json5": "json5"
   },
+
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json": "**/.cspell.yaml"
+  },
+
   "json.schemas": [
     {
-      "fileMatch": ["**/.mise.toml", "**/.mise/config.toml"],
+      "fileMatch": ["config.toml", ".mise.toml"],
       "url": "https://mise.jdx.dev/schema/mise.json"
     }
   ],
+
   "[json]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  "[jsonc]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  "[json5]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  "[markdown]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+
+  "[toml]": {
+    "editor.defaultFormatter": "tamasfe.even-better-toml"
   }
 }

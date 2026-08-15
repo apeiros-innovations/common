@@ -1,3 +1,8 @@
 {
-  "recommendations": ["redhat.vscode-yaml", "esbenp.prettier-vscode", "nefrob.vscode-just-syntax"]
+  "recommendations": [
+    "redhat.vscode-yaml",
+    "esbenp.prettier-vscode",
+    "nefrob.vscode-just-syntax",
+    "oxc.oxc-vscode"
+  ]
 }

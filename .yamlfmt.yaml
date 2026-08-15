@@ -1,9 +1,12 @@
 ---
 doublestar: true
 line_ending: lf
+
 exclude:
   - "**/templates/**"
+
 regex_exclude: []
+
 formatter:
   type: basic
   indent: 2
