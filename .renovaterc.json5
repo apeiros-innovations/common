@@ -1,4 +1,4 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["local>apeiros-innovations/renovate-config"],
+  extends: ["github>home-operations/renovate-presets#7.0.0", ":timezone(America/New_York)"],
 }
