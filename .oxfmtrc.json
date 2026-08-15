@@ -10,5 +10,6 @@
   "trailingComma": "all",
   "bracketSpacing": true,
   "objectWrap": "preserve",
+  "embeddedLanguageFormatting": "auto",
   "endOfLine": "lf"
 }
