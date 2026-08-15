@@ -1,36 +1,37 @@
+# yamllint disable rule:quoted-strings
 ---
 default: true
-code-block-style:  # MD046
+gitignore: true
+code-block-style:
   style: fenced
-emphasis-style: false  # MD049
-header-style:  # MD003
+emphasis-style: false
+header-style:
   style: atx
-hr-style:  # MD035
+hr-style:
   style: "---"
 line-length:
-  line_length: 1800  # MD013
+  line_length: 1800
   headings: true
   heading_line_length: 100
   tables: false
-no-duplicate-heading:  # MD024
+no-duplicate-heading:
   siblings_only: true
-no-emphasis-as-heading: false  # MD036
-no-inline-html: false  # MD033
-no-trailing-punctuation:  # MD026
-  punctuation: ".,;:!。，；：！"
-no-trailing-spaces: false  # MD009
-ol-prefix: false  # MD029
-reference-links-images: false  # MD052
-table-column-style: false  # MD060
+no-emphasis-as-heading: false
+no-inline-html: false
+no-trailing-punctuation:
+  punctuation: .,;:!。，；：！
+no-trailing-spaces: false
+ol-prefix: false
+reference-links-images: false
+table-column-style: false
 no-multiple-blanks: false
 no-bare-urls: false
 MD025: false
-MD041: false
 MD055: false
 MD056: false
 MD059: false
-proper-names:  # MD044
+proper-names:
   code_blocks: false
   html_elements: false
   names:
-    - Apeiros
+    - DevOps
