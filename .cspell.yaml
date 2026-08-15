@@ -38,6 +38,8 @@ dictionaries:
   - cpp-compound-words
 ignorePaths:
   - CHANGELOG.md
+  - LICENSE
+  - .mise/**
   - .vscode/**
 patterns:
   - name: markdown-fenced-code-blocks
