@@ -17,6 +17,7 @@ node = "26.7.0"
 "aqua:google/yamlfmt" = "0.21.0"
 "aqua:zizmorcore/zizmor" = "1.29.0"
 "aqua:editorconfig-checker/editorconfig-checker" = "3.11.1"
+"github:adrienverge/yamllint" = "latest"
 
 [hooks]
 postinstall = "lefthook install"

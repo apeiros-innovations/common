@@ -491,6 +491,45 @@ url = "https://github.com/zizmorcore/zizmor/releases/download/v1.29.0/zizmor-x86
 url_api = "https://api.github.com/repos/zizmorcore/zizmor/releases/assets/498263142"
 provenance = "github-attestations"
 
+[[tools."github:adrienverge/yamllint"]]
+version = "1.38.0"
+backend = "github:adrienverge/yamllint"
+
+[tools."github:adrienverge/yamllint"."platforms.linux-arm64"]
+checksum = "sha256:09e5f29531daab93366bb061e76019d5e91691ef0a40328f04c927387d1d364d"
+url = "https://github.com/adrienverge/yamllint/releases/download/v1.38.0/yamllint-1.38.0.tar.gz"
+url_api = "https://api.github.com/repos/adrienverge/yamllint/releases/assets/339841231"
+
+[tools."github:adrienverge/yamllint"."platforms.linux-arm64-musl"]
+checksum = "sha256:09e5f29531daab93366bb061e76019d5e91691ef0a40328f04c927387d1d364d"
+url = "https://github.com/adrienverge/yamllint/releases/download/v1.38.0/yamllint-1.38.0.tar.gz"
+url_api = "https://api.github.com/repos/adrienverge/yamllint/releases/assets/339841231"
+
+[tools."github:adrienverge/yamllint"."platforms.linux-x64"]
+checksum = "sha256:09e5f29531daab93366bb061e76019d5e91691ef0a40328f04c927387d1d364d"
+url = "https://github.com/adrienverge/yamllint/releases/download/v1.38.0/yamllint-1.38.0.tar.gz"
+url_api = "https://api.github.com/repos/adrienverge/yamllint/releases/assets/339841231"
+
+[tools."github:adrienverge/yamllint"."platforms.linux-x64-musl"]
+checksum = "sha256:09e5f29531daab93366bb061e76019d5e91691ef0a40328f04c927387d1d364d"
+url = "https://github.com/adrienverge/yamllint/releases/download/v1.38.0/yamllint-1.38.0.tar.gz"
+url_api = "https://api.github.com/repos/adrienverge/yamllint/releases/assets/339841231"
+
+[tools."github:adrienverge/yamllint"."platforms.macos-arm64"]
+checksum = "sha256:09e5f29531daab93366bb061e76019d5e91691ef0a40328f04c927387d1d364d"
+url = "https://github.com/adrienverge/yamllint/releases/download/v1.38.0/yamllint-1.38.0.tar.gz"
+url_api = "https://api.github.com/repos/adrienverge/yamllint/releases/assets/339841231"
+
+[tools."github:adrienverge/yamllint"."platforms.macos-x64"]
+checksum = "sha256:09e5f29531daab93366bb061e76019d5e91691ef0a40328f04c927387d1d364d"
+url = "https://github.com/adrienverge/yamllint/releases/download/v1.38.0/yamllint-1.38.0.tar.gz"
+url_api = "https://api.github.com/repos/adrienverge/yamllint/releases/assets/339841231"
+
+[tools."github:adrienverge/yamllint"."platforms.windows-x64"]
+checksum = "sha256:09e5f29531daab93366bb061e76019d5e91691ef0a40328f04c927387d1d364d"
+url = "https://github.com/adrienverge/yamllint/releases/download/v1.38.0/yamllint-1.38.0.tar.gz"
+url_api = "https://api.github.com/repos/adrienverge/yamllint/releases/assets/339841231"
+
 [[tools.lefthook]]
 version = "2.1.9"
 backend = "aqua:evilmartians/lefthook"
