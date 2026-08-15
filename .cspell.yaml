@@ -41,6 +41,9 @@ ignorePaths:
   - LICENSE
   - .mise/**
   - .vscode/**
+  - pnpm-lock.yaml
+  - package-lock.json
+  - yarn.lock
 patterns:
   - name: markdown-fenced-code-blocks
     pattern: /^\s*(`{3,}|~{3,}).*[\s\S]*?^\s*\1/gm
