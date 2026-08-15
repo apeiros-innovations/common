@@ -3,40 +3,70 @@
 root = true
 
 [*]
+charset = utf-8
+end_of_line = lf
 indent_style = space
 indent_size = 2
-end_of_line = lf
-charset = utf-8
-trim_trailing_whitespace = true
 insert_final_newline = true
+trim_trailing_whitespace = true
 
+# YAML
+[{*.yaml,*.yml}]
+indent_style = space
+indent_size = 2
+
+# JSON / JSONC / JSON5
+[{*.json,*.jsonc,*.json5}]
+indent_style = space
+indent_size = 2
+
+# JavaScript / TypeScript
+[{*.js,*.jsx,*.mjs,*.cjs,*.ts,*.tsx,*.mts,*.cts}]
+indent_style = space
+indent_size = 2
+
+# Markdown
 [*.md]
-indent_size = 4
+indent_style = space
+indent_size = 2
 trim_trailing_whitespace = false
 
-[Dockerfile]
-indent_size = 4
-
+# Python
 [*.py]
+indent_style = space
 indent_size = 4
 
+# Shell
 [{*.sh,*.bash}]
+indent_style = space
 indent_size = 4
 
+# Just
 [{*.just,*.justfile}]
+indent_style = space
 indent_size = 4
 
+# Dockerfiles
+[{Dockerfile,*.Dockerfile}]
+indent_style = space
+indent_size = 4
+
+# Make
 [{Makefile,*.mk}]
 indent_style = tab
 indent_size = 4
 
+# Go
 [{*.go,go.mod,go.sum}]
 indent_style = tab
 indent_size = 4
 
+# Rust
 [*.rs]
+indent_style = space
 indent_size = 4
 
+# Git configuration
 [.gitmodules]
 indent_style = tab
 indent_size = 4
