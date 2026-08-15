@@ -1,0 +1,13 @@
+---
+pre-push:
+  jobs:
+    - name: astro validation
+      group:
+        parallel: true
+        jobs:
+          - name: astro check
+            run: yarn astro check
+            tags:
+              - validation
+              - astro
+              - typescript

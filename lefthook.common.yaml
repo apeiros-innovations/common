@@ -15,6 +15,7 @@ commit-msg:
 
 pre-commit:
   piped: true
+
   skip:
     - merge
     - rebase
@@ -96,17 +97,20 @@ pre-commit:
             tags:
               - format
               - markdown
+              - mdx
               - oxfmt
 
-          - name: format javascript typescript
+          - name: format javascript frameworks
             glob:
               - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+              - "**/*.{astro,vue,svelte}"
             run: oxfmt {staged_files}
             stage_fixed: true
             tags:
               - format
               - javascript
               - typescript
+              - framework
               - oxfmt
 
           - name: format css
@@ -164,6 +168,7 @@ pre-commit:
             tags:
               - format
               - yaml
+              - yamlfmt
 
           - name: format shell
             glob:
@@ -173,6 +178,7 @@ pre-commit:
             tags:
               - format
               - shell
+              - shfmt
 
           - name: text hygiene
             exclude:
@@ -183,6 +189,7 @@ pre-commit:
               - "**/*.{json,json5,jsonc}"
               - "**/*.{md,markdown,mdx}"
               - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+              - "**/*.{astro,vue,svelte}"
               - "**/*.{css,scss,less,pcss,postcss}"
               - "**/*.{html,htm,xhtml}"
               - "**/*.{graphql,gql,graphqls}"
@@ -266,6 +273,7 @@ pre-commit:
             tags:
               - lint
               - yaml
+              - yamllint
 
           - name: hadolint
             glob:
@@ -277,6 +285,7 @@ pre-commit:
               - lint
               - security
               - container
+              - hadolint
 
           - name: shellcheck
             glob:
@@ -285,6 +294,7 @@ pre-commit:
             tags:
               - lint
               - shell
+              - shellcheck
 
           - name: cspell
             exclude:
@@ -322,6 +332,7 @@ pre-commit:
             tags:
               - lint
               - markdown
+              - markdownlint
 
           - name: check added large files
             run: |
@@ -435,14 +446,17 @@ pre-push:
                   --
             tags:
               - lint
-              - spelling - cspell
+              - spelling
+              - cspell
 
-    - name: editorconfig repository
-      run: |
-        if [ -f .editorconfig ]; then
-          ec
-        fi
-      tags:
-        - lint
-        - editorconfig
-        - repository
+          - name: editorconfig repository
+            run: |
+              if [ -f .editorconfig ]; then
+                ec \
+                  --disable-indentation \
+                  --disable-indent-size
+              fi
+            tags:
+              - lint
+              - editorconfig
+              - repository

@@ -3,6 +3,7 @@
   "editor.formatOnSave": true,
   "editor.formatOnSaveMode": "file",
   "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
   "yaml.schemaStore.enable": true,
   "json.schemaDownload.enable": true,
   "markdownlint.configFile": ".markdownlint.yaml",
@@ -15,22 +16,21 @@
     "mise.toml": "toml",
     ".mise.toml": "toml",
     ".markdownlintignore": "ignore",
-    ".prettierignore": "ignore",
     ".trivyignore": "ignore",
     "**/*.json5": "json5"
   },
-
   "yaml.schemas": {
     "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json": "**/.cspell.yaml"
   },
-
   "json.schemas": [
     {
       "fileMatch": ["config.toml", ".mise.toml"],
       "url": "https://mise.jdx.dev/schema/mise.json"
     }
   ],
-
+  "[yaml]": {
+    "editor.defaultFormatter": "bluebrown.yamlfmt"
+  },
   "[json]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
@@ -42,11 +42,45 @@
   "[json5]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-
+  "[javascript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
   "[markdown]": {
     "editor.defaultFormatter": "oxc.oxc-vscode"
   },
-
+  "[mdx]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[scss]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[less]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[astro]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "oxc.oxc-vscode"
+  },
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
   }

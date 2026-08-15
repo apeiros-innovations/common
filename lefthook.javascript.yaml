@@ -8,10 +8,11 @@ pre-commit:
           - name: oxlint
             glob:
               - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
-              - "**/*.{vue,svelte,astro}"
+              - "**/*.{astro,vue,svelte}"
             run: oxlint --deny-warnings -- {staged_files}
             tags:
               - lint
               - javascript
               - typescript
+              - framework
               - oxlint

@@ -15,7 +15,7 @@ trim_trailing_whitespace = true
 indent_style = space
 indent_size = 2
 
-# JSON / JSONC / JSON5
+# JSON
 [{*.json,*.jsonc,*.json5}]
 indent_style = space
 indent_size = 2
@@ -25,48 +25,104 @@ indent_size = 2
 indent_style = space
 indent_size = 2
 
-# Markdown
-[*.md]
+# Astro / Vue / Svelte
+[{*.astro,*.vue,*.svelte}]
+indent_style = space
+indent_size = 2
+
+# HTML / CSS
+[{*.html,*.htm,*.xhtml,*.css,*.scss,*.less,*.pcss,*.postcss}]
+indent_style = space
+indent_size = 2
+
+# Markdown / MDX
+[{*.md,*.markdown,*.mdx}]
 indent_style = space
 indent_size = 2
 trim_trailing_whitespace = false
 
+# GraphQL
+[{*.graphql,*.gql,*.graphqls}]
+indent_style = space
+indent_size = 2
+
+# TOML
+[*.toml]
+indent_style = space
+indent_size = 2
+
 # Python
-[*.py]
+[{*.py,*.pyi,*.pyw}]
 indent_style = space
 indent_size = 4
 
 # Shell
-[{*.sh,*.bash}]
+[{*.sh,*.bash,*.ksh}]
 indent_style = space
 indent_size = 4
 
 # Just
-[{*.just,*.justfile}]
+[*.just]
 indent_style = space
 indent_size = 4
 
-# Dockerfiles
-[{Dockerfile,*.Dockerfile}]
+[.justfile]
+indent_style = space
+indent_size = 4
+
+[justfile]
+indent_style = space
+indent_size = 4
+
+[Justfile]
+indent_style = space
+indent_size = 4
+
+# Docker
+[Dockerfile]
+indent_style = space
+indent_size = 4
+
+[Containerfile]
+indent_style = space
+indent_size = 4
+
+[*.Dockerfile]
+indent_style = space
+indent_size = 4
+
+[*.Containerfile]
 indent_style = space
 indent_size = 4
 
 # Make
-[{Makefile,*.mk}]
+[Makefile]
 indent_style = tab
-indent_size = 4
+tab_width = 4
+
+[*.mk]
+indent_style = tab
+tab_width = 4
 
 # Go
-[{*.go,go.mod,go.sum}]
+[*.go]
 indent_style = tab
-indent_size = 4
+tab_width = 4
+
+[go.mod]
+indent_style = tab
+tab_width = 4
+
+[go.sum]
+indent_style = tab
+tab_width = 4
 
 # Rust
 [*.rs]
 indent_style = space
 indent_size = 4
 
-# Git configuration
+# Git
 [.gitmodules]
 indent_style = tab
-indent_size = 4
+tab_width = 4
