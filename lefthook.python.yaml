@@ -1,0 +1,111 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: format python
+            group:
+              piped: true
+              jobs:
+                - name: django upgrade
+                  glob:
+                    - "**/*.py"
+                  run: |
+                    if [ ! -f pyproject.toml ]; then
+                      exit 0
+                    fi
+
+                    if ! python -c '
+                    import pathlib
+                    import re
+
+                    try:
+                        import tomllib
+                    except ModuleNotFoundError:
+                        try:
+                            import tomli as tomllib
+                        except ModuleNotFoundError:
+                            raise SystemExit(1)
+
+                    data = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
+                    dependencies = data.get("project", {}).get("dependencies", [])
+                    pattern = re.compile(
+                        r"^\s*django(?:\[[^\]]+\])?\s*(?:===|==|~=|!=|<=|>=|<|>)",
+                        re.IGNORECASE,
+                    )
+                    raise SystemExit(
+                        0 if any(pattern.search(item) for item in dependencies) else 1
+                    )
+                    '; then
+                      exit 0
+                    fi
+
+                    django-upgrade \
+                      --exit-zero-even-if-changed \
+                      {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - python
+                    - django
+
+                - name: ruff fix
+                  glob:
+                    - "**/*.{py,pyi,pyw}"
+                  run: >-
+                    ruff check --fix-only --force-exclude --extend-select I {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - lint
+                    - python
+                    - ruff
+
+                - name: ruff format
+                  glob:
+                    - "**/*.{py,pyi,pyw}"
+                  run: >-
+                    ruff format --force-exclude {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - python
+                    - ruff
+
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: ruff
+            glob:
+              - "**/*.{py,pyi,pyw}"
+            run: >-
+              ruff check --force-exclude --extend-select I {staged_files}
+            tags:
+              - lint
+              - python
+              - ruff
+
+          - name: pylint
+            glob:
+              - "**/*.{py,pyw}"
+            run: |
+              bash -eu -c '
+                files=()
+
+                for file do
+                  if grep -q "[^[:space:]]" "$file"; then
+                    files+=("$file")
+                  fi
+                done
+
+                [ "${#files[@]}" -gt 0 ] || exit 0
+
+                pylint -- "${files[@]}"
+              ' -- {staged_files}
+            tags:
+              - lint
+              - python
+              - pylint

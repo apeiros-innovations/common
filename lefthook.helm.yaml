@@ -1,0 +1,189 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: helm docs
+            glob:
+              - "**/Chart.yaml"
+              - "**/requirements.yaml"
+              - "**/values.yaml"
+              - "**/README.md.gotmpl"
+            group:
+              piped: true
+              jobs:
+                - name: generate helm docs
+                  run: |
+                    bash -eu -c '
+                      charts=()
+
+                      add_chart() {
+                        candidate="$1"
+
+                        for existing in "${charts[@]}"; do
+                          [ "$existing" = "$candidate" ] && return 0
+                        done
+
+                        charts+=("$candidate")
+                      }
+
+                      find_chart() {
+                        file="$1"
+                        dir=$(dirname "$file")
+
+                        while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+                          if [ -f "$dir/Chart.yaml" ]; then
+                            printf "%s\\n" "$dir"
+                            return 0
+                          fi
+                          dir=$(dirname "$dir")
+                        done
+
+                        if [ -f Chart.yaml ]; then
+                          printf "%s\\n" "."
+                        fi
+                      }
+
+                      for file do
+                        [ -e "$file" ] || continue
+
+                        chart=$(find_chart "$file")
+                        [ -n "$chart" ] || continue
+                        add_chart "$chart"
+                      done
+
+                      for chart in "${charts[@]}"; do
+                        readme="$chart/README.md"
+
+                        if [ -f "$readme" ] &&
+                          ! git diff --quiet -- "$readme"; then
+                          printf "%s has unstaged changes\\n" "$readme" >&2
+                          exit 1
+                        fi
+
+                        helm-docs --chart-search-root "$chart"
+                      done
+                    ' -- {staged_files}
+                  tags:
+                    - format
+                    - helm
+                    - documentation
+
+                - name: format helm docs
+                  run: |
+                    bash -eu -c '
+                      charts=()
+
+                      add_chart() {
+                        candidate="$1"
+
+                        for existing in "${charts[@]}"; do
+                          [ "$existing" = "$candidate" ] && return 0
+                        done
+
+                        charts+=("$candidate")
+                      }
+
+                      find_chart() {
+                        file="$1"
+                        dir=$(dirname "$file")
+
+                        while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+                          if [ -f "$dir/Chart.yaml" ]; then
+                            printf "%s\\n" "$dir"
+                            return 0
+                          fi
+                          dir=$(dirname "$dir")
+                        done
+
+                        if [ -f Chart.yaml ]; then
+                          printf "%s\\n" "."
+                        fi
+                      }
+
+                      for file do
+                        [ -e "$file" ] || continue
+
+                        chart=$(find_chart "$file")
+                        [ -n "$chart" ] || continue
+                        add_chart "$chart"
+                      done
+
+                      for chart in "${charts[@]}"; do
+                        readme="$chart/README.md"
+                        [ -f "$readme" ] || continue
+
+                        oxfmt --write "$readme"
+                        git add -- "$readme"
+                      done
+                    ' -- {staged_files}
+                  tags:
+                    - format
+                    - helm
+                    - documentation
+                    - oxfmt
+
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: helm lint
+            glob:
+              - "**/Chart.yaml"
+              - "**/Chart.lock"
+              - "**/values.yaml"
+              - "**/values.schema.json"
+              - "**/templates/**"
+              - "**/crds/**"
+            run: |
+              bash -eu -c '
+                charts=()
+
+                add_chart() {
+                  candidate="$1"
+
+                  for existing in "${charts[@]}"; do
+                    [ "$existing" = "$candidate" ] && return 0
+                  done
+
+                  charts+=("$candidate")
+                }
+
+                find_chart() {
+                  file="$1"
+                  dir=$(dirname "$file")
+
+                  while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+                    if [ -f "$dir/Chart.yaml" ]; then
+                      printf "%s\\n" "$dir"
+                      return 0
+                    fi
+                    dir=$(dirname "$dir")
+                  done
+
+                  if [ -f Chart.yaml ]; then
+                    printf "%s\\n" "."
+                  fi
+                }
+
+                for file do
+                  [ -e "$file" ] || continue
+
+                  chart=$(find_chart "$file")
+                  [ -n "$chart" ] || continue
+                  add_chart "$chart"
+                done
+
+                failed=0
+
+                for chart in "${charts[@]}"; do
+                  helm lint "$chart" --strict || failed=1
+                done
+
+                exit "$failed"
+              ' -- {staged_files}
+            tags:
+              - lint
+              - helm

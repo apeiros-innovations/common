@@ -18,3 +18,5 @@ slsa
 hbom
 ddil
 iast
+crds
+graphqls

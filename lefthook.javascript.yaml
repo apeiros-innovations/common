@@ -1,0 +1,17 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: oxlint
+            glob:
+              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+              - "**/*.{vue,svelte,astro}"
+            run: oxlint --deny-warnings -- {staged_files}
+            tags:
+              - lint
+              - javascript
+              - typescript
+              - oxlint

@@ -1,0 +1,33 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: format django templates
+            glob:
+              - "**/templates/**/*.{html,htm}"
+            run: >-
+              djlint --reformat --quiet --warn {staged_files}
+            stage_fixed: true
+            tags:
+              - format
+              - django
+              - templates
+              - djlint
+
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: lint django templates
+            glob:
+              - "**/templates/**/*.{html,htm}"
+            run: >-
+              djlint --lint {staged_files}
+            tags:
+              - lint
+              - django
+              - templates
+              - djlint
