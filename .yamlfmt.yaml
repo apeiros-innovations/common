@@ -1,14 +1,16 @@
 ---
 doublestar: true
+line_ending: lf
+exclude:
+  - "**/templates/**"
+regex_exclude: []
 formatter:
   type: basic
+  indent: 2
   include_document_start: true
   pad_line_comments: 2
-  scan_folded_as_literal: true
   retain_line_breaks_single: true
-
-exclude: []
-
-regex_exclude:
-  - '\(x_k8s_(exists|get|list)\('
-  - 'containers\[\?contains\(command,'
+  scan_folded_as_literal: false
+  trim_trailing_whitespace: true
+  eof_newline: true
+  force_quote_style: double
