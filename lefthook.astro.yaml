@@ -11,3 +11,9 @@ pre-push:
               - validation
               - astro
               - typescript
+
+          - name: astro build
+            run: pnpm astro build
+            tags:
+              - validation
+              - astro
