@@ -6,7 +6,7 @@ pre-push:
         parallel: true
         jobs:
           - name: astro check
-            run: yarn astro check
+            run: pnpm astro check
             tags:
               - validation
               - astro
