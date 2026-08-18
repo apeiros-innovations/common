@@ -40,15 +40,6 @@ pre-commit:
       group:
         parallel: true
         jobs:
-          - name: format go
-            glob:
-              - "**/*.go"
-            run: gofmt -s -w {staged_files}
-            stage_fixed: true
-            tags:
-              - format
-              - go
-
           - name: format rust
             glob:
               - "**/*.rs"

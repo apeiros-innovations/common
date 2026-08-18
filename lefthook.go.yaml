@@ -1,0 +1,169 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: format go
+            group:
+              jobs:
+                - name: goimports
+                  glob:
+                    - "**/*.go"
+                  run: >-
+                    goimports -w {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - go
+                    - goimports
+
+                - name: gofmt simplify
+                  glob:
+                    - "**/*.go"
+                  run: >-
+                    gofmt -s -w {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - go
+                    - gofmt
+
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: golangci config
+            only: &golangci-config-present
+              - run: >-
+                  test -f .golangci.yml || test -f .golangci.yaml || test -f .golangci.toml || test -f .golangci.json
+            glob:
+              - ".golangci.{yml,yaml,toml,json}"
+            run: >-
+              golangci-lint config verify
+            tags:
+              - validation
+              - lint
+              - go
+              - golangci-lint
+
+          - name: golangci lint
+            only: *golangci-config-present
+            glob:
+              - "**/*.go"
+            run: |
+              patch="$(mktemp)"
+              trap 'rm -f "$patch"' EXIT
+
+              git --no-pager diff \
+                --cached \
+                --no-ext-diff \
+                --no-textconv \
+                --unified=0 \
+                -- \
+                ':(glob)**/*.go' >"$patch"
+
+              [ -s "$patch" ] || exit 0
+
+              golangci-lint run \
+                --new-from-patch="$patch" \
+                --whole-files
+            tags:
+              - lint
+              - go
+              - golangci-lint
+
+pre-push:
+  jobs:
+    - name: go validation
+      group:
+        parallel: true
+        jobs:
+          - name: go mod tidy
+            only: &go-module-present
+              - run: >-
+                  git ls-files | grep -Eq '(^|/)go\.mod$'
+            run: |
+              bash -eu -c '
+                failed=0
+
+                while IFS= read -r -d "" path; do
+                  case "$path" in
+                    go.mod|*/go.mod)
+                      dir=$(dirname "$path")
+
+                      printf "checking module metadata: %s\n" "$dir"
+
+                      (
+                        cd "$dir"
+                        go mod tidy -diff
+                      ) || failed=1
+                      ;;
+                  esac
+                done < <(git ls-files -z)
+
+                exit "$failed"
+              '
+            tags:
+              - validation
+              - go
+              - modules
+              - dependencies
+
+          - name: go test
+            only: *go-module-present
+            run: |
+              bash -eu -c '
+                failed=0
+
+                while IFS= read -r -d "" path; do
+                  case "$path" in
+                    go.mod|*/go.mod)
+                      dir=$(dirname "$path")
+
+                      printf "testing module: %s\n" "$dir"
+
+                      (
+                        cd "$dir"
+                        go test ./...
+                      ) || failed=1
+                      ;;
+                  esac
+                done < <(git ls-files -z)
+
+                exit "$failed"
+              '
+            tags:
+              - test
+              - validation
+              - go
+
+          - name: govulncheck
+            only: *go-module-present
+            run: |
+              bash -eu -c '
+                failed=0
+
+                while IFS= read -r -d "" path; do
+                  case "$path" in
+                    go.mod|*/go.mod)
+                      dir=$(dirname "$path")
+
+                      printf "checking vulnerabilities: %s\n" "$dir"
+
+                      (
+                        cd "$dir"
+                        govulncheck ./...
+                      ) || failed=1
+                      ;;
+                  esac
+                done < <(git ls-files -z)
+
+                exit "$failed"
+              '
+            tags:
+              - security
+              - dependencies
+              - go
+              - govulncheck

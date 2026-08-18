@@ -25,3 +25,5 @@ oxlintrc
 oxfmtrc
 pylintrc
 djlintrc
+golangci
+govulncheck
