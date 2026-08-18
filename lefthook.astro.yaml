@@ -6,10 +6,26 @@ pre-commit:
         parallel: true
         jobs:
           - name: format astro
+            only:
+              - run: |
+                  git ls-files |
+                    grep -Eq '^(\.prettierrc(\.(json|yml|yaml|json5|js|ts|mjs|mts|cjs|cts|toml))?|prettier\.config\.(js|ts|mjs|mts|cjs|cts))$' &&
+                    exit 0
+
+                  if [ -f package.json ] &&
+                     grep -Eq '"prettier"[[:space:]]*:' package.json; then
+                    exit 0
+                  fi
+
+                  if [ -f package.yaml ] &&
+                     grep -Eq '^[[:space:]]*prettier[[:space:]]*:' package.yaml; then
+                    exit 0
+                  fi
+
+                  exit 1
             glob:
               - "**/*.astro"
-            run: >-
-              pnpm exec prettier --plugin=prettier-plugin-astro --parser=astro --write {staged_files}
+            run: pnpm exec prettier --write {staged_files}
             stage_fixed: true
             tags:
               - format
