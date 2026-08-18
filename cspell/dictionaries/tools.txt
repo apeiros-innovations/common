@@ -27,3 +27,5 @@ pylintrc
 djlintrc
 golangci
 govulncheck
+devskim
+mvdan

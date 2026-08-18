@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "$(dirname -- "$0")/../lib/common.sh"
+
+common_root="$(common_remote_root)"
+config="$(first_existing_file .betterleaks.toml .gitleaks.toml || true)"
+
+if [[ -z "$config" ]]; then
+  config="$common_root/.betterleaks.toml"
+fi
+
+exec mise x -- \
+  betterleaks git . \
+  --config "$config" \
+  --pre-commit \
+  --staged \
+  --redact \
+  --no-banner

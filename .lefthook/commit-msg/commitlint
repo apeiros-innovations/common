@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "$(dirname -- "$0")/../lib/common.sh"
+
+common_root="$(common_remote_root)"
+
+if has_commitlint_config; then
+  exec mise x -- commitlint --edit "$1"
+fi
+
+exec mise x -- \
+  commitlint \
+  --config "$common_root/.commitlintrc.yaml" \
+  --edit "$1"

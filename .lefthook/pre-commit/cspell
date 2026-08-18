@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "$(dirname -- "$0")/../lib/common.sh"
+
+common_root="$(common_remote_root)"
+
+if has_cspell_config; then
+  exec mise x -- \
+    cspell lint \
+    --no-progress \
+    --no-must-find-files \
+    -- \
+    "$@"
+fi
+
+exec mise x -- \
+  cspell lint \
+  --config "$common_root/.cspell.yaml" \
+  --no-progress \
+  --no-must-find-files \
+  -- \
+  "$@"

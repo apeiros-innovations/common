@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+for file in "$@"; do
+  [[ -f "$file" ]] || continue
+
+  prefix="$(git show ":$file" 2>/dev/null | LC_ALL=C head -c 2)"
+  [[ "$prefix" == "#!" ]] || continue
+
+  mode="$(git ls-files --stage -- "$file" | awk 'NR == 1 { print $1 }')"
+  [[ "$mode" == "100755" ]] && continue
+  [[ "$mode" == "100644" ]] || continue
+
+  chmod +x -- "$file"
+  git update-index --chmod=+x -- "$file"
+
+  printf '%s: marked executable\n' "$file"
+done

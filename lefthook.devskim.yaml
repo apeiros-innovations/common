@@ -1,0 +1,49 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: devskim
+            only:
+              - run: test -f .devskim.json
+            glob:
+              - "**/*.{c,h,cc,cpp,cxx,hpp,hxx,m,mm}"
+              - "**/*.{cs,csx}"
+              - "**/*.{cob,cbl,cpy}"
+              - "**/*.go"
+              - "**/*.java"
+              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+              - "**/*.{php,phtml}"
+              - "**/*.{ps1,psm1,psd1}"
+              - "**/*.{py,pyi,pyw}"
+              - "**/*.{rb,rake}"
+              - "**/*.rs"
+              - "**/*.sql"
+              - "**/*.swift"
+              - "**/*.{vb,vbs}"
+            run: |
+              bash -eu -c '
+                failed=0
+
+                for file do
+                  [ -f "$file" ] || continue
+
+                  mise x -- \
+                    devskim analyze \
+                      -I "$file" \
+                      --options-json .devskim.json \
+                      -f text \
+                      -E \
+                      --skip-git-ignored-files \
+                      --skip-excerpts ||
+                    failed=1
+                done
+
+                exit "$failed"
+              ' -- {staged_files}
+            tags:
+              - security
+              - sast
+              - devskim

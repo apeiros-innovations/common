@@ -1,0 +1,2 @@
+[tools]
+"pipx:djlint" = "1.42.3"

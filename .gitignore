@@ -1,7 +1,7 @@
 *.crt
 *.key
 .DS_Store
-/.private/
+.private/
 /.task/
 /.venv/
 Thumbs.db

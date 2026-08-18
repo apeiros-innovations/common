@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "$(dirname -- "$0")/../lib/common.sh"
+
+common_root="$(common_remote_root)"
+config="$(first_existing_file .yamlfmt .yamlfmt.yaml .yamlfmt.yml || true)"
+
+if [[ -z "$config" ]]; then
+  config="$common_root/.yamlfmt.yaml"
+fi
+
+exec mise x -- \
+  yamlfmt \
+  -conf "$config" \
+  "$@"

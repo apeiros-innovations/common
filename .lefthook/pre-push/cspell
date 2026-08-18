@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "$(dirname -- "$0")/../lib/common.sh"
+
+common_root="$(common_remote_root)"
+
+if has_cspell_config; then
+  git ls-files -z -- . ":(exclude,glob)**/*.svg" |
+    xargs -0 -r mise x -- \
+      cspell lint \
+      --no-progress \
+      --no-must-find-files \
+      --
+  exit 0
+fi
+
+git ls-files -z -- . ":(exclude,glob)**/*.svg" |
+  xargs -0 -r mise x -- \
+    cspell lint \
+    --config "$common_root/.cspell.yaml" \
+    --no-progress \
+    --no-must-find-files \
+    --

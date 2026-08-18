@@ -9,26 +9,16 @@ output:
   - jobs
 
 commit-msg:
-  commands:
-    commitlint:
-      only:
-        - run: |
-            git ls-files |
-              grep -Eq '^(\.commitlintrc(\.(json|yaml|yml|js|cjs|mjs|ts|cts|mts))?|commitlint\.config\.(js|cjs|mjs|ts|cts|mts))$' &&
-              exit 0
-
-            if [ -f package.json ] &&
-               grep -Eq '"commitlint"[[:space:]]*:' package.json; then
-              exit 0
-            fi
-
-            if [ -f package.yaml ] &&
-               grep -Eq '^[[:space:]]*commitlint[[:space:]]*:' package.yaml; then
-              exit 0
-            fi
-
-            exit 1
-      run: commitlint --edit {1}
+  jobs:
+    - name: commitlint
+      script: commitlint
+      runner: bash
+      args: "{1}"
+      tags:
+        - lint
+        - git
+        - commit-message
+        - commitlint
 
 pre-commit:
   skip:
@@ -40,20 +30,17 @@ pre-commit:
       group:
         parallel: true
         jobs:
-          - name: format rust
-            glob:
-              - "**/*.rs"
-            run: cargo fmt --all
-            stage_fixed: true
-            tags:
-              - format
-              - rust
-
           - name: format just
             glob:
               - "**/*.just"
               - "**/{.justfile,justfile,Justfile}"
-            run: for f in {staged_files}; do just --justfile "$f" --fmt; done
+            run: |
+              mise x -- \
+                bash -eu -c '
+                  for file do
+                    just --justfile "$file" --fmt
+                  done
+                ' -- {staged_files}
             stage_fixed: true
             tags:
               - format
@@ -61,6 +48,7 @@ pre-commit:
 
           - name: mise
             glob:
+              - "mise.toml"
               - ".mise.toml"
               - ".mise/config.toml"
             group:
@@ -74,20 +62,49 @@ pre-commit:
 
                 - name: mise lock
                   run: |
-                    mise lock && {
-                      for f in {staged_files}; do
-                        lock_file="$(dirname "$f")/mise.lock"
-                        [ -f "$lock_file" ] && git add "$lock_file"
+                    bash -eu -c '
+                      lock_files=()
+
+                      for config do
+                        case "$config" in
+                          mise.toml|.mise.toml)
+                            lock_file="mise.lock"
+                            ;;
+                          .mise/config.toml)
+                            lock_file=".mise/mise.lock"
+                            ;;
+                          *)
+                            continue
+                            ;;
+                        esac
+
+                        if [ ! -f "$lock_file" ]; then
+                          printf "%s: missing required Mise lockfile %s\n" \
+                            "$config" "$lock_file" >&2
+                          printf "Create it before committing: touch %s && mise install\n" \
+                            "$lock_file" >&2
+                          exit 1
+                        fi
+
+                        lock_files+=("$lock_file")
                       done
-                      true
-                    }
+
+                      mise lock
+
+                      for lock_file in "${lock_files[@]}"; do
+                        git add -- "$lock_file"
+                      done
+                    ' -- {staged_files}
                   tags:
                     - mise
+                    - supply-chain
 
           - name: format json
             glob:
               - "**/*.{json,json5,jsonc}"
-            run: oxfmt {staged_files}
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -97,7 +114,9 @@ pre-commit:
           - name: format markdown
             glob:
               - "**/*.{md,markdown,mdx}"
-            run: oxfmt {staged_files}
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -108,7 +127,9 @@ pre-commit:
           - name: format css
             glob:
               - "**/*.{css,scss,less,pcss,postcss}"
-            run: oxfmt {staged_files}
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -120,7 +141,9 @@ pre-commit:
               - "**/*.{html,htm,xhtml}"
             exclude:
               - "**/templates/**"
-            run: oxfmt {staged_files}
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -130,7 +153,9 @@ pre-commit:
           - name: format graphql
             glob:
               - "**/*.{graphql,gql,graphqls}"
-            run: oxfmt {staged_files}
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -141,9 +166,12 @@ pre-commit:
             glob:
               - "**/*.toml"
             exclude:
+              - "mise.toml"
               - ".mise.toml"
               - ".mise/config.toml"
-            run: oxfmt {staged_files}
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -151,23 +179,13 @@ pre-commit:
               - oxfmt
 
           - name: format yaml
-            only:
-              - run: >-
-                  test -f .yamlfmt || test -f .yamlfmt.yaml || test -f .yamlfmt.yml
             glob:
               - "**/*.{yaml,yml}"
             exclude:
               - "**/templates/**"
-            run: |
-              config=
-              for candidate in .yamlfmt .yamlfmt.yaml .yamlfmt.yml; do
-                if [ -f "$candidate" ]; then
-                  config="$candidate"
-                  break
-                fi
-              done
-
-              yamlfmt -conf "$config" {staged_files}
+            script: yamlfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -177,7 +195,8 @@ pre-commit:
           - name: format shell
             glob:
               - "**/*.{sh,bash,ksh}"
-            run: shfmt -w -s {staged_files}
+            run: >-
+              mise x -- shfmt -w -s {staged_files}
             stage_fixed: true
             tags:
               - format
@@ -203,35 +222,16 @@ pre-commit:
               - "**/{.justfile,justfile,Justfile}"
               - ".mise.toml"
               - ".mise/config.toml"
-            group:
-              jobs:
-                - name: trailing whitespace
-                  file_types:
-                    - text
-                    - not symlink
-                  run: >-
-                    perl -i -pe 's/[\t\f\x0b ]+(?=\r?$)//' -- {staged_files}
-                  stage_fixed: true
-                  tags:
-                    - format
-                    - text
-
-                - name: end of file fixer
-                  file_types:
-                    - text
-                    - not symlink
-                  run: |
-                    perl -0777 -i -pe '
-                      if (length) {
-                        my $eol = /\r\n\z/ ? "\r\n" : /\r\z/ ? "\r" : "\n";
-                        s/(?:\r\n|\r|\n)+\z//;
-                        $_ .= $eol if length;
-                      }
-                    ' -- {staged_files}
-                  stage_fixed: true
-                  tags:
-                    - format
-                    - text
+            file_types:
+              - text
+              - not symlink
+            script: text-hygiene.py
+            runner: mise x -- python3
+            args: "{staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - text
 
           - name: fix shebang script permissions
             exclude:
@@ -240,24 +240,9 @@ pre-commit:
             file_types:
               - text
               - not symlink
-            run: |
-              bash -eu -c '
-                for file do
-                  [ -f "$file" ] || continue
-
-                  prefix=$(git show ":$file" 2>/dev/null | LC_ALL=C head -c 2)
-                  [ "$prefix" = "#!" ] || continue
-
-                  mode=$(git ls-files --stage -- "$file" | awk "NR == 1 { print \$1 }")
-                  [ "$mode" = "100755" ] && continue
-                  [ "$mode" = "100644" ] || continue
-
-                  chmod +x -- "$file"
-                  git update-index --chmod=+x -- "$file"
-
-                  printf "%s: marked executable\n" "$file"
-                done
-              ' -- {staged_files}
+            script: fix-shebang-permissions
+            runner: bash
+            args: "{staged_files}"
             tags:
               - format
               - repository
@@ -276,41 +261,8 @@ pre-commit:
               - repository
 
           - name: check case conflicts
-            run: |
-              python3 - <<'PY'
-              import subprocess
-              import sys
-              import unicodedata
-
-              raw = subprocess.check_output(
-                  ["git", "ls-files", "-z"],
-              )
-
-              paths = [
-                  path.decode("utf-8", errors="surrogateescape")
-                  for path in raw.split(b"\0")
-                  if path
-              ]
-
-              seen: dict[str, str] = {}
-              failed = False
-
-              for path in paths:
-                  key = unicodedata.normalize("NFC", path).casefold()
-                  previous = seen.get(key)
-
-                  if previous is not None and previous != path:
-                      print(
-                          f"case-insensitive path conflict: "
-                          f"{previous!r} <-> {path!r}",
-                          file=sys.stderr,
-                      )
-                      failed = True
-                  else:
-                      seen[key] = path
-
-              raise SystemExit(1 if failed else 0)
-              PY
+            script: check-case-conflicts.py
+            runner: mise x -- python3
             tags:
               - validation
               - repository
@@ -319,94 +271,33 @@ pre-commit:
           - name: check json
             glob:
               - "**/*.json"
-            run: |
-              python3 - {staged_files} <<'PY'
-              import json
-              import sys
-              from pathlib import Path
-
-              def reject_duplicate_keys(pairs):
-                  result = {}
-
-                  for key, value in pairs:
-                      if key in result:
-                          raise ValueError(f"duplicate key: {key!r}")
-                      result[key] = value
-
-                  return result
-
-              def reject_nonstandard_constant(value):
-                  raise ValueError(f"non-standard JSON constant: {value}")
-
-              failed = False
-
-              for filename in sys.argv[1:]:
-                  path = Path(filename)
-
-                  if not path.is_file():
-                      continue
-
-                  try:
-                      with path.open("r", encoding="utf-8") as file:
-                          json.load(
-                              file,
-                              object_pairs_hook=reject_duplicate_keys,
-                              parse_constant=reject_nonstandard_constant,
-                          )
-                  except (
-                      json.JSONDecodeError,
-                      UnicodeDecodeError,
-                      ValueError,
-                  ) as error:
-                      print(f"{path}: {error}", file=sys.stderr)
-                      failed = True
-
-              raise SystemExit(1 if failed else 0)
-              PY
+            script: check-json.py
+            runner: mise x -- python3
+            args: "{staged_files}"
             tags:
               - validation
               - json
               - repository
 
           - name: lint yaml
-            only:
-              - run: >-
-                  test -f .yamllint || test -f .yamllint.yaml || test -f .yamllint.yml
             glob:
               - "**/*.{yaml,yml}"
             exclude:
               - "**/templates/**"
-            run: |
-              config=
-              for candidate in .yamllint .yamllint.yaml .yamllint.yml; do
-                if [ -f "$candidate" ]; then
-                  config="$candidate"
-                  break
-                fi
-              done
-
-              yamllint -c "$config" {staged_files}
+            script: yamllint
+            runner: bash
+            args: "{staged_files}"
             tags:
               - lint
               - yaml
               - yamllint
 
-          - name: hadolint
-            glob:
-              - "**/{Dockerfile,Containerfile}"
-              - "**/{Dockerfile,Containerfile}.*"
-              - "**/*.{Dockerfile,Containerfile}"
-            run: hadolint -- {staged_files}
-            tags:
-              - lint
-              - security
-              - container
-              - hadolint
-
           - name: shellcheck
             glob:
               - "**/*.{sh,bash,bats,ksh}"
-            run: shellcheck {staged_files}
+            script: shellcheck
+            runner: bash
+            args: "{staged_files}"
             tags:
               - lint
               - shell
@@ -416,36 +307,22 @@ pre-commit:
             glob:
               - "**/.env"
               - "**/.env.*"
-            run: dotenv-linter check {staged_files}
+            run: >-
+              mise x -- dotenv-linter check {staged_files}
             tags:
               - lint
               - environment
               - dotenv
 
           - name: cspell
-            only: &cspell-config-present
-              - run: |
-                  git ls-files |
-                    grep -Eq '^(\.config/)?((\.?cspell)(\.config)?\.(yaml|yml|json|jsonc|mjs|cjs|js|mts|ts|cts|toml)|(\.?cSpell)\.json)$' &&
-                    exit 0
-
-                  git ls-files |
-                    grep -Eq '^\.vscode/(cspell|cSpell|\.cspell)\.json$' &&
-                    exit 0
-
-                  if [ -f package.json ] &&
-                     grep -Eq '"cspell"[[:space:]]*:' package.json; then
-                    exit 0
-                  fi
-
-                  exit 1
             exclude:
               - "**/*.svg"
             file_types:
               - text
               - not symlink
-            run: >-
-              cspell lint --no-progress --no-must-find-files -- {staged_files}
+            script: cspell
+            runner: bash
+            args: "{staged_files}"
             tags:
               - lint
               - spelling
@@ -459,51 +336,27 @@ pre-commit:
               - text
               - not symlink
             run: >-
-              ec --disable-indentation --disable-indent-size {staged_files}
+              mise x -- ec --disable-indentation --disable-indent-size {staged_files}
             tags:
               - lint
               - editorconfig
               - repository
 
           - name: markdownlint
-            only:
-              - run: >-
-                  test -f .markdownlint-cli2.jsonc || test -f .markdownlint-cli2.yaml || test -f .markdownlint-cli2.cjs || test -f .markdownlint-cli2.mjs || test -f .markdownlint.jsonc || test -f .markdownlint.json || test -f .markdownlint.yaml || test -f .markdownlint.yml || test -f .markdownlint.cjs || test -f .markdownlint.mjs
             glob:
               - "**/*.{md,markdown}"
-            run: markdownlint-cli2 --no-globs -- {staged_files}
+            script: markdownlint
+            runner: bash
+            args: "{staged_files}"
             tags:
               - lint
               - markdown
               - markdownlint
 
           - name: check added large files
-            run: |
-              bash -eu -c '
-                failed=0
-
-                for file do
-                  if git diff --cached --quiet --diff-filter=A -- "$file"; then
-                    continue
-                  fi
-
-                  lfs_attr=$(git check-attr filter -- "$file")
-                  case "$lfs_attr" in
-                    *": filter: lfs") continue ;;
-                  esac
-
-                  size=$(git cat-file -s ":$file")
-                  if [ "$size" -gt 1048576 ]; then
-                    kib=$(((size + 1023) / 1024))
-                    printf "%s (%s KiB) exceeds the 1024 KiB limit\n" \
-                      "$file" \
-                      "$kib" >&2
-                    failed=1
-                  fi
-                done
-
-                exit "$failed"
-              ' -- {staged_files}
+            script: check-large-files
+            runner: bash
+            args: "{staged_files}"
             tags:
               - validation
               - repository
@@ -515,62 +368,20 @@ pre-commit:
             file_types:
               - text
               - not symlink
-            run: |
-              bash -eu -c '
-                failed=0
-
-                for file do
-                  mode=$(git ls-files --stage -- "$file" | awk "NR == 1 { print \$1 }")
-                  [ "$mode" = "100755" ] || continue
-
-                  prefix=$(git show ":$file" 2>/dev/null | LC_ALL=C head -c 2)
-                  if [ "$prefix" != "#!" ]; then
-                    printf "%s: executable file has no shebang\n" "$file" >&2
-                    failed=1
-                  fi
-                done
-
-                exit "$failed"
-              ' -- {staged_files}
+            script: check-executable-shebangs
+            runner: bash
+            args: "{staged_files}"
             tags:
               - validation
               - repository
 
           - name: betterleaks
-            run: >-
-              betterleaks git . --pre-commit --staged --redact --no-banner
+            script: betterleaks
+            runner: bash
             tags:
               - security
               - secrets
               - betterleaks
-
-          - name: trivy dockerfile
-            glob:
-              - "**/{Dockerfile,Containerfile}"
-              - "**/{Dockerfile,Containerfile}.*"
-              - "**/*.{Dockerfile,Containerfile}"
-            run: |
-              bash -eu -c '
-                failed=0
-
-                for file do
-                  [ -f "$file" ] || continue
-
-                  trivy config \
-                    --quiet \
-                    --misconfig-scanners dockerfile \
-                    --severity HIGH,CRITICAL \
-                    --exit-code 1 \
-                    "$file" ||
-                    failed=1
-                done
-
-                exit "$failed"
-              ' -- {staged_files}
-            tags:
-              - security
-              - trivy
-              - container
 
 pre-push:
   jobs:
@@ -579,15 +390,8 @@ pre-push:
         parallel: true
         jobs:
           - name: cspell repository
-            only: *cspell-config-present
-            exclude:
-              - "**/*.svg"
-            run: |
-              git ls-files -z |
-                xargs -0 -r cspell lint \
-                  --no-progress \
-                  --no-must-find-files \
-                  --
+            script: cspell
+            runner: bash
             tags:
               - lint
               - spelling
@@ -596,7 +400,7 @@ pre-push:
           - name: editorconfig repository
             only: *editorconfig-present
             run: >-
-              ec --disable-indentation --disable-indent-size
+              mise x -- ec --disable-indentation --disable-indent-size
             tags:
               - lint
               - editorconfig
