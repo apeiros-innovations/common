@@ -23,7 +23,7 @@ pre-commit:
             glob:
               - "**/templates/**/*.{html,htm}"
             run: >-
-              djlint --profile=django --reformat --quiet {staged_files}
+              mise x -- djlint --profile=django --reformat --quiet {staged_files}
             stage_fixed: true
             tags:
               - format
@@ -40,7 +40,7 @@ pre-commit:
             glob:
               - "**/templates/**/*.{html,htm}"
             run: >-
-              djlint --profile=django --lint {staged_files}
+              mise x -- djlint --profile=django --lint {staged_files}
             tags:
               - lint
               - django

@@ -24,13 +24,13 @@ pre-commit:
               - "**/*.swift"
               - "**/*.{vb,vbs}"
             run: |
-              bash -eu -c '
-                failed=0
+              mise x -- \
+                bash -e -o pipefail -c '
+                  failed=0
 
-                for file do
-                  [ -f "$file" ] || continue
+                  for file do
+                    [ -f "$file" ] || continue
 
-                  mise x -- \
                     devskim analyze \
                       -I "$file" \
                       --options-json .devskim.json \
@@ -38,11 +38,11 @@ pre-commit:
                       -E \
                       --skip-git-ignored-files \
                       --skip-excerpts ||
-                    failed=1
-                done
+                      failed=1
+                  done
 
-                exit "$failed"
-              ' -- {staged_files}
+                  exit "$failed"
+                ' -- {staged_files}
             tags:
               - security
               - sast

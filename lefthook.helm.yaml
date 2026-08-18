@@ -11,119 +11,72 @@ pre-commit:
               - "**/requirements.yaml"
               - "**/values.yaml"
               - "**/README.md.gotmpl"
-            group:
-              piped: true
-              jobs:
-                - name: generate helm docs
-                  run: |
-                    bash -eu -c '
-                      charts=()
+            run: |
+              mise x -- \
+                bash -e -o pipefail -c '
+                  charts=()
 
-                      add_chart() {
-                        candidate="$1"
+                  add_chart() {
+                    candidate="$1"
 
-                        for existing in "${charts[@]}"; do
-                          [ "$existing" = "$candidate" ] && return 0
-                        done
+                    for existing in "${charts[@]}"; do
+                      [ "$existing" = "$candidate" ] && return 0
+                    done
 
-                        charts+=("$candidate")
-                      }
+                    charts+=("$candidate")
+                  }
 
-                      find_chart() {
-                        file="$1"
-                        dir=$(dirname "$file")
+                  find_chart() {
+                    file="$1"
+                    dir=$(dirname "$file")
 
-                        while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
-                          if [ -f "$dir/Chart.yaml" ]; then
-                            printf "%s\\n" "$dir"
-                            return 0
-                          fi
-                          dir=$(dirname "$dir")
-                        done
+                    while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+                      if [ -f "$dir/Chart.yaml" ]; then
+                        printf "%s\n" "$dir"
+                        return 0
+                      fi
 
-                        if [ -f Chart.yaml ]; then
-                          printf "%s\\n" "."
-                        fi
-                      }
+                      dir=$(dirname "$dir")
+                    done
 
-                      for file do
-                        [ -e "$file" ] || continue
+                    if [ -f Chart.yaml ]; then
+                      printf "%s\n" "."
+                    fi
 
-                        chart=$(find_chart "$file")
-                        [ -n "$chart" ] || continue
-                        add_chart "$chart"
-                      done
+                    return 0
+                  }
 
-                      for chart in "${charts[@]}"; do
-                        readme="$chart/README.md"
+                  for file do
+                    [ -e "$file" ] || continue
 
-                        if [ -f "$readme" ] &&
-                          ! git diff --quiet -- "$readme"; then
-                          printf "%s has unstaged changes\\n" "$readme" >&2
-                          exit 1
-                        fi
+                    chart=$(find_chart "$file")
+                    [ -n "$chart" ] || continue
+                    add_chart "$chart"
+                  done
 
-                        helm-docs --chart-search-root "$chart"
-                      done
-                    ' -- {staged_files}
-                  tags:
-                    - format
-                    - helm
-                    - documentation
+                  for chart in "${charts[@]}"; do
+                    readme="$chart/README.md"
 
-                - name: format helm docs
-                  run: |
-                    bash -eu -c '
-                      charts=()
+                    if [ -f "$readme" ] &&
+                      ! git diff --quiet -- "$readme"; then
+                      printf "%s has unstaged changes\n" "$readme" >&2
+                      exit 1
+                    fi
 
-                      add_chart() {
-                        candidate="$1"
+                    helm-docs --chart-search-root "$chart"
 
-                        for existing in "${charts[@]}"; do
-                          [ "$existing" = "$candidate" ] && return 0
-                        done
+                    [ -f "$readme" ] || continue
 
-                        charts+=("$candidate")
-                      }
-
-                      find_chart() {
-                        file="$1"
-                        dir=$(dirname "$file")
-
-                        while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
-                          if [ -f "$dir/Chart.yaml" ]; then
-                            printf "%s\\n" "$dir"
-                            return 0
-                          fi
-                          dir=$(dirname "$dir")
-                        done
-
-                        if [ -f Chart.yaml ]; then
-                          printf "%s\\n" "."
-                        fi
-                      }
-
-                      for file do
-                        [ -e "$file" ] || continue
-
-                        chart=$(find_chart "$file")
-                        [ -n "$chart" ] || continue
-                        add_chart "$chart"
-                      done
-
-                      for chart in "${charts[@]}"; do
-                        readme="$chart/README.md"
-                        [ -f "$readme" ] || continue
-
-                        oxfmt --write "$readme"
-                        git add -- "$readme"
-                      done
-                    ' -- {staged_files}
-                  tags:
-                    - format
-                    - helm
-                    - documentation
-                    - oxfmt
+                    oxfmt --write "$readme"
+                    git add -- "$readme"
+                  done
+                ' -- {staged_files}
+            tags:
+              - format
+              - helm
+              - documentation
+              - helm-docs
+              - oxfmt
 
     - name: validate
       group:
@@ -138,52 +91,56 @@ pre-commit:
               - "**/templates/**"
               - "**/crds/**"
             run: |
-              bash -eu -c '
-                charts=()
+              mise x -- \
+                bash -e -o pipefail -c '
+                  charts=()
 
-                add_chart() {
-                  candidate="$1"
+                  add_chart() {
+                    candidate="$1"
 
-                  for existing in "${charts[@]}"; do
-                    [ "$existing" = "$candidate" ] && return 0
-                  done
+                    for existing in "${charts[@]}"; do
+                      [ "$existing" = "$candidate" ] && return 0
+                    done
 
-                  charts+=("$candidate")
-                }
+                    charts+=("$candidate")
+                  }
 
-                find_chart() {
-                  file="$1"
-                  dir=$(dirname "$file")
+                  find_chart() {
+                    file="$1"
+                    dir=$(dirname "$file")
 
-                  while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
-                    if [ -f "$dir/Chart.yaml" ]; then
-                      printf "%s\\n" "$dir"
-                      return 0
+                    while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+                      if [ -f "$dir/Chart.yaml" ]; then
+                        printf "%s\n" "$dir"
+                        return 0
+                      fi
+
+                      dir=$(dirname "$dir")
+                    done
+
+                    if [ -f Chart.yaml ]; then
+                      printf "%s\n" "."
                     fi
-                    dir=$(dirname "$dir")
+
+                    return 0
+                  }
+
+                  for file do
+                    [ -e "$file" ] || continue
+
+                    chart=$(find_chart "$file")
+                    [ -n "$chart" ] || continue
+                    add_chart "$chart"
                   done
 
-                  if [ -f Chart.yaml ]; then
-                    printf "%s\\n" "."
-                  fi
-                }
+                  failed=0
 
-                for file do
-                  [ -e "$file" ] || continue
+                  for chart in "${charts[@]}"; do
+                    helm lint "$chart" --strict || failed=1
+                  done
 
-                  chart=$(find_chart "$file")
-                  [ -n "$chart" ] || continue
-                  add_chart "$chart"
-                done
-
-                failed=0
-
-                for chart in "${charts[@]}"; do
-                  helm lint "$chart" --strict || failed=1
-                done
-
-                exit "$failed"
-              ' -- {staged_files}
+                  exit "$failed"
+                ' -- {staged_files}
             tags:
               - lint
               - helm

@@ -12,7 +12,7 @@ pre-commit:
                   glob:
                     - "**/*.go"
                   run: >-
-                    goimports -w {staged_files}
+                    mise x -- goimports -w {staged_files}
                   stage_fixed: true
                   tags:
                     - format
@@ -23,7 +23,7 @@ pre-commit:
                   glob:
                     - "**/*.go"
                   run: >-
-                    gofmt -s -w {staged_files}
+                    mise x -- gofmt -s -w {staged_files}
                   stage_fixed: true
                   tags:
                     - format
@@ -41,7 +41,7 @@ pre-commit:
             glob:
               - ".golangci.{yml,yaml,toml,json}"
             run: >-
-              golangci-lint config verify
+              mise x -- golangci-lint config verify
             tags:
               - validation
               - lint
@@ -53,22 +53,25 @@ pre-commit:
             glob:
               - "**/*.go"
             run: |
-              patch="$(mktemp)"
-              trap 'rm -f "$patch"' EXIT
+              mise x -- \
+                bash -e -o pipefail -c '
+                  patch="$(mktemp)"
+                  trap "rm -f -- \"$patch\"" EXIT
 
-              git --no-pager diff \
-                --cached \
-                --no-ext-diff \
-                --no-textconv \
-                --unified=0 \
-                -- \
-                ':(glob)**/*.go' >"$patch"
+                  git --no-pager diff \
+                    --cached \
+                    --no-ext-diff \
+                    --no-textconv \
+                    --unified=0 \
+                    -- \
+                    ":(glob)**/*.go" >"$patch"
 
-              [ -s "$patch" ] || exit 0
+                  [ -s "$patch" ] || exit 0
 
-              golangci-lint run \
-                --new-from-patch="$patch" \
-                --whole-files
+                  golangci-lint run \
+                    --new-from-patch="$patch" \
+                    --whole-files
+                '
             tags:
               - lint
               - go
@@ -85,26 +88,27 @@ pre-push:
               - run: >-
                   git ls-files | grep -Eq '(^|/)go\.mod$'
             run: |
-              bash -eu -c '
-                failed=0
+              mise x -- \
+                bash -e -o pipefail -c '
+                  failed=0
 
-                while IFS= read -r -d "" path; do
-                  case "$path" in
-                    go.mod|*/go.mod)
-                      dir=$(dirname "$path")
+                  while IFS= read -r -d "" path; do
+                    case "$path" in
+                      go.mod|*/go.mod)
+                        dir=$(dirname "$path")
 
-                      printf "checking module metadata: %s\n" "$dir"
+                        printf "checking module metadata: %s\n" "$dir"
 
-                      (
-                        cd "$dir"
-                        go mod tidy -diff
-                      ) || failed=1
-                      ;;
-                  esac
-                done < <(git ls-files -z)
+                        (
+                          cd "$dir"
+                          go mod tidy -diff
+                        ) || failed=1
+                        ;;
+                    esac
+                  done < <(git ls-files -z)
 
-                exit "$failed"
-              '
+                  exit "$failed"
+                '
             tags:
               - validation
               - go
@@ -114,26 +118,27 @@ pre-push:
           - name: go test
             only: *go-module-present
             run: |
-              bash -eu -c '
-                failed=0
+              mise x -- \
+                bash -e -o pipefail -c '
+                  failed=0
 
-                while IFS= read -r -d "" path; do
-                  case "$path" in
-                    go.mod|*/go.mod)
-                      dir=$(dirname "$path")
+                  while IFS= read -r -d "" path; do
+                    case "$path" in
+                      go.mod|*/go.mod)
+                        dir=$(dirname "$path")
 
-                      printf "testing module: %s\n" "$dir"
+                        printf "testing module: %s\n" "$dir"
 
-                      (
-                        cd "$dir"
-                        go test ./...
-                      ) || failed=1
-                      ;;
-                  esac
-                done < <(git ls-files -z)
+                        (
+                          cd "$dir"
+                          go test ./...
+                        ) || failed=1
+                        ;;
+                    esac
+                  done < <(git ls-files -z)
 
-                exit "$failed"
-              '
+                  exit "$failed"
+                '
             tags:
               - test
               - validation
@@ -142,26 +147,27 @@ pre-push:
           - name: govulncheck
             only: *go-module-present
             run: |
-              bash -eu -c '
-                failed=0
+              mise x -- \
+                bash -e -o pipefail -c '
+                  failed=0
 
-                while IFS= read -r -d "" path; do
-                  case "$path" in
-                    go.mod|*/go.mod)
-                      dir=$(dirname "$path")
+                  while IFS= read -r -d "" path; do
+                    case "$path" in
+                      go.mod|*/go.mod)
+                        dir=$(dirname "$path")
 
-                      printf "checking vulnerabilities: %s\n" "$dir"
+                        printf "checking vulnerabilities: %s\n" "$dir"
 
-                      (
-                        cd "$dir"
-                        govulncheck ./...
-                      ) || failed=1
-                      ;;
-                  esac
-                done < <(git ls-files -z)
+                        (
+                          cd "$dir"
+                          govulncheck ./...
+                        ) || failed=1
+                        ;;
+                    esac
+                  done < <(git ls-files -z)
 
-                exit "$failed"
-              '
+                  exit "$failed"
+                '
             tags:
               - security
               - dependencies

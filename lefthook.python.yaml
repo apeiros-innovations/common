@@ -13,7 +13,7 @@ pre-commit:
                     - run: |
                         [ -f pyproject.toml ] || exit 1
 
-                        python3 - <<'PY'
+                        mise x -- python3 - <<'PY'
                         import pathlib
                         import re
                         import tomllib
@@ -27,8 +27,8 @@ pre-commit:
                         )
 
                         pattern = re.compile(
-                            r"^\s*django(?:\[[^\]]+\])?\s*"
-                            r"(?:===|==|~=|!=|<=|>=|<|>)",
+                            r"^\s*django(?:\[[^\]]+\])?"
+                            r"(?:\s*(?:===|==|~=|!=|<=|>=|<|>)|\s*;|\s*$)",
                             re.IGNORECASE,
                         )
 
@@ -44,7 +44,7 @@ pre-commit:
                   glob:
                     - "**/*.py"
                   run: >-
-                    django-upgrade --exit-zero-even-if-changed {staged_files}
+                    mise x -- django-upgrade --exit-zero-even-if-changed {staged_files}
                   stage_fixed: true
                   tags:
                     - format
@@ -69,7 +69,7 @@ pre-commit:
                   glob:
                     - "**/*.{py,pyi,pyw}"
                   run: >-
-                    ruff check --fix-only --force-exclude {staged_files}
+                    mise x -- ruff check --fix-only --force-exclude {staged_files}
                   stage_fixed: true
                   tags:
                     - format
@@ -82,7 +82,7 @@ pre-commit:
                   glob:
                     - "**/*.{py,pyi,pyw}"
                   run: >-
-                    ruff format --force-exclude {staged_files}
+                    mise x -- ruff format --force-exclude {staged_files}
                   stage_fixed: true
                   tags:
                     - format
@@ -98,7 +98,7 @@ pre-commit:
             glob:
               - "**/*.{py,pyi,pyw}"
             run: >-
-              ruff check --force-exclude {staged_files}
+              mise x -- ruff check --force-exclude {staged_files}
             tags:
               - lint
               - python
@@ -137,7 +137,7 @@ pre-commit:
             glob:
               - "**/*.{py,pyi,pyw}"
             run: >-
-              pylint -- {staged_files}
+              mise x -- pylint -- {staged_files}
             tags:
               - lint
               - python

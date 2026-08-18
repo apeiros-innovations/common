@@ -6,12 +6,11 @@ pre-commit:
         parallel: true
         jobs:
           - name: format javascript typescript
-            only:
-              - run: >-
-                  test -f .oxfmtrc.json || test -f .oxfmtrc.jsonc || test -f oxfmt.config.ts || test -f oxfmt.config.mts
             glob:
               - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
-            run: oxfmt {staged_files}
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
             stage_fixed: true
             tags:
               - format
@@ -30,7 +29,8 @@ pre-commit:
             glob:
               - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
               - "**/*.{astro,vue,svelte}"
-            run: oxlint --deny-warnings -- {staged_files}
+            run: >-
+              mise x -- oxlint --deny-warnings -- {staged_files}
             tags:
               - lint
               - javascript

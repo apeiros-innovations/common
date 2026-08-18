@@ -39,7 +39,8 @@ pre-commit:
               - ".renovaterc"
               - ".renovaterc.{json,jsonc,json5}"
               - "package.json"
-            run: renovate-config-validator --strict
+            run: >-
+              mise x -- renovate-config-validator --strict
             tags:
               - validation
               - dependency-management

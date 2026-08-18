@@ -25,7 +25,8 @@ pre-commit:
                   exit 1
             glob:
               - "**/*.astro"
-            run: pnpm exec prettier --write {staged_files}
+            run: >-
+              mise x -- pnpm exec prettier --write {staged_files}
             stage_fixed: true
             tags:
               - format
@@ -39,14 +40,16 @@ pre-push:
         parallel: true
         jobs:
           - name: astro check
-            run: pnpm astro check
+            run: >-
+              mise x -- pnpm exec astro check
             tags:
               - validation
               - astro
               - typescript
 
           - name: astro build
-            run: pnpm astro build
+            run: >-
+              mise x -- pnpm exec astro build
             tags:
               - validation
               - astro
