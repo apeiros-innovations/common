@@ -7,55 +7,69 @@ pre-commit:
         jobs:
           - name: format python
             group:
-              piped: true
               jobs:
                 - name: django upgrade
+                  only:
+                    - run: |
+                        [ -f pyproject.toml ] || exit 1
+
+                        python3 - <<'PY'
+                        import pathlib
+                        import re
+                        import tomllib
+
+                        path = pathlib.Path("pyproject.toml")
+                        data = tomllib.loads(path.read_text(encoding="utf-8"))
+
+                        dependencies = data.get("project", {}).get(
+                            "dependencies",
+                            [],
+                        )
+
+                        pattern = re.compile(
+                            r"^\s*django(?:\[[^\]]+\])?\s*"
+                            r"(?:===|==|~=|!=|<=|>=|<|>)",
+                            re.IGNORECASE,
+                        )
+
+                        raise SystemExit(
+                            0
+                            if any(
+                                pattern.search(dependency)
+                                for dependency in dependencies
+                            )
+                            else 1
+                        )
+                        PY
                   glob:
                     - "**/*.py"
-                  run: |
-                    if [ ! -f pyproject.toml ]; then
-                      exit 0
-                    fi
-
-                    if ! python -c '
-                    import pathlib
-                    import re
-
-                    try:
-                        import tomllib
-                    except ModuleNotFoundError:
-                        try:
-                            import tomli as tomllib
-                        except ModuleNotFoundError:
-                            raise SystemExit(1)
-
-                    data = tomllib.loads(pathlib.Path("pyproject.toml").read_text())
-                    dependencies = data.get("project", {}).get("dependencies", [])
-                    pattern = re.compile(
-                        r"^\s*django(?:\[[^\]]+\])?\s*(?:===|==|~=|!=|<=|>=|<|>)",
-                        re.IGNORECASE,
-                    )
-                    raise SystemExit(
-                        0 if any(pattern.search(item) for item in dependencies) else 1
-                    )
-                    '; then
-                      exit 0
-                    fi
-
-                    django-upgrade \
-                      --exit-zero-even-if-changed \
-                      {staged_files}
+                  run: >-
+                    django-upgrade --exit-zero-even-if-changed {staged_files}
                   stage_fixed: true
                   tags:
                     - format
                     - python
                     - django
+                    - django-upgrade
 
                 - name: ruff fix
+                  only: &ruff-config-present
+                    - run: |
+                        [ -f .ruff.toml ] && exit 0
+                        [ -f ruff.toml ] && exit 0
+
+                        if [ -f pyproject.toml ] &&
+                           grep -Eq \
+                             '^[[:space:]]*\[tool\.ruff([.][^]]+)?\]' \
+                             pyproject.toml; then
+                          exit 0
+                        fi
+
+                        exit 1
                   glob:
                     - "**/*.{py,pyi,pyw}"
                   run: >-
-                    ruff check --fix-only --force-exclude --extend-select I {staged_files}
+                    ruff check --fix-only --force-exclude {staged_files}
                   stage_fixed: true
                   tags:
                     - format
@@ -64,6 +78,7 @@ pre-commit:
                     - ruff
 
                 - name: ruff format
+                  only: *ruff-config-present
                   glob:
                     - "**/*.{py,pyi,pyw}"
                   run: >-
@@ -79,32 +94,50 @@ pre-commit:
         parallel: true
         jobs:
           - name: ruff
+            only: *ruff-config-present
             glob:
               - "**/*.{py,pyi,pyw}"
             run: >-
-              ruff check --force-exclude --extend-select I {staged_files}
+              ruff check --force-exclude {staged_files}
             tags:
               - lint
               - python
               - ruff
 
           - name: pylint
-            glob:
-              - "**/*.{py,pyw}"
-            run: |
-              bash -eu -c '
-                files=()
+            only: &pylint-config-present
+              - run: |
+                  [ -f pylintrc ] && exit 0
+                  [ -f .pylintrc ] && exit 0
+                  [ -f pylintrc.toml ] && exit 0
+                  [ -f .pylintrc.toml ] && exit 0
 
-                for file do
-                  if grep -q "[^[:space:]]" "$file"; then
-                    files+=("$file")
+                  if [ -f pyproject.toml ] &&
+                     grep -Eq \
+                       '^[[:space:]]*\[tool\.pylint([.][^]]+)?\]' \
+                       pyproject.toml; then
+                    exit 0
                   fi
-                done
 
-                [ "${#files[@]}" -gt 0 ] || exit 0
+                  if [ -f setup.cfg ] &&
+                     grep -Eqi \
+                       '^[[:space:]]*\[pylint([.][^]]+)?\]' \
+                       setup.cfg; then
+                    exit 0
+                  fi
 
-                pylint -- "${files[@]}"
-              ' -- {staged_files}
+                  if [ -f tox.ini ] &&
+                     grep -Eqi \
+                       '^[[:space:]]*\[pylint([.][^]]+)?\]' \
+                       tox.ini; then
+                    exit 0
+                  fi
+
+                  exit 1
+            glob:
+              - "**/*.{py,pyi,pyw}"
+            run: >-
+              pylint -- {staged_files}
             tags:
               - lint
               - python
