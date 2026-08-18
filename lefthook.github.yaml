@@ -1,0 +1,33 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: actionlint
+            glob:
+              - ".github/workflows/*.{yaml,yml}"
+              - ".github/actionlint.{yaml,yml}"
+            run: actionlint
+            tags:
+              - lint
+              - github
+              - github-actions
+              - actionlint
+
+          - name: zizmor
+            glob:
+              - ".github/workflows/*.{yaml,yml}"
+              - ".github/actions/**/action.{yaml,yml}"
+              - ".github/dependabot.{yaml,yml}"
+              - ".github/zizmor.{yaml,yml}"
+              - "zizmor.{yaml,yml}"
+            run: >-
+              zizmor --offline --min-severity=medium --min-confidence=medium .
+            tags:
+              - lint
+              - security
+              - github
+              - github-actions
+              - zizmor
