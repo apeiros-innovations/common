@@ -1,6 +1,21 @@
 ---
 pre-commit:
   jobs:
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: format javascript typescript
+            glob:
+              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+            run: oxfmt {staged_files}
+            stage_fixed: true
+            tags:
+              - format
+              - javascript
+              - typescript
+              - oxfmt
+
     - name: validate
       group:
         parallel: true

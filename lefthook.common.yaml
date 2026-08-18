@@ -100,19 +100,6 @@ pre-commit:
               - mdx
               - oxfmt
 
-          - name: format javascript frameworks
-            glob:
-              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
-              - "**/*.{astro,vue,svelte}"
-            run: oxfmt {staged_files}
-            stage_fixed: true
-            tags:
-              - format
-              - javascript
-              - typescript
-              - framework
-              - oxfmt
-
           - name: format css
             glob:
               - "**/*.{css,scss,less,pcss,postcss}"

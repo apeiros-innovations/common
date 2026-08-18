@@ -1,4 +1,21 @@
 ---
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        parallel: true
+        jobs:
+          - name: format astro
+            glob:
+              - "**/*.astro"
+            run: >-
+              pnpm exec prettier --plugin=prettier-plugin-astro --parser=astro --write {staged_files}
+            stage_fixed: true
+            tags:
+              - format
+              - astro
+              - prettier
+
 pre-push:
   jobs:
     - name: astro validation
