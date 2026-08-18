@@ -20,3 +20,4 @@ ddil
 iast
 crds
 graphqls
+renovaterc
