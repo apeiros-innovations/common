@@ -6,10 +6,24 @@ pre-commit:
         parallel: true
         jobs:
           - name: format django templates
+            only: &djlint-config-present
+              - run: |
+                  [ -f djlint.toml ] && exit 0
+                  [ -f .djlint.toml ] && exit 0
+                  [ -f .djlintrc ] && exit 0
+
+                  if [ -f pyproject.toml ] &&
+                     grep -Eq \
+                       '^[[:space:]]*\[tool\.djlint([.][^]]+)?\]' \
+                       pyproject.toml; then
+                    exit 0
+                  fi
+
+                  exit 1
             glob:
               - "**/templates/**/*.{html,htm}"
             run: >-
-              djlint --reformat --quiet --warn {staged_files}
+              djlint --profile=django --reformat --quiet {staged_files}
             stage_fixed: true
             tags:
               - format
@@ -22,10 +36,11 @@ pre-commit:
         parallel: true
         jobs:
           - name: lint django templates
+            only: *djlint-config-present
             glob:
               - "**/templates/**/*.{html,htm}"
             run: >-
-              djlint --lint {staged_files}
+              djlint --profile=django --lint {staged_files}
             tags:
               - lint
               - django
