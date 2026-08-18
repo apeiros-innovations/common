@@ -45,13 +45,18 @@ ignorePaths:
   - package-lock.json
   - yarn.lock
 patterns:
-  - name: markdown-fenced-code-blocks
-    pattern: /^\s*(`{3,}|~{3,}).*[\s\S]*?^\s*\1/gm
-overrides:
-  - filename:
-      - "**/*.md"
+  - name: markdown-inline-code
+    pattern: /`+[^`\r\n]*`+/g
+  - name: markdown-backtick-code-blocks
+    pattern: /^ {0,3}`{3,}[^\r\n]*\r?\n[\s\S]*?(?:^ {0,3}`{3,}[ \t]*$|$(?![\s\S]))/gm
+  - name: markdown-tilde-code-blocks
+    pattern: /^ {0,3}~{3,}[^\r\n]*\r?\n[\s\S]*?(?:^ {0,3}~{3,}[ \t]*$|$(?![\s\S]))/gm
+languageSettings:
+  - languageId: markdown
     ignoreRegExpList:
-      - markdown-fenced-code-blocks
+      - markdown-inline-code
+      - markdown-backtick-code-blocks
+      - markdown-tilde-code-blocks
 words:
   - diátaxis
   - workerd
