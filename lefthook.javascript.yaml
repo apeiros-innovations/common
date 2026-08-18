@@ -6,6 +6,9 @@ pre-commit:
         parallel: true
         jobs:
           - name: format javascript typescript
+            only:
+              - run: >-
+                  test -f .oxfmtrc.json || test -f .oxfmtrc.jsonc || test -f oxfmt.config.ts || test -f oxfmt.config.mts
             glob:
               - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
             run: oxfmt {staged_files}
@@ -21,6 +24,9 @@ pre-commit:
         parallel: true
         jobs:
           - name: oxlint
+            only:
+              - run: >-
+                  test -f .oxlintrc.json || test -f .oxlintrc.jsonc || test -f oxlint.config.ts || test -f oxlint.config.mts
             glob:
               - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
               - "**/*.{astro,vue,svelte}"

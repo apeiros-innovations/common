@@ -21,3 +21,5 @@ iast
 crds
 graphqls
 renovaterc
+oxlintrc
+oxfmtrc
