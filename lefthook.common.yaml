@@ -11,11 +11,26 @@ output:
 commit-msg:
   commands:
     commitlint:
+      only:
+        - run: |
+            git ls-files |
+              grep -Eq '^(\.commitlintrc(\.(json|yaml|yml|js|cjs|mjs|ts|cts|mts))?|commitlint\.config\.(js|cjs|mjs|ts|cts|mts))$' &&
+              exit 0
+
+            if [ -f package.json ] &&
+               grep -Eq '"commitlint"[[:space:]]*:' package.json; then
+              exit 0
+            fi
+
+            if [ -f package.yaml ] &&
+               grep -Eq '^[[:space:]]*commitlint[[:space:]]*:' package.yaml; then
+              exit 0
+            fi
+
+            exit 1
       run: commitlint --edit {1}
 
 pre-commit:
-  piped: true
-
   skip:
     - merge
     - rebase
@@ -146,11 +161,23 @@ pre-commit:
               - oxfmt
 
           - name: format yaml
+            only:
+              - run: >-
+                  test -f .yamlfmt || test -f .yamlfmt.yaml || test -f .yamlfmt.yml
             glob:
               - "**/*.{yaml,yml}"
             exclude:
               - "**/templates/**"
-            run: yamlfmt {staged_files}
+            run: |
+              config=
+              for candidate in .yamlfmt .yamlfmt.yaml .yamlfmt.yml; do
+                if [ -f "$candidate" ]; then
+                  config="$candidate"
+                  break
+                fi
+              done
+
+              yamlfmt -conf "$config" {staged_files}
             stage_fixed: true
             tags:
               - format
@@ -251,12 +278,32 @@ pre-commit:
       group:
         parallel: true
         jobs:
+          - name: git diff check
+            run: >-
+              git --no-pager diff --cached --check --no-ext-diff --no-textconv
+            tags:
+              - validation
+              - git
+              - repository
+
           - name: lint yaml
+            only:
+              - run: >-
+                  test -f .yamllint || test -f .yamllint.yaml || test -f .yamllint.yml
             glob:
               - "**/*.{yaml,yml}"
             exclude:
               - "**/templates/**"
-            run: yamllint {staged_files}
+            run: |
+              config=
+              for candidate in .yamllint .yamllint.yaml .yamllint.yml; do
+                if [ -f "$candidate" ]; then
+                  config="$candidate"
+                  break
+                fi
+              done
+
+              yamllint -c "$config" {staged_files}
             tags:
               - lint
               - yaml
@@ -283,7 +330,33 @@ pre-commit:
               - shell
               - shellcheck
 
+          - name: dotenv
+            glob:
+              - "**/.env"
+              - "**/.env.*"
+            run: dotenv-linter check {staged_files}
+            tags:
+              - lint
+              - environment
+              - dotenv
+
           - name: cspell
+            only: &cspell-config-present
+              - run: |
+                  git ls-files |
+                    grep -Eq '^(\.config/)?((\.?cspell)(\.config)?\.(yaml|yml|json|jsonc|mjs|cjs|js|mts|ts|cts|toml)|(\.?cSpell)\.json)$' &&
+                    exit 0
+
+                  git ls-files |
+                    grep -Eq '^\.vscode/(cspell|cSpell|\.cspell)\.json$' &&
+                    exit 0
+
+                  if [ -f package.json ] &&
+                     grep -Eq '"cspell"[[:space:]]*:' package.json; then
+                    exit 0
+                  fi
+
+                  exit 1
             exclude:
               - "**/*.svg"
             file_types:
@@ -297,22 +370,23 @@ pre-commit:
               - cspell
 
           - name: editorconfig
+            only: &editorconfig-present
+              - run: >-
+                  git ls-files | grep -Eq '(^|/)\.editorconfig$'
             file_types:
               - text
               - not symlink
-            run: |
-              if [ -f .editorconfig ]; then
-                ec \
-                  --disable-indentation \
-                  --disable-indent-size \
-                  {staged_files}
-              fi
+            run: >-
+              ec --disable-indentation --disable-indent-size {staged_files}
             tags:
               - lint
               - editorconfig
               - repository
 
           - name: markdownlint
+            only:
+              - run: >-
+                  test -f .markdownlint-cli2.jsonc || test -f .markdownlint-cli2.yaml || test -f .markdownlint-cli2.cjs || test -f .markdownlint-cli2.mjs || test -f .markdownlint.jsonc || test -f .markdownlint.json || test -f .markdownlint.yaml || test -f .markdownlint.yml || test -f .markdownlint.cjs || test -f .markdownlint.mjs
             glob:
               - "**/*.{md,markdown}"
             run: markdownlint-cli2 --no-globs -- {staged_files}
@@ -423,6 +497,7 @@ pre-push:
         parallel: true
         jobs:
           - name: cspell repository
+            only: *cspell-config-present
             exclude:
               - "**/*.svg"
             run: |
@@ -437,12 +512,9 @@ pre-push:
               - cspell
 
           - name: editorconfig repository
-            run: |
-              if [ -f .editorconfig ]; then
-                ec \
-                  --disable-indentation \
-                  --disable-indent-size
-              fi
+            only: *editorconfig-present
+            run: >-
+              ec --disable-indentation --disable-indent-size
             tags:
               - lint
               - editorconfig
