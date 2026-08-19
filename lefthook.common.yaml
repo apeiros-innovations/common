@@ -50,6 +50,7 @@ pre-commit:
             glob:
               - ".config/mise/config.toml"
               - ".config/mise/conf.d/*.toml"
+              - "mise.lock"
             group:
               jobs:
                 - name: format mise
@@ -71,6 +72,7 @@ pre-commit:
 
                     git add -- mise.lock
                   tags:
+                    - validation
                     - mise
                     - supply-chain
 
@@ -196,6 +198,7 @@ pre-commit:
               - "**/{.justfile,justfile,Justfile}"
               - ".config/mise/config.toml"
               - ".config/mise/conf.d/*.toml"
+              - "mise.lock"
             file_types:
               - text
               - not symlink
@@ -234,8 +237,8 @@ pre-commit:
               - git
               - repository
 
-          - name: check case conflicts
-            script: check-case-conflicts.py
+          - name: check path portability
+            script: check-path-portability.py
             runner: mise x -- python3
             tags:
               - validation
@@ -305,7 +308,7 @@ pre-commit:
           - name: editorconfig
             only: &editorconfig-present
               - run: >-
-                  git ls-files | grep -Eq '(^|/)\.editorconfig$'
+                  git ls-files --error-unmatch -- '.editorconfig' ':(glob)**/.editorconfig' >/dev/null 2>&1
             file_types:
               - text
               - not symlink
@@ -336,6 +339,32 @@ pre-commit:
               - repository
               - large-files
 
+          - name: check symlinks
+            script: check-symlinks.py
+            runner: mise x -- python3
+            args: "{staged_files}"
+            tags:
+              - validation
+              - repository
+              - symlinks
+
+          - name: check gitlinks
+            script: check-gitlinks.py
+            runner: mise x -- python3
+            tags:
+              - validation
+              - repository
+              - submodules
+
+          - name: check forced ignored files
+            script: check-forced-ignored-files.py
+            runner: mise x -- python3
+            args: "{staged_files}"
+            tags:
+              - validation
+              - repository
+              - gitignore
+
           - name: betterleaks
             script: betterleaks
             runner: bash
@@ -346,6 +375,15 @@ pre-commit:
 
 pre-push:
   jobs:
+    - name: signed commits
+      script: check-signed-commits.py
+      runner: mise x -- python3
+      use_stdin: true
+      tags:
+        - validation
+        - git
+        - signatures
+
     - name: repository validation
       group:
         parallel: true
@@ -353,6 +391,7 @@ pre-push:
           - name: cspell repository
             script: cspell
             runner: bash
+            args: "--repository"
             tags:
               - lint
               - spelling

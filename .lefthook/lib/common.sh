@@ -49,11 +49,13 @@ has_commitlint_config() {
 		[[ -f $candidate ]] && return 0
 	done
 
-	if [[ -f package.json ]] && grep -Eq '"commitlint"[[:space:]]*:' package.json; then
+	if [[ -f package.json ]] &&
+		grep -Eq '"commitlint"[[:space:]]*:' package.json; then
 		return 0
 	fi
 
-	if [[ -f package.yaml ]] && grep -Eq '^[[:space:]]*commitlint[[:space:]]*:' package.yaml; then
+	if [[ -f package.yaml ]] &&
+		grep -Eq '^[[:space:]]*commitlint[[:space:]]*:' package.yaml; then
 		return 0
 	fi
 
@@ -68,7 +70,8 @@ has_oxfmt_root_config() {
 }
 
 has_shellcheck_config() {
-	git ls-files | grep -Eq '(^|/)(\.shellcheckrc|shellcheckrc)$'
+	git ls-files |
+		grep -Eq '(^|/)(\.shellcheckrc|shellcheckrc)$'
 }
 
 has_cspell_config() {
@@ -80,7 +83,8 @@ has_cspell_config() {
 		grep -Eq '(^|/)\.vscode/(cspell|cSpell|\.cspell)\.json$' &&
 		return 0
 
-	if [[ -f package.json ]] && grep -Eq '"cspell"[[:space:]]*:' package.json; then
+	if [[ -f package.json ]] &&
+		grep -Eq '"cspell"[[:space:]]*:' package.json; then
 		return 0
 	fi
 

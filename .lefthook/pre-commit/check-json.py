@@ -45,7 +45,10 @@ for filename in sys.argv[1:]:
         )
         failed = True
     except (UnicodeDecodeError, ValueError) as error:
-        print(f"{path}: {error}", file=sys.stderr)
+        print(
+            f"{path}: {error}",
+            file=sys.stderr,
+        )
         failed = True
 
 raise SystemExit(1 if failed else 0)

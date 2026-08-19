@@ -4,8 +4,13 @@ import re
 import sys
 from pathlib import Path
 
-TRAILING_WHITESPACE = re.compile(rb"[\t\f\v ]+(?=\r?$)", re.MULTILINE)
-FINAL_NEWLINES = re.compile(rb"(?:\r\n|\r|\n)+\Z")
+TRAILING_WHITESPACE = re.compile(
+    rb"[\t\f\v ]+(?=\r?$)",
+    re.MULTILINE,
+)
+FINAL_NEWLINES = re.compile(
+    rb"(?:\r\n|\r|\n)+\Z",
+)
 
 
 def normalize(path: Path) -> None:
@@ -24,8 +29,14 @@ def normalize(path: Path) -> None:
     else:
         eol = b"\n"
 
-    normalized = TRAILING_WHITESPACE.sub(b"", original)
-    normalized = FINAL_NEWLINES.sub(b"", normalized)
+    normalized = TRAILING_WHITESPACE.sub(
+        b"",
+        original,
+    )
+    normalized = FINAL_NEWLINES.sub(
+        b"",
+        normalized,
+    )
 
     if normalized:
         normalized += eol
@@ -34,7 +45,11 @@ def normalize(path: Path) -> None:
         return
 
     path.write_bytes(normalized)
-    print(f"{path}: normalized text whitespace", file=sys.stderr)
+
+    print(
+        f"{path}: normalized text whitespace",
+        file=sys.stderr,
+    )
 
 
 for filename in sys.argv[1:]:
