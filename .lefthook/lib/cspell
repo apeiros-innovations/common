@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+# NOTE: This is used by both pre-commit and pre-push hooks.
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "$(dirname -- "$0")/../lib/common.sh"
+
+common_root="$(common_remote_root)"
+
+run_staged() {
+  if has_cspell_config; then
+    exec mise x -- \
+      cspell lint \
+      --no-progress \
+      --no-must-find-files \
+      -- \
+      "$@"
+  fi
+
+  exec mise x -- \
+    cspell lint \
+    --config "$common_root/.cspell.yaml" \
+    --no-progress \
+    --no-must-find-files \
+    -- \
+    "$@"
+}
+
+run_repository() {
+  if has_cspell_config; then
+    git ls-files |
+      mise x -- \
+        cspell lint \
+        --file-list stdin \
+        --no-progress \
+        --no-must-find-files
+
+    return
+  fi
+
+  git ls-files |
+    mise x -- \
+      cspell lint \
+      --config "$common_root/.cspell.yaml" \
+      --file-list stdin \
+      --no-progress \
+      --no-must-find-files
+}
+
+if [[ "${1:-}" == "--repository" ]]; then
+  shift
+
+  if [[ "$#" -ne 0 ]]; then
+    printf >&2 \
+      'cspell: --repository does not accept file arguments\n'
+    exit 2
+  fi
+
+  run_repository
+  exit
+fi
+
+run_staged "$@"
