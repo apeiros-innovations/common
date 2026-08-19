@@ -2,22 +2,37 @@
 
 set -euo pipefail
 
+readonly limit_bytes=1048576
 failed=0
 
 for file in "$@"; do
-  if git diff --cached --quiet --diff-filter=A -- "$file"; then
+  if git diff \
+    --cached \
+    --quiet \
+    --diff-filter=A \
+    -- \
+    "$file"; then
     continue
   fi
 
-  lfs_attr="$(git check-attr filter -- "$file")"
-  case "$lfs_attr" in
-    *": filter: lfs") continue ;;
-  esac
+  object_type="$(
+    git cat-file -t ":$file" 2>/dev/null || true
+  )"
 
-  size="$(git cat-file -s ":$file")"
-  if [[ "$size" -gt 1048576 ]]; then
+  [[ "$object_type" == "blob" ]] || continue
+
+  size="$(
+    git cat-file -s ":$file"
+  )"
+
+  if ((size > limit_bytes)); then
     kib=$(((size + 1023) / 1024))
-    printf '%s (%s KiB) exceeds the 1024 KiB limit\n' "$file" "$kib" >&2
+
+    printf >&2 \
+      '%s: staged blob is %s KiB; repository limit is 1024 KiB\n' \
+      "$file" \
+      "$kib"
+
     failed=1
   fi
 done
