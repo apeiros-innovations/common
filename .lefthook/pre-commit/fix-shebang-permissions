@@ -5,15 +5,26 @@ set -euo pipefail
 for file in "$@"; do
   [[ -f "$file" ]] || continue
 
-  prefix="$(git show ":$file" 2>/dev/null | LC_ALL=C head -c 2)"
+  prefix=""
+  IFS= read -r -n 2 prefix < <(
+    git show ":$file" 2>/dev/null
+  ) || true
+
   [[ "$prefix" == "#!" ]] || continue
 
-  mode="$(git ls-files --stage -- "$file" | awk 'NR == 1 { print $1 }')"
+  index_entry="$(git ls-files --stage -- "$file")"
+  [[ -n "$index_entry" ]] || continue
+
+  mode="${index_entry%% *}"
+
   [[ "$mode" == "100755" ]] && continue
   [[ "$mode" == "100644" ]] || continue
 
+  printf >&2 \
+    '%s:1: shebang script has mode %s; expected 100755; fixing executable bit\n' \
+    "$file" \
+    "$mode"
+
   chmod +x -- "$file"
   git update-index --chmod=+x -- "$file"
-
-  printf '%s: marked executable\n' "$file"
 done
