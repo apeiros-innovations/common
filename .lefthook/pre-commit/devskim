@@ -2,20 +2,22 @@
 
 set -euo pipefail
 
-failed=0
+exec mise x -- \
+  bash -euo pipefail -c '
+    failed=0
 
-for file in "$@"; do
-  [[ -f "$file" ]] || continue
+    for file do
+      [[ -f "$file" ]] || continue
 
-  mise x -- \
-    devskim analyze \
-    -I "$file" \
-    --options-json .devskim.json \
-    -f text \
-    -E \
-    --skip-git-ignored-files \
-    --skip-excerpts ||
-    failed=1
-done
+      devskim analyze \
+        -I "$file" \
+        --options-json .devskim.json \
+        -f text \
+        -E \
+        --skip-git-ignored-files \
+        --skip-excerpts ||
+        failed=1
+    done
 
-exit "$failed"
+    exit "$failed"
+  ' bash "$@"

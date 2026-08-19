@@ -37,7 +37,16 @@ for filename in sys.argv[1:]:
                 object_pairs_hook=reject_duplicate_keys,
                 parse_constant=reject_nonstandard_constant,
             )
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as error:
+    except json.JSONDecodeError as error:
+        print(
+            f"{path}:{error.lineno}:{error.colno}: {error.msg}",
+            file=sys.stderr,
+        )
+        failed = True
+    except UnicodeDecodeError as error:
+        print(f"{path}: invalid UTF-8: {error}", file=sys.stderr)
+        failed = True
+    except ValueError as error:
         print(f"{path}: {error}", file=sys.stderr)
         failed = True
 

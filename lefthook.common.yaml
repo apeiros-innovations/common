@@ -48,9 +48,8 @@ pre-commit:
 
           - name: mise
             glob:
-              - "mise.toml"
-              - ".mise.toml"
-              - ".mise/config.toml"
+              - ".config/mise/config.toml"
+              - ".config/mise/conf.d/*.toml"
             group:
               jobs:
                 - name: format mise
@@ -62,39 +61,15 @@ pre-commit:
 
                 - name: mise lock
                   run: |
-                    bash -eu -c '
-                      lock_files=()
+                    mise lock
 
-                      for config do
-                        case "$config" in
-                          mise.toml|.mise.toml)
-                            lock_file="mise.lock"
-                            ;;
-                          .mise/config.toml)
-                            lock_file=".mise/mise.lock"
-                            ;;
-                          *)
-                            continue
-                            ;;
-                        esac
+                    if [ ! -f mise.lock ]; then
+                      printf >&2 \
+                        'mise.lock: missing after `mise lock`; ensure [settings].lockfile = true\n'
+                      exit 1
+                    fi
 
-                        if [ ! -f "$lock_file" ]; then
-                          printf "%s: missing required Mise lockfile %s\n" \
-                            "$config" "$lock_file" >&2
-                          printf "Create it before committing: touch %s && mise install\n" \
-                            "$lock_file" >&2
-                          exit 1
-                        fi
-
-                        lock_files+=("$lock_file")
-                      done
-
-                      mise lock
-
-                      for lock_file in "${lock_files[@]}"; do
-                        git add -- "$lock_file"
-                      done
-                    ' -- {staged_files}
+                    git add -- mise.lock
                   tags:
                     - mise
                     - supply-chain
@@ -166,9 +141,8 @@ pre-commit:
             glob:
               - "**/*.toml"
             exclude:
-              - "mise.toml"
-              - ".mise.toml"
-              - ".mise/config.toml"
+              - ".config/mise/config.toml"
+              - ".config/mise/conf.d/*.toml"
             script: oxfmt
             runner: bash
             args: "{staged_files}"
@@ -220,8 +194,8 @@ pre-commit:
               - "**/*.{yaml,yml}"
               - "**/*.{sh,bash,ksh}"
               - "**/{.justfile,justfile,Justfile}"
-              - ".mise.toml"
-              - ".mise/config.toml"
+              - ".config/mise/config.toml"
+              - ".config/mise/conf.d/*.toml"
             file_types:
               - text
               - not symlink
@@ -233,18 +207,18 @@ pre-commit:
               - format
               - text
 
-          - name: fix shebang script permissions
+          - name: shebang permissions
             exclude:
               - "**/{.justfile,justfile,Justfile}"
               - "**/*.just"
             file_types:
               - text
               - not symlink
-            script: fix-shebang-permissions
+            script: shebang-permissions
             runner: bash
             args: "{staged_files}"
             tags:
-              - format
+              - validation
               - repository
               - permissions
 
@@ -355,20 +329,6 @@ pre-commit:
 
           - name: check added large files
             script: check-large-files
-            runner: bash
-            args: "{staged_files}"
-            tags:
-              - validation
-              - repository
-
-          - name: check executables have shebangs
-            exclude:
-              - "**/{.justfile,justfile,Justfile}"
-              - "**/*.just"
-            file_types:
-              - text
-              - not symlink
-            script: check-executable-shebangs
             runner: bash
             args: "{staged_files}"
             tags:

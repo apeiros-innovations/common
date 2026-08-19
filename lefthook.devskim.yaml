@@ -23,26 +23,9 @@ pre-commit:
               - "**/*.sql"
               - "**/*.swift"
               - "**/*.{vb,vbs}"
-            run: |
-              mise x -- \
-                bash -e -o pipefail -c '
-                  failed=0
-
-                  for file do
-                    [ -f "$file" ] || continue
-
-                    devskim analyze \
-                      -I "$file" \
-                      --options-json .devskim.json \
-                      -f text \
-                      -E \
-                      --skip-git-ignored-files \
-                      --skip-excerpts ||
-                      failed=1
-                  done
-
-                  exit "$failed"
-                ' -- {staged_files}
+            script: devskim
+            runner: bash
+            args: "{staged_files}"
             tags:
               - security
               - sast
