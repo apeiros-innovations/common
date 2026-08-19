@@ -214,8 +214,8 @@ pre-commit:
             file_types:
               - text
               - not symlink
-            script: shebang-permissions
-            runner: bash
+            script: shebang-permissions.py
+            runner: mise x -- python3
             args: "{staged_files}"
             tags:
               - validation
@@ -328,12 +328,13 @@ pre-commit:
               - markdownlint
 
           - name: check added large files
-            script: check-large-files
-            runner: bash
+            script: check-large-files.py
+            runner: mise x -- python3
             args: "{staged_files}"
             tags:
               - validation
               - repository
+              - large-files
 
           - name: betterleaks
             script: betterleaks

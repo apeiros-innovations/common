@@ -24,7 +24,7 @@ pre-commit:
               - "**/*.swift"
               - "**/*.{vb,vbs}"
             script: devskim
-            runner: bash
+            runner: mise x -- bash
             args: "{staged_files}"
             tags:
               - security
