@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-from __future__ import annotations
-
 import re
 import sys
 from pathlib import Path
@@ -11,7 +9,7 @@ FINAL_NEWLINES = re.compile(rb"(?:\r\n|\r|\n)+\Z")
 
 
 def normalize(path: Path) -> None:
-    if not path.is_file():
+    if not path.is_file(follow_symlinks=False):
         return
 
     original = path.read_bytes()
@@ -32,8 +30,11 @@ def normalize(path: Path) -> None:
     if normalized:
         normalized += eol
 
-    if normalized != original:
-        path.write_bytes(normalized)
+    if normalized == original:
+        return
+
+    path.write_bytes(normalized)
+    print(f"{path}: normalized text whitespace", file=sys.stderr)
 
 
 for filename in sys.argv[1:]:

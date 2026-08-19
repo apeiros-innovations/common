@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
-from __future__ import annotations
-
 import json
 import sys
 from pathlib import Path
 
 
-def reject_duplicate_keys(pairs: list[tuple[str, object]]) -> dict[str, object]:
+def reject_duplicate_keys(
+    pairs: list[tuple[str, object]],
+) -> dict[str, object]:
     result: dict[str, object] = {}
 
     for key, value in pairs:
         if key in result:
             raise ValueError(f"duplicate key: {key!r}")
+
         result[key] = value
 
     return result
@@ -27,7 +28,7 @@ failed = False
 for filename in sys.argv[1:]:
     path = Path(filename)
 
-    if not path.is_file():
+    if not path.is_file(follow_symlinks=False):
         continue
 
     try:
@@ -43,10 +44,7 @@ for filename in sys.argv[1:]:
             file=sys.stderr,
         )
         failed = True
-    except UnicodeDecodeError as error:
-        print(f"{path}: invalid UTF-8: {error}", file=sys.stderr)
-        failed = True
-    except ValueError as error:
+    except (UnicodeDecodeError, ValueError) as error:
         print(f"{path}: {error}", file=sys.stderr)
         failed = True
 

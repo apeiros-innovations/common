@@ -1,3 +1,4 @@
 ---
 extends:
   - lefthook.common.yaml
+  - lefthook.python.yaml
