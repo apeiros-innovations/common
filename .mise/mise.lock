@@ -47,49 +47,19 @@ url_api = "https://api.github.com/repos/aquasecurity/trivy/releases/assets/51433
 provenance = "cosign"
 
 [[tools."aqua:astral-sh/ruff"]]
-version = "0.16.0"
+version = "0.16.3"
 backend = "aqua:astral-sh/ruff"
 
-[tools."aqua:astral-sh/ruff"."platforms.linux-arm64"]
-checksum = "sha256:7a6add3d38768dfa00c6d3853e9bd940b5526f3fbb76f02b1fe77ec0653f1e0e"
-url = "https://github.com/astral-sh/ruff/releases/download/0.16.0/ruff-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/487540070"
-provenance = "github-attestations"
-
-[tools."aqua:astral-sh/ruff"."platforms.linux-arm64-musl"]
-checksum = "sha256:7a6add3d38768dfa00c6d3853e9bd940b5526f3fbb76f02b1fe77ec0653f1e0e"
-url = "https://github.com/astral-sh/ruff/releases/download/0.16.0/ruff-aarch64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/487540070"
-provenance = "github-attestations"
-
 [tools."aqua:astral-sh/ruff"."platforms.linux-x64"]
-checksum = "sha256:2138b7bc58ff877f5bba09aea4cc984ad5699433b6a3f811003527b8cff8e9ad"
-url = "https://github.com/astral-sh/ruff/releases/download/0.16.0/ruff-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/487540129"
-provenance = "github-attestations"
-
-[tools."aqua:astral-sh/ruff"."platforms.linux-x64-musl"]
-checksum = "sha256:2138b7bc58ff877f5bba09aea4cc984ad5699433b6a3f811003527b8cff8e9ad"
-url = "https://github.com/astral-sh/ruff/releases/download/0.16.0/ruff-x86_64-unknown-linux-musl.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/487540129"
+checksum = "sha256:d67c9b5949981698c48915abf65e0b3406ba9184ad73521cdf20a926bc889c73"
+url = "https://github.com/astral-sh/ruff/releases/download/0.16.3/ruff-x86_64-unknown-linux-musl.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/513140356"
 provenance = "github-attestations"
 
 [tools."aqua:astral-sh/ruff"."platforms.macos-arm64"]
-checksum = "sha256:ce6564491a2cc4b0659f45ee174dbef17e4dec24e03a9c03d313b5430bc21099"
-url = "https://github.com/astral-sh/ruff/releases/download/0.16.0/ruff-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/487540064"
-provenance = "github-attestations"
-
-[tools."aqua:astral-sh/ruff"."platforms.macos-x64"]
-checksum = "sha256:3d9ef6228c4eeb26d593c398b2dc5250e0f6d6425933db2993fcf30d49c78b69"
-url = "https://github.com/astral-sh/ruff/releases/download/0.16.0/ruff-x86_64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/487540116"
-provenance = "github-attestations"
-
-[tools."aqua:astral-sh/ruff"."platforms.windows-x64"]
-checksum = "sha256:c5d1185c47261f86361d03b547da25be79120226a6f1721d623b2aba9d27668b"
-url = "https://github.com/astral-sh/ruff/releases/download/0.16.0/ruff-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/487540121"
+checksum = "sha256:136a4db6512d9b16dda56ac8604696ed65c3b1a914a142de029e7f8d5006f1d9"
+url = "https://github.com/astral-sh/ruff/releases/download/0.16.3/ruff-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/513140218"
 provenance = "github-attestations"
 
 [[tools."aqua:astral-sh/uv"]]
@@ -469,36 +439,16 @@ url_api = "https://api.github.com/repos/hadolint/hadolint/releases/assets/496546
 provenance = "github-attestations"
 
 [[tools."aqua:helm/helm"]]
-version = "4.2.3"
+version = "4.2.4"
 backend = "aqua:helm/helm"
 
-[tools."aqua:helm/helm"."platforms.linux-arm64"]
-checksum = "sha256:21abd9354d39b2cd79a8d76be6912cd137a983cbf997193503fb8a6a6e2f2785"
-url = "https://get.helm.sh/helm-v4.2.3-linux-arm64.tar.gz"
-
-[tools."aqua:helm/helm"."platforms.linux-arm64-musl"]
-checksum = "sha256:21abd9354d39b2cd79a8d76be6912cd137a983cbf997193503fb8a6a6e2f2785"
-url = "https://get.helm.sh/helm-v4.2.3-linux-arm64.tar.gz"
-
 [tools."aqua:helm/helm"."platforms.linux-x64"]
-checksum = "sha256:e9b88b4ee95b18c706839c28d3a0220e5bc470e9cd9262410c90793c45ff8b7c"
-url = "https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz"
-
-[tools."aqua:helm/helm"."platforms.linux-x64-musl"]
-checksum = "sha256:e9b88b4ee95b18c706839c28d3a0220e5bc470e9cd9262410c90793c45ff8b7c"
-url = "https://get.helm.sh/helm-v4.2.3-linux-amd64.tar.gz"
+checksum = "sha256:c306b46f719b0a4da32d0f78ee21bf90ce8d602f15b22ab753f0674d1670a7f3"
+url = "https://get.helm.sh/helm-v4.2.4-linux-amd64.tar.gz"
 
 [tools."aqua:helm/helm"."platforms.macos-arm64"]
-checksum = "sha256:048ecf5ad3160f83d918f9fe945238d2132b079640f7b106175331c25f242c64"
-url = "https://get.helm.sh/helm-v4.2.3-darwin-arm64.tar.gz"
-
-[tools."aqua:helm/helm"."platforms.macos-x64"]
-checksum = "sha256:ff3ac86755a45f3422473bc1200776aac0fe04c5766abe6ca66699f7b564b23b"
-url = "https://get.helm.sh/helm-v4.2.3-darwin-amd64.tar.gz"
-
-[tools."aqua:helm/helm"."platforms.windows-x64"]
-checksum = "sha256:02c6137bb5f050479193afad5a28804e9edc3beeab7e7b53a6e1499c9ba387ef"
-url = "https://get.helm.sh/helm-v4.2.3-windows-amd64.tar.gz"
+checksum = "sha256:d747eb4e28bd2727173d15b759fa0a17822291ec09db7ced3d55af290a3661a2"
+url = "https://get.helm.sh/helm-v4.2.4-darwin-arm64.tar.gz"
 
 [[tools."aqua:koalaman/shellcheck"]]
 version = "0.11.0"
@@ -748,7 +698,7 @@ version = "0.49.0"
 backend = "go:golang.org/x/tools/cmd/goimports"
 
 [[tools."go:golang.org/x/vuln/cmd/govulncheck"]]
-version = "1.1.4"
+version = "1.7.0"
 backend = "go:golang.org/x/vuln/cmd/govulncheck"
 
 [[tools.lefthook]]
@@ -862,7 +812,7 @@ version = "1.32.0"
 backend = "pipx:django-upgrade"
 
 [[tools."pipx:djlint"]]
-version = "1.42.3"
+version = "1.44.2"
 backend = "pipx:djlint"
 
 [[tools."pipx:pylint"]]
