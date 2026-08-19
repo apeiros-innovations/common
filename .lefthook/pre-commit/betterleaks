@@ -18,4 +18,5 @@ exec mise x -- \
   --pre-commit \
   --staged \
   --redact \
+  --verbose \
   --no-banner
