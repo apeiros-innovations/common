@@ -14,24 +14,26 @@ def normalize(path: Path) -> None:
     if not path.is_file():
         return
 
-    data = path.read_bytes()
-    if not data:
+    original = path.read_bytes()
+
+    if not original:
         return
 
-    if data.endswith(b"\r\n"):
+    if original.endswith(b"\r\n"):
         eol = b"\r\n"
-    elif data.endswith(b"\r"):
+    elif original.endswith(b"\r"):
         eol = b"\r"
     else:
         eol = b"\n"
 
-    data = TRAILING_WHITESPACE.sub(b"", data)
-    data = FINAL_NEWLINES.sub(b"", data)
+    normalized = TRAILING_WHITESPACE.sub(b"", original)
+    normalized = FINAL_NEWLINES.sub(b"", normalized)
 
-    if data:
-        data += eol
+    if normalized:
+        normalized += eol
 
-    path.write_bytes(data)
+    if normalized != original:
+        path.write_bytes(normalized)
 
 
 for filename in sys.argv[1:]:
