@@ -34,3 +34,6 @@ trustify
 cyclonedx
 guacsec
 dind
+sarif
+anchore
+buildx
