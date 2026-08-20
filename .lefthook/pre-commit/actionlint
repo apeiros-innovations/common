@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# shellcheck source=../lib/common.sh
+source "$(dirname -- "$0")/../lib/common.sh"
+
+common_root="$(common_remote_root)"
+config="$common_root/.github/actionlint.yaml"
+
+if [[ ! -f "$config" ]]; then
+  printf >&2 \
+    'actionlint: common configuration not found: %s\n' \
+    "$config"
+  exit 1
+fi
+
+exec mise x -- \
+  actionlint \
+  -config-file "$config" \
+  "$@"
