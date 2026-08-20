@@ -6,6 +6,7 @@ caseSensitive: false
 allowCompoundWords: true
 ignoreRandomStrings: true
 useGitignore: true
+globRoot: "${cwd}"
 dictionaryDefinitions:
   - name: apeiros
     path: ./cspell/dictionaries/apeiros.txt
