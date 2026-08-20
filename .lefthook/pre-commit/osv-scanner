@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+failed=0
+
+print_npm_remediation() {
+  local lock_file="$1"
+  local package_root
+  local manifest
+
+  package_root="$(dirname -- "$lock_file")"
+  manifest="$package_root/package.json"
+
+  [[ -f "$manifest" ]] || return 0
+
+  printf >&2 '\n%s: npm guided remediation is available\n' \
+    "$lock_file"
+
+  if [[ "$lock_file" == "package-lock.json" ]]; then
+    printf >&2 \
+      '  lefthook run osv-remediate-npm\n'
+  else
+    printf >&2 \
+      '  mise x -- osv-scanner fix --interactive -M %q -L %q\n' \
+      "$manifest" \
+      "$lock_file"
+  fi
+}
+
+for file in "$@"; do
+  [[ -f "$file" ]] || continue
+
+  status=0
+
+  osv-scanner scan source \
+    --format=vertical \
+    --verbosity=error \
+    "$file" ||
+    status=$?
+
+  case "$status" in
+    0)
+      ;;
+
+    1)
+      failed=1
+
+      if [[ "$(basename -- "$file")" == "package-lock.json" ]]; then
+        print_npm_remediation "$file"
+      fi
+      ;;
+
+    *)
+      printf >&2 \
+        '%s: osv-scanner failed with exit code %s\n' \
+        "$file" \
+        "$status"
+
+      failed=1
+      ;;
+  esac
+done
+
+exit "$failed"

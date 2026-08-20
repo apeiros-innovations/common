@@ -1,12 +1,11 @@
 ---
-# yaml-language-server: $schema=https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json
 version: "0.2"
 language: en
 caseSensitive: false
 allowCompoundWords: true
 ignoreRandomStrings: true
 useGitignore: true
-globRoot: "${cwd}"
+globRoot: ${cwd}
 dictionaryDefinitions:
   - name: apeiros
     path: ./cspell/dictionaries/apeiros.txt
@@ -92,7 +91,8 @@ languageSettings:
       - markdown-tilde-code-blocks
 words:
   - diátaxis
-  - workerd
-  - kics
-  - tamasfe
   - gpgsig
+  - kics
+  - renv
+  - tamasfe
+  - workerd

@@ -353,6 +353,26 @@ url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golan
 url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413471017"
 provenance = "github-attestations"
 
+[[tools."aqua:google/osv-scanner"]]
+version = "2.4.0"
+backend = "aqua:google/osv-scanner"
+
+[tools."aqua:google/osv-scanner"."platforms.linux-x64"]
+checksum = "sha256:15314940c10d26af9c6649f150b8a47c1262e8fc7e17b1d1029b0e479e8ed8a0"
+url = "https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_linux_amd64"
+url_api = "https://api.github.com/repos/google/osv-scanner/releases/assets/451242336"
+
+[tools."aqua:google/osv-scanner"."platforms.linux-x64".provenance.slsa]
+url = "https://github.com/google/osv-scanner/releases/download/v2.4.0/multiple.intoto.jsonl"
+
+[tools."aqua:google/osv-scanner"."platforms.macos-arm64"]
+checksum = "sha256:9ca3185ad63e9ab54f7cb90f46a7362be02d80e37f0123d095a54355ea202f5d"
+url = "https://github.com/google/osv-scanner/releases/download/v2.4.0/osv-scanner_darwin_arm64"
+url_api = "https://api.github.com/repos/google/osv-scanner/releases/assets/451242387"
+
+[tools."aqua:google/osv-scanner"."platforms.macos-arm64".provenance.slsa]
+url = "https://github.com/google/osv-scanner/releases/download/v2.4.0/multiple.intoto.jsonl"
+
 [[tools."aqua:google/yamlfmt"]]
 version = "0.21.0"
 backend = "aqua:google/yamlfmt"
