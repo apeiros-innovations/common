@@ -30,3 +30,6 @@ govulncheck
 devskim
 mvdan
 mosa
+trustify
+cyclonedx
+guacsec
