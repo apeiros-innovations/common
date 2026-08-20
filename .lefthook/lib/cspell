@@ -29,23 +29,21 @@ run_staged() {
 
 run_repository() {
   if has_cspell_config; then
-    git ls-files |
-      mise x -- \
-        cspell lint \
-        --file-list stdin \
-        --no-progress \
-        --no-must-find-files
-
-    return
+    exec mise x -- \
+      cspell lint \
+      --dot \
+      --no-progress \
+      --no-must-find-files \
+      .
   fi
 
-  git ls-files |
-    mise x -- \
-      cspell lint \
-      --config "$common_root/.cspell.yaml" \
-      --file-list stdin \
-      --no-progress \
-      --no-must-find-files
+  exec mise x -- \
+    cspell lint \
+    --config "$common_root/.cspell.yaml" \
+    --dot \
+    --no-progress \
+    --no-must-find-files \
+    .
 }
 
 if [[ "${1:-}" == "--repository" ]]; then

@@ -76,6 +76,7 @@ ignorePaths:
   - "*.ico"
   - "*.pdf"
   - "*.min.js"
+  - .yarn/**
 patterns:
   - name: markdown-inline-code
     pattern: /`+[^`\r\n]*`+/g
