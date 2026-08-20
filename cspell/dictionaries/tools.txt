@@ -37,3 +37,4 @@ dind
 sarif
 anchore
 buildx
+fluxcd
