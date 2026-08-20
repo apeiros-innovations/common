@@ -8,8 +8,9 @@ pre-commit:
           - name: actionlint
             glob:
               - ".github/workflows/**/*.{yaml,yml}"
-            run: >-
-              .lefthook/pre-commit/actionlint
+            script: actionlint
+            runner: bash
+            args: "{staged_files}"
             tags:
               - lint
               - github
@@ -21,10 +22,9 @@ pre-commit:
               - ".github/workflows/**/*.{yaml,yml}"
               - ".github/actions/**/action.{yaml,yml}"
               - ".github/dependabot.{yaml,yml}"
-              - ".github/zizmor.{yaml,yml}"
-              - "zizmor.{yaml,yml}"
-            run: >-
-              mise x -- zizmor --offline --min-severity=medium --min-confidence=medium .
+            script: zizmor
+            runner: bash
+            args: "{staged_files}"
             tags:
               - lint
               - security
