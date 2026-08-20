@@ -33,3 +33,4 @@ mosa
 trustify
 cyclonedx
 guacsec
+dind
