@@ -17,6 +17,7 @@
     ".mise.toml": "toml",
     ".markdownlintignore": "ignore",
     ".trivyignore": "ignore",
+    ".betterleaksignore": "ignore",
     "**/*.json5": "json5"
   },
   "yaml.schemas": {
