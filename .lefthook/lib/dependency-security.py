@@ -4,6 +4,7 @@ import argparse
 import json
 import subprocess
 import sys
+from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -20,16 +21,74 @@ class PackageManager(StrEnum):
     BUN = "bun"
 
 
+@dataclass(frozen=True, order=True)
+class IssueKey:
+    ecosystem: str
+    package: str
+    advisory_ids: tuple[str, ...]
+
+
+@dataclass(frozen=True, order=True)
+class Finding:
+    issue: IssueKey
+    version: str
+
+
+@dataclass(frozen=True)
+class ScanSummary:
+    findings: frozenset[Finding]
+
+    @property
+    def issues(self) -> frozenset[IssueKey]:
+        return frozenset(
+            finding.issue
+            for finding in self.findings
+        )
+
+    @property
+    def finding_count(self) -> int:
+        return len(self.findings)
+
+    @property
+    def resolution_count(self) -> int:
+        return len(
+            {
+                (
+                    finding.issue.ecosystem,
+                    finding.issue.package,
+                    finding.version,
+                )
+                for finding in self.findings
+            }
+        )
+
+    def versions_for(
+        self,
+        issue: IssueKey,
+    ) -> tuple[str, ...]:
+        return tuple(
+            sorted(
+                {
+                    finding.version
+                    for finding in self.findings
+                    if finding.issue == issue
+                }
+            )
+        )
+
+
+@dataclass(frozen=True)
+class FileSnapshot:
+    path: Path
+    existed: bool
+    data: bytes | None
+
+
 LOCKFILE_BY_MANAGER = {
     PackageManager.NPM: "package-lock.json",
     PackageManager.PNPM: "pnpm-lock.yaml",
     PackageManager.YARN: "yarn.lock",
     PackageManager.BUN: "bun.lock",
-}
-
-MANAGER_BY_LOCKFILE = {
-    lockfile: manager
-    for manager, lockfile in LOCKFILE_BY_MANAGER.items()
 }
 
 OSV_LOCKFILES = {
@@ -63,10 +122,14 @@ OSV_LOCKFILES = {
 }
 
 
-def git_output(*args: str) -> str:
+def git_output(
+    *args: str,
+    cwd: Path | None = None,
+) -> str:
     try:
         return subprocess.check_output(
             ["git", *args],
+            cwd=cwd,
             stderr=subprocess.DEVNULL,
             text=True,
         ).strip()
@@ -78,16 +141,16 @@ def git_output(*args: str) -> str:
 
 def repository_root() -> Path:
     try:
-        root = git_output(
-            "rev-parse",
-            "--show-toplevel",
+        return Path(
+            git_output(
+                "rev-parse",
+                "--show-toplevel",
+            )
         )
     except subprocess.CalledProcessError as error:
         raise DependencySecurityError(
             "not inside a Git repository"
         ) from error
-
-    return Path(root)
 
 
 def run_command(
@@ -96,17 +159,16 @@ def run_command(
     cwd: Path,
 ) -> int:
     try:
-        result = subprocess.run(
+        return subprocess.run(
             command,
             cwd=cwd,
             check=False,
-        )
+        ).returncode
     except FileNotFoundError as error:
         raise DependencySecurityError(
-            f"{command[0]} is not installed or is not available on PATH"
+            f"{command[0]} is not installed "
+            "or is not available on PATH"
         ) from error
-
-    return result.returncode
 
 
 def load_package_json(
@@ -147,8 +209,9 @@ def declared_package_manager(
     if not path.is_file(follow_symlinks=False):
         return None
 
-    data = load_package_json(root)
-    raw = data.get("packageManager")
+    raw = load_package_json(root).get(
+        "packageManager"
+    )
 
     if raw is None:
         return None
@@ -183,15 +246,14 @@ def declared_package_manager(
 def root_lockfiles(
     root: Path,
 ) -> dict[PackageManager, Path]:
-    found: dict[PackageManager, Path] = {}
-
-    for manager, filename in LOCKFILE_BY_MANAGER.items():
-        path = root / filename
-
-        if path.is_file(follow_symlinks=False):
-            found[manager] = path
-
-    return found
+    return {
+        manager: path
+        for manager, filename
+        in LOCKFILE_BY_MANAGER.items()
+        if (
+            path := root / filename
+        ).is_file(follow_symlinks=False)
+    }
 
 
 def detect_package_manager(
@@ -203,7 +265,9 @@ def detect_package_manager(
     if len(lockfiles) > 1:
         rendered = "\n".join(
             f"  {path.name}"
-            for path in sorted(lockfiles.values())
+            for path in sorted(
+                lockfiles.values()
+            )
         )
 
         raise DependencySecurityError(
@@ -213,9 +277,14 @@ def detect_package_manager(
         )
 
     if declared is not None:
-        expected = root / LOCKFILE_BY_MANAGER[declared]
+        expected = (
+            root
+            / LOCKFILE_BY_MANAGER[declared]
+        )
 
-        if not expected.is_file(follow_symlinks=False):
+        if not expected.is_file(
+            follow_symlinks=False
+        ):
             raise DependencySecurityError(
                 "package.json declares "
                 f"{declared.value!r} but "
@@ -231,9 +300,10 @@ def detect_package_manager(
 
         print(
             "dependency-security: "
-            f"inferred package manager {manager.value!r} "
-            f"from {lockfile.name}; "
-            "consider declaring packageManager in package.json",
+            f"inferred package manager "
+            f"{manager.value!r} from {lockfile.name}; "
+            "consider declaring packageManager "
+            "in package.json",
             file=sys.stderr,
         )
 
@@ -249,12 +319,13 @@ def detect_package_manager(
 def is_osv_lockfile(
     path: Path,
 ) -> bool:
-    if path.name in OSV_LOCKFILES:
-        return True
-
     return (
-        path.name == "verification-metadata.xml"
-        and path.parent.name == "gradle"
+        path.name in OSV_LOCKFILES
+        or (
+            path.name
+            == "verification-metadata.xml"
+            and path.parent.name == "gradle"
+        )
     )
 
 
@@ -265,7 +336,8 @@ def lockfiles_for_package_json(
 
     found = [
         directory / filename
-        for filename in MANAGER_BY_LOCKFILE
+        for filename
+        in LOCKFILE_BY_MANAGER.values()
         if (
             directory / filename
         ).is_file(follow_symlinks=False)
@@ -293,16 +365,16 @@ def scan_targets(
     for filename in paths:
         path = Path(filename)
 
-        if not path.is_file(follow_symlinks=False):
+        if not path.is_file(
+            follow_symlinks=False
+        ):
             continue
 
         if path.name == "package.json":
             targets.update(
                 lockfiles_for_package_json(path)
             )
-            continue
-
-        if is_osv_lockfile(path):
+        elif is_osv_lockfile(path):
             targets.add(path)
 
     return sorted(targets)
@@ -339,29 +411,25 @@ def run_osv_scan(
                 "or is not available on PATH"
             ) from error
 
-        match result.returncode:
-            case 0:
-                pass
-
-            case 1:
-                vulnerabilities_found = True
-
-            case _:
-                print(
-                    "dependency-security: "
-                    f"osv-scanner failed for {target} "
-                    f"with exit code {result.returncode}",
-                    file=sys.stderr,
-                )
-                scanner_error = True
+        if result.returncode == 1:
+            vulnerabilities_found = True
+        elif result.returncode != 0:
+            print(
+                "dependency-security: "
+                f"osv-scanner failed for {target} "
+                f"with exit code {result.returncode}",
+                file=sys.stderr,
+            )
+            scanner_error = True
 
     if scanner_error:
         return 2
 
-    if vulnerabilities_found:
-        return 1
-
-    return 0
+    return (
+        1
+        if vulnerabilities_found
+        else 0
+    )
 
 
 def scan_repository(
@@ -373,7 +441,7 @@ def scan_repository(
     )
 
     try:
-        result = subprocess.run(
+        return subprocess.run(
             [
                 "osv-scanner",
                 "scan",
@@ -384,14 +452,12 @@ def scan_repository(
                 str(root),
             ],
             check=False,
-        )
+        ).returncode
     except FileNotFoundError as error:
         raise DependencySecurityError(
             "osv-scanner is not installed "
             "or is not available on PATH"
         ) from error
-
-    return result.returncode
 
 
 def osv_json_report(
@@ -427,16 +493,21 @@ def osv_json_report(
 
         message = (
             "osv-scanner failed while collecting "
-            f"vulnerability data with exit code {result.returncode}"
+            "vulnerability data with exit code "
+            f"{result.returncode}"
         )
 
         if detail:
             message = f"{message}: {detail}"
 
-        raise DependencySecurityError(message)
+        raise DependencySecurityError(
+            message
+        )
 
     try:
-        data = json.loads(result.stdout)
+        data = json.loads(
+            result.stdout
+        )
     except json.JSONDecodeError as error:
         raise DependencySecurityError(
             "osv-scanner returned invalid JSON"
@@ -444,53 +515,136 @@ def osv_json_report(
 
     if not isinstance(data, dict):
         raise DependencySecurityError(
-            "osv-scanner returned an unexpected JSON document"
+            "osv-scanner returned an unexpected "
+            "JSON document"
         )
 
     return data
 
 
-def vulnerable_npm_packages(
-    lockfile: Path,
-    *,
-    cwd: Path,
-) -> list[str]:
-    report = osv_json_report(
-        lockfile,
-        cwd=cwd,
+def vulnerability_groups(
+    package_result: dict[str, Any],
+) -> list[tuple[str, ...]]:
+    groups = package_result.get(
+        "groups",
+        [],
     )
+    normalized: list[tuple[str, ...]] = []
 
-    names: set[str] = set()
-
-    results = report.get("results", [])
-
-    if not isinstance(results, list):
-        raise DependencySecurityError(
-            "osv-scanner JSON results field is not a list"
-        )
-
-    for scan_result in results:
-        if not isinstance(scan_result, dict):
-            continue
-
-        packages = scan_result.get("packages", [])
-
-        if not isinstance(packages, list):
-            continue
-
-        for package_result in packages:
-            if not isinstance(package_result, dict):
+    if isinstance(groups, list):
+        for group in groups:
+            if not isinstance(group, dict):
                 continue
 
-            vulnerabilities = package_result.get(
-                "vulnerabilities",
+            raw_ids = group.get(
+                "ids",
                 [],
             )
 
-            if not isinstance(vulnerabilities, list):
+            if not isinstance(
+                raw_ids,
+                list,
+            ):
                 continue
 
-            if not vulnerabilities:
+            ids = tuple(
+                sorted(
+                    {
+                        identifier
+                        for identifier in raw_ids
+                        if (
+                            isinstance(
+                                identifier,
+                                str,
+                            )
+                            and identifier
+                        )
+                    }
+                )
+            )
+
+            if ids:
+                normalized.append(
+                    ids
+                )
+
+    if normalized:
+        return normalized
+
+    vulnerabilities = package_result.get(
+        "vulnerabilities",
+        [],
+    )
+
+    if not isinstance(
+        vulnerabilities,
+        list,
+    ):
+        return []
+
+    for vulnerability in vulnerabilities:
+        if not isinstance(
+            vulnerability,
+            dict,
+        ):
+            continue
+
+        identifier = vulnerability.get(
+            "id"
+        )
+
+        if (
+            isinstance(
+                identifier,
+                str,
+            )
+            and identifier
+        ):
+            normalized.append(
+                (identifier,)
+            )
+
+    return normalized
+
+
+def summarize_osv_report(
+    report: dict[str, Any],
+) -> ScanSummary:
+    findings: set[Finding] = set()
+    results = report.get(
+        "results",
+        [],
+    )
+
+    if not isinstance(results, list):
+        raise DependencySecurityError(
+            "osv-scanner JSON results field "
+            "is not a list"
+        )
+
+    for scan_result in results:
+        if not isinstance(
+            scan_result,
+            dict,
+        ):
+            continue
+
+        packages = scan_result.get(
+            "packages",
+            [],
+        )
+
+        if not isinstance(
+            packages,
+            list,
+        ):
+            continue
+
+        for package_result in packages:
+            if not isinstance(
+                package_result,
+                dict,
+            ):
                 continue
 
             package = package_result.get(
@@ -498,48 +652,387 @@ def vulnerable_npm_packages(
                 {},
             )
 
-            if not isinstance(package, dict):
-                continue
-
-            if package.get("ecosystem") != "npm":
+            if not isinstance(
+                package,
+                dict,
+            ):
                 continue
 
             name = package.get("name")
+            version = package.get("version")
+            ecosystem = package.get(
+                "ecosystem"
+            )
 
-            if isinstance(name, str) and name:
-                names.add(name)
+            if not all(
+                isinstance(value, str)
+                and value
+                for value in (
+                    name,
+                    version,
+                    ecosystem,
+                )
+            ):
+                continue
 
-    return sorted(names)
+            for advisory_ids in (
+                vulnerability_groups(
+                    package_result
+                )
+            ):
+                findings.add(
+                    Finding(
+                        issue=IssueKey(
+                            ecosystem=ecosystem,
+                            package=name,
+                            advisory_ids=(
+                                advisory_ids
+                            ),
+                        ),
+                        version=version,
+                    )
+                )
+
+    return ScanSummary(
+        findings=frozenset(
+            findings
+        )
+    )
 
 
-def command_scan(
+def scan_lockfile_summary(
+    lockfile: Path,
+    *,
+    cwd: Path,
+) -> ScanSummary:
+    return summarize_osv_report(
+        osv_json_report(
+            lockfile,
+            cwd=cwd,
+        )
+    )
+
+
+def vulnerable_npm_packages(
+    summary: ScanSummary,
+) -> list[str]:
+    return sorted(
+        {
+            finding.issue.package
+            for finding in summary.findings
+            if (
+                finding.issue.ecosystem
+                == "npm"
+            )
+        }
+    )
+
+
+def tracked_package_json_files(
     root: Path,
-    paths: list[str],
-) -> int:
-    if not paths:
-        return scan_repository(root)
+) -> list[Path]:
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "ls-files",
+                "-z",
+                "--",
+                "package.json",
+                ":(glob)**/package.json",
+            ],
+            cwd=root,
+            check=True,
+            stdout=subprocess.PIPE,
+        )
+    except FileNotFoundError as error:
+        raise DependencySecurityError(
+            "git is not installed or is not "
+            "available on PATH"
+        ) from error
+    except subprocess.CalledProcessError as error:
+        raise DependencySecurityError(
+            "unable to enumerate tracked "
+            "package.json files"
+        ) from error
 
-    targets = scan_targets(paths)
+    paths = {
+        root
+        / Path(
+            raw.decode("utf-8")
+        )
+        for raw in result.stdout.split(
+            b"\0"
+        )
+        if raw
+    }
 
-    if not targets:
-        return 0
+    root_manifest = (
+        root / "package.json"
+    )
 
-    return run_osv_scan(targets)
+    if root_manifest.exists():
+        paths.add(
+            root_manifest
+        )
+
+    return sorted(paths)
 
 
-def command_detect(
+def protected_remediation_files(
     root: Path,
-) -> int:
-    manager, lockfile = detect_package_manager(root)
+    manager: PackageManager,
+) -> list[Path]:
+    paths = set(
+        tracked_package_json_files(
+            root
+        )
+    )
+
+    if manager == PackageManager.PNPM:
+        paths.add(
+            root
+            / "pnpm-workspace.yaml"
+        )
+
+    return sorted(paths)
+
+
+def snapshot_file(
+    path: Path,
+) -> FileSnapshot:
+    if not path.exists():
+        return FileSnapshot(
+            path=path,
+            existed=False,
+            data=None,
+        )
+
+    return FileSnapshot(
+        path=path,
+        existed=True,
+        data=path.read_bytes(),
+    )
+
+
+def snapshot_files(
+    paths: list[Path],
+) -> dict[Path, FileSnapshot]:
+    return {
+        path: snapshot_file(path)
+        for path in paths
+    }
+
+
+def snapshot_changed(
+    snapshot: FileSnapshot,
+) -> bool:
+    if (
+        snapshot.existed
+        != snapshot.path.exists()
+    ):
+        return True
+
+    if not snapshot.existed:
+        return False
+
+    return (
+        snapshot.path.read_bytes()
+        != snapshot.data
+    )
+
+
+def changed_snapshots(
+    snapshots: dict[
+        Path,
+        FileSnapshot,
+    ],
+) -> list[Path]:
+    return sorted(
+        snapshot.path
+        for snapshot
+        in snapshots.values()
+        if snapshot_changed(
+            snapshot
+        )
+    )
+
+
+def restore_snapshot(
+    snapshot: FileSnapshot,
+) -> None:
+    if not snapshot.existed:
+        if snapshot.path.exists():
+            snapshot.path.unlink()
+        return
+
+    if snapshot.data is None:
+        raise DependencySecurityError(
+            f"unable to restore "
+            f"{snapshot.path}: "
+            "snapshot data is missing"
+        )
+
+    snapshot.path.write_bytes(
+        snapshot.data
+    )
+
+
+def restore_snapshots(
+    snapshots: dict[
+        Path,
+        FileSnapshot,
+    ],
+) -> None:
+    for snapshot in snapshots.values():
+        restore_snapshot(
+            snapshot
+        )
+
+
+def print_scan_summary(
+    label: str,
+    summary: ScanSummary,
+) -> None:
+    print(
+        "dependency-security: "
+        f"{label}: "
+        f"{summary.finding_count} "
+        "vulnerability finding"
+        f"{'' if summary.finding_count == 1 else 's'} "
+        f"across {summary.resolution_count} "
+        "vulnerable package resolution"
+        f"{'' if summary.resolution_count == 1 else 's'}",
+        file=sys.stderr,
+    )
+
+
+def format_issue(
+    issue: IssueKey,
+    summary: ScanSummary,
+) -> str:
+    versions = ", ".join(
+        summary.versions_for(
+            issue
+        )
+    )
+    advisories = ", ".join(
+        issue.advisory_ids
+    )
+
+    return (
+        f"{issue.package}@{versions}: "
+        f"{advisories}"
+    )
+
+
+def print_issues(
+    title: str,
+    issues: frozenset[IssueKey],
+    summary: ScanSummary,
+) -> None:
+    if not issues:
+        return
 
     print(
-        f"package-manager={manager.value}"
-    )
-    print(
-        f"lockfile={lockfile.relative_to(root)}"
+        f"dependency-security: {title}:",
+        file=sys.stderr,
     )
 
-    return 0
+    for issue in sorted(issues):
+        print(
+            f"  {format_issue(issue, summary)}",
+            file=sys.stderr,
+        )
+
+
+def print_remediation_comparison(
+    before: ScanSummary,
+    after: ScanSummary,
+) -> None:
+    resolved = (
+        before.issues
+        - after.issues
+    )
+    remaining = (
+        before.issues
+        & after.issues
+    )
+    introduced = (
+        after.issues
+        - before.issues
+    )
+    net_reduction = (
+        before.finding_count
+        - after.finding_count
+    )
+
+    print(
+        "dependency-security: remediation result:",
+        file=sys.stderr,
+    )
+    print(
+        f"  before: "
+        f"{before.finding_count} findings",
+        file=sys.stderr,
+    )
+    print(
+        f"  after: "
+        f"{after.finding_count} findings",
+        file=sys.stderr,
+    )
+    print(
+        f"  net reduction: "
+        f"{net_reduction}",
+        file=sys.stderr,
+    )
+    print(
+        "  resolved advisory/package issues: "
+        f"{len(resolved)}",
+        file=sys.stderr,
+    )
+    print(
+        "  remaining advisory/package issues: "
+        f"{len(remaining)}",
+        file=sys.stderr,
+    )
+    print(
+        "  introduced advisory/package issues: "
+        f"{len(introduced)}",
+        file=sys.stderr,
+    )
+
+    print_issues(
+        "resolved",
+        resolved,
+        before,
+    )
+    print_issues(
+        "remaining after conservative remediation",
+        remaining,
+        after,
+    )
+    print_issues(
+        "introduced",
+        introduced,
+        after,
+    )
+
+
+def remediation_exit_code_allowed(
+    manager: PackageManager,
+    returncode: int,
+) -> bool:
+    if manager in {
+        PackageManager.NPM,
+        PackageManager.PNPM,
+    }:
+        return returncode in {0, 1}
+
+    if manager == PackageManager.YARN:
+        return returncode == 0
+
+    return False
 
 
 def remediate_npm(
@@ -570,7 +1063,7 @@ def remediate_pnpm(
 ) -> int:
     print(
         "dependency-security: applying "
-        "pnpm vulnerability remediation",
+        "pnpm lockfile vulnerability remediation",
         file=sys.stderr,
     )
 
@@ -586,23 +1079,17 @@ def remediate_pnpm(
 
 def remediate_yarn(
     root: Path,
-    lockfile: Path,
+    before: ScanSummary,
 ) -> int:
-    print(
-        "dependency-security: identifying vulnerable "
-        "Yarn package resolutions with OSV",
-        file=sys.stderr,
-    )
-
     packages = vulnerable_npm_packages(
-        lockfile,
-        cwd=root,
+        before
     )
 
     if not packages:
         print(
             "dependency-security: "
-            "no vulnerable Yarn package resolutions found",
+            "no vulnerable Yarn package "
+            "resolutions found",
             file=sys.stderr,
         )
         return 0
@@ -632,22 +1119,12 @@ def remediate_yarn(
     )
 
 
-def command_remediate(
+def apply_remediation(
+    manager: PackageManager,
     root: Path,
+    lockfile: Path,
+    before: ScanSummary,
 ) -> int:
-    manager, lockfile = detect_package_manager(root)
-
-    print(
-        "dependency-security: "
-        f"package manager: {manager.value}",
-        file=sys.stderr,
-    )
-    print(
-        "dependency-security: "
-        f"lockfile: {lockfile.relative_to(root)}",
-        file=sys.stderr,
-    )
-
     match manager:
         case PackageManager.NPM:
             return remediate_npm(
@@ -656,23 +1133,291 @@ def command_remediate(
             )
 
         case PackageManager.PNPM:
-            return remediate_pnpm(root)
+            return remediate_pnpm(
+                root
+            )
 
         case PackageManager.YARN:
             return remediate_yarn(
                 root,
-                lockfile,
+                before,
             )
 
         case PackageManager.BUN:
             raise DependencySecurityError(
-                "Bun lockfiles are supported by OSV scanning, "
-                "but automatic remediation is not configured"
+                "Bun lockfiles are supported "
+                "by OSV scanning, but automatic "
+                "remediation is not configured"
             )
 
     raise DependencySecurityError(
-        f"unsupported package manager: {manager}"
+        f"unsupported package manager: "
+        f"{manager}"
     )
+
+
+def command_scan(
+    root: Path,
+    paths: list[str],
+) -> int:
+    if not paths:
+        return scan_repository(
+            root
+        )
+
+    targets = scan_targets(
+        paths
+    )
+
+    if not targets:
+        return 0
+
+    return run_osv_scan(
+        targets
+    )
+
+
+def command_detect(
+    root: Path,
+) -> int:
+    manager, lockfile = (
+        detect_package_manager(
+            root
+        )
+    )
+
+    print(
+        f"package-manager={manager.value}"
+    )
+    print(
+        f"lockfile="
+        f"{lockfile.relative_to(root)}"
+    )
+
+    return 0
+
+
+def command_remediate(
+    root: Path,
+) -> int:
+    manager, lockfile = (
+        detect_package_manager(
+            root
+        )
+    )
+
+    print(
+        "dependency-security: "
+        f"package manager: {manager.value}",
+        file=sys.stderr,
+    )
+    print(
+        "dependency-security: "
+        f"lockfile: "
+        f"{lockfile.relative_to(root)}",
+        file=sys.stderr,
+    )
+    print(
+        "dependency-security: guardrail: "
+        "remediation may update the lockfile "
+        "but must not modify dependency manifests "
+        "or package-manager policy files",
+        file=sys.stderr,
+    )
+
+    before = scan_lockfile_summary(
+        lockfile,
+        cwd=root,
+    )
+
+    print_scan_summary(
+        "before remediation",
+        before,
+    )
+
+    if before.finding_count == 0:
+        print(
+            "dependency-security: "
+            "no remediation required",
+            file=sys.stderr,
+        )
+        return 0
+
+    protected_paths = (
+        protected_remediation_files(
+            root,
+            manager,
+        )
+    )
+
+    protected = snapshot_files(
+        protected_paths
+    )
+
+    rollback = snapshot_files(
+        sorted(
+            set(protected_paths)
+            | {lockfile}
+        )
+    )
+
+    try:
+        returncode = apply_remediation(
+            manager,
+            root,
+            lockfile,
+            before,
+        )
+    except DependencySecurityError:
+        restore_snapshots(
+            rollback
+        )
+        raise
+
+    if not remediation_exit_code_allowed(
+        manager,
+        returncode,
+    ):
+        restore_snapshots(
+            rollback
+        )
+
+        raise DependencySecurityError(
+            f"{manager.value} remediation "
+            f"failed with exit code {returncode}; "
+            "repository dependency files were restored"
+        )
+
+    changed_protected = (
+        changed_snapshots(
+            protected
+        )
+    )
+
+    if changed_protected:
+        restore_snapshots(
+            rollback
+        )
+
+        rendered = "\n".join(
+            f"  {path.relative_to(root)}"
+            for path in changed_protected
+        )
+
+        raise DependencySecurityError(
+            "remediation attempted to modify "
+            "protected dependency files:\n"
+            f"{rendered}\n"
+            "repository dependency files were restored; "
+            "broader dependency upgrades belong to the "
+            "repository dependency update workflow"
+        )
+
+    try:
+        after = scan_lockfile_summary(
+            lockfile,
+            cwd=root,
+        )
+    except DependencySecurityError:
+        restore_snapshots(
+            rollback
+        )
+        raise
+
+    print_scan_summary(
+        "after remediation",
+        after,
+    )
+
+    print_remediation_comparison(
+        before,
+        after,
+    )
+
+    introduced = (
+        after.issues
+        - before.issues
+    )
+
+    if introduced:
+        restore_snapshots(
+            rollback
+        )
+
+        raise DependencySecurityError(
+            "remediation introduced new "
+            "advisory/package issues; repository "
+            "dependency files were restored"
+        )
+
+    if (
+        after.finding_count
+        > before.finding_count
+    ):
+        restore_snapshots(
+            rollback
+        )
+
+        raise DependencySecurityError(
+            "remediation increased the vulnerability "
+            "finding count; repository dependency "
+            "files were restored"
+        )
+
+    if (
+        after.finding_count
+        == before.finding_count
+    ):
+        if snapshot_changed(
+            rollback[lockfile]
+        ):
+            restore_snapshots(
+                rollback
+            )
+
+            print(
+                "dependency-security: remediation "
+                "changed dependency files without "
+                "reducing vulnerabilities; changes "
+                "were restored to avoid unrelated churn",
+                file=sys.stderr,
+            )
+        else:
+            print(
+                "dependency-security: no vulnerabilities "
+                "could be remediated within the current "
+                "dependency constraints",
+                file=sys.stderr,
+            )
+
+        print(
+            "dependency-security: remaining findings "
+            "require broader dependency updates or "
+            "upstream fixes; leave those changes to the "
+            "repository dependency update workflow",
+            file=sys.stderr,
+        )
+
+        return 1
+
+    if after.finding_count > 0:
+        print(
+            "dependency-security: conservative remediation "
+            "reduced the vulnerability set, but unresolved "
+            "findings remain for the repository dependency "
+            "update workflow",
+            file=sys.stderr,
+        )
+
+        return 1
+
+    print(
+        "dependency-security: all detected vulnerabilities "
+        "were remediated within the existing dependency policy",
+        file=sys.stderr,
+    )
+
+    return 0
 
 
 def parser() -> argparse.ArgumentParser:
@@ -687,25 +1432,36 @@ def parser() -> argparse.ArgumentParser:
 
     scan = commands.add_parser(
         "scan",
-        help="scan dependency files with OSV-Scanner",
+        help=(
+            "scan dependency files "
+            "with OSV-Scanner"
+        ),
     )
     scan.add_argument(
         "paths",
         nargs="*",
         help=(
             "dependency files to scan; "
-            "without paths the repository is scanned recursively"
+            "without paths the repository "
+            "is scanned recursively"
         ),
     )
 
     commands.add_parser(
         "detect",
-        help="detect the root JavaScript package manager",
+        help=(
+            "detect the root JavaScript "
+            "package manager"
+        ),
     )
 
     commands.add_parser(
         "remediate",
-        help="apply conservative automatic dependency remediation",
+        help=(
+            "apply conservative automatic "
+            "dependency remediation and compare "
+            "OSV findings before and after"
+        ),
     )
 
     return result
@@ -725,10 +1481,14 @@ def main() -> int:
                 )
 
             case "detect":
-                return command_detect(root)
+                return command_detect(
+                    root
+                )
 
             case "remediate":
-                return command_remediate(root)
+                return command_remediate(
+                    root
+                )
 
     except DependencySecurityError as error:
         print(
