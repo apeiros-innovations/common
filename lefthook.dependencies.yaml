@@ -28,7 +28,7 @@ pre-commit:
               - "**/composer.lock"
               - "**/Pipfile.lock"
               - "**/poetry.lock"
-              - "**/requirements*.txt"
+              - "**/requirements.txt"
               - "**/pdm.lock"
               - "**/pylock.toml"
               - "**/uv.lock"
@@ -61,8 +61,6 @@ dependency-remediate:
       script: dependency-security.py
       runner: mise x -- python3
       args: "remediate"
-      interactive: true
-      use_stdin: true
       tags:
         - security
         - dependencies
