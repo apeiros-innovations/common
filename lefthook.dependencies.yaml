@@ -17,6 +17,7 @@ pre-commit:
               - "**/gradle.lockfile"
               - "**/gradle/verification-metadata.xml"
               - "**/pom.xml"
+              - "**/package.json"
               - "**/bun.lock"
               - "**/package-lock.json"
               - "**/pnpm-lock.yaml"
@@ -27,7 +28,7 @@ pre-commit:
               - "**/composer.lock"
               - "**/Pipfile.lock"
               - "**/poetry.lock"
-              - "**/requirements.txt"
+              - "**/requirements*.txt"
               - "**/pdm.lock"
               - "**/pylock.toml"
               - "**/uv.lock"
@@ -35,8 +36,8 @@ pre-commit:
               - "**/Gemfile.lock"
               - "**/gems.locked"
               - "**/Cargo.lock"
-            script: dependency-security
-            runner: mise x -- bash
+            script: dependency-security.py
+            runner: mise x -- python3
             args: "scan {staged_files}"
             tags:
               - security
@@ -46,8 +47,9 @@ pre-commit:
 dependency-scan:
   jobs:
     - name: scan
-      run: >-
-        mise x -- python3 .lefthook/lib/dependency-security.py scan-repository
+      script: dependency-security.py
+      runner: mise x -- python3
+      args: "scan"
       tags:
         - security
         - dependencies
@@ -56,8 +58,9 @@ dependency-scan:
 dependency-remediate:
   jobs:
     - name: remediate
-      run: >-
-        mise x -- python3 .lefthook/lib/dependency-security.py remediate
+      script: dependency-security.py
+      runner: mise x -- python3
+      args: "remediate"
       interactive: true
       tags:
         - security
