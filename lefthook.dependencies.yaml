@@ -62,6 +62,7 @@ dependency-remediate:
       runner: mise x -- python3
       args: "remediate"
       interactive: true
+      use_stdin: true
       tags:
         - security
         - dependencies
