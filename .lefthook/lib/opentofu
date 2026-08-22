@@ -46,7 +46,10 @@ add_unique_directory() {
 	local candidate=$1
 	local existing
 
-	for existing in "${MODULE_DIRECTORIES[@]}"; do
+	for existing in "${MODULE_DIRECTORIES[@]:-}"; do
+		[[ -n $existing ]] ||
+			continue
+
 		[[ $existing == "$candidate" ]] &&
 			return 0
 	done
@@ -258,7 +261,10 @@ generate_docs() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]}"; do
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		[[ -n $module ]] ||
+			continue
+
 		config="$(resolve_terraform_docs_config "$module")"
 		readme="${module}/README.md"
 
@@ -294,7 +300,10 @@ providers_lock() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]}"; do
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		[[ -n $module ]] ||
+			continue
+
 		if ! module_owns_lockfile "$module"; then
 			printf \
 				'opentofu: skipping provider lock for %s; nested configurations must explicitly own a .terraform.lock.hcl before the shared hook manages it\n' \
@@ -361,7 +370,10 @@ lint_modules() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]}"; do
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		[[ -n $module ]] ||
+			continue
+
 		config="$(resolve_tflint_config "$module")"
 
 		printf 'linting OpenTofu module: %s\n' "$module"
@@ -382,7 +394,10 @@ scan_modules() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]}"; do
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		[[ -n $module ]] ||
+			continue
+
 		printf 'scanning OpenTofu module: %s\n' "$module"
 
 		if config="$(resolve_trivy_config "$module")"; then
@@ -469,7 +484,10 @@ validate_modules() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]}"; do
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		[[ -n $module ]] ||
+			continue
+
 		printf 'validating OpenTofu module: %s\n' "$module"
 
 		# Prefer already-initialized state. This avoids unnecessary provider

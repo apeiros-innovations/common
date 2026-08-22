@@ -20,7 +20,10 @@ add_unique_directory() {
 	local candidate=$1
 	local existing
 
-	for existing in "${DIRECTORIES[@]}"; do
+	for existing in "${DIRECTORIES[@]:-}"; do
+		[[ -n $existing ]] ||
+			continue
+
 		[[ $existing == "$candidate" ]] &&
 			return 0
 	done
@@ -161,7 +164,10 @@ validate_hcl() {
 
 	collect_hcl_directories "$@"
 
-	for directory in "${DIRECTORIES[@]}"; do
+	for directory in "${DIRECTORIES[@]:-}"; do
+		[[ -n $directory ]] ||
+			continue
+
 		printf 'validating Terragrunt HCL: %s\n' "$directory"
 
 		(
@@ -179,7 +185,10 @@ validate_inputs() {
 
 	collect_hcl_directories "$@"
 
-	for directory in "${DIRECTORIES[@]}"; do
+	for directory in "${DIRECTORIES[@]:-}"; do
+		[[ -n $directory ]] ||
+			continue
+
 		printf 'validating Terragrunt inputs: %s\n' "$directory"
 
 		(
@@ -198,7 +207,10 @@ providers_lock() {
 
 	collect_unit_directories "$@"
 
-	for directory in "${DIRECTORIES[@]}"; do
+	for directory in "${DIRECTORIES[@]:-}"; do
+		[[ -n $directory ]] ||
+			continue
+
 		# When Terragrunt and native OpenTofu configuration coexist in the
 		# same directory, OpenTofu owns the dependency lockfile. This avoids
 		# two independent hooks racing to regenerate the same artifact.
