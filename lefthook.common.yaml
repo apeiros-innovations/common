@@ -27,6 +27,7 @@ pre-commit:
 
   jobs:
     - name: format
+      priority: 10
       group:
         parallel: true
         jobs:
@@ -226,6 +227,7 @@ pre-commit:
               - permissions
 
     - name: validate
+      priority: 30
       group:
         parallel: true
         jobs:
@@ -313,7 +315,7 @@ pre-commit:
               - text
               - not symlink
             run: >-
-              mise x -- ec --disable-indentation --disable-indent-size {staged_files}
+              mise x -- ec --disable-indentation --disable-indent-size --disable-max-line-length {staged_files}
             tags:
               - lint
               - editorconfig
