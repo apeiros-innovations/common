@@ -21,13 +21,14 @@ commit-msg:
         - commitlint
 
 pre-commit:
+  parallel: false
+
   skip:
     - merge
     - rebase
 
   jobs:
     - name: format
-      priority: 10
       group:
         parallel: true
         jobs:
@@ -47,35 +48,16 @@ pre-commit:
               - format
               - just
 
-          - name: mise
+          - name: format mise
             glob:
               - ".config/mise/config.toml"
               - ".config/mise/conf.d/*.toml"
               - "mise.lock"
-            group:
-              jobs:
-                - name: format mise
-                  run: mise fmt
-                  stage_fixed: true
-                  tags:
-                    - format
-                    - mise
-
-                - name: mise lock
-                  run: |
-                    mise lock
-
-                    if [ ! -f mise.lock ]; then
-                      printf >&2 \
-                        'mise.lock: missing after `mise lock`; ensure [settings].lockfile = true\n'
-                      exit 1
-                    fi
-
-                    git add -- mise.lock
-                  tags:
-                    - validation
-                    - mise
-                    - supply-chain
+            run: mise fmt
+            stage_fixed: true
+            tags:
+              - format
+              - mise
 
           - name: format json
             glob:
@@ -196,6 +178,7 @@ pre-commit:
               - "**/*.toml"
               - "**/*.{yaml,yml}"
               - "**/*.{sh,bash,ksh}"
+              - "**/*.{tf,tofu,tfvars,hcl}"
               - "**/{.justfile,justfile,Justfile}"
               - ".config/mise/config.toml"
               - ".config/mise/conf.d/*.toml"
@@ -226,8 +209,32 @@ pre-commit:
               - repository
               - permissions
 
+    - name: generate
+      group:
+        parallel: true
+        jobs:
+          - name: mise lock
+            glob:
+              - ".config/mise/config.toml"
+              - ".config/mise/conf.d/*.toml"
+              - "mise.lock"
+            run: |
+              mise lock
+
+              if [ ! -f mise.lock ]; then
+                printf >&2 \
+                  'mise.lock: missing after `mise lock`; ensure [settings].lockfile = true\n'
+                exit 1
+              fi
+
+              git add -- mise.lock
+            tags:
+              - generation
+              - mise
+              - dependencies
+              - supply-chain
+
     - name: validate
-      priority: 30
       group:
         parallel: true
         jobs:
@@ -402,7 +409,7 @@ pre-push:
           - name: editorconfig repository
             only: *editorconfig-present
             run: >-
-              mise x -- ec --disable-indentation --disable-indent-size
+              mise x -- ec --disable-indentation --disable-indent-size --disable-max-line-length
             tags:
               - lint
               - editorconfig

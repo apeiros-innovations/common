@@ -4,7 +4,6 @@ pre-commit:
 
   jobs:
     - name: format
-      priority: 10
       group:
         parallel: true
         jobs:
@@ -24,7 +23,6 @@ pre-commit:
               - opentofu
 
     - name: generate
-      priority: 20
       group:
         parallel: true
         jobs:
@@ -40,6 +38,7 @@ pre-commit:
             args: "docs {staged_files}"
             tags:
               - documentation
+              - generation
               - opentofu
               - terraform-docs
 
@@ -56,12 +55,12 @@ pre-commit:
             args: "providers-lock {staged_files}"
             tags:
               - dependencies
+              - generation
               - supply-chain
               - opentofu
               - providers
 
     - name: validate
-      priority: 30
       group:
         parallel: true
         jobs:
@@ -94,6 +93,7 @@ pre-commit:
             args: "trivy {staged_files}"
             tags:
               - security
+              - validation
               - opentofu
               - trivy
 

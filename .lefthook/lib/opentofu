@@ -101,7 +101,7 @@ collect_module_directories() {
 		esac
 
 		case "/${path}/" in
-		*/.terraform/*)
+		*/.terraform/* | */.terragrunt-cache/*)
 			continue
 			;;
 		esac
@@ -139,7 +139,7 @@ guard_lockfile() {
 	[[ -e $path ]] ||
 		return 0
 
-	# A new untracked lockfile may become a managed generated artifact.
+	# Untracked root lockfiles are allowed to become managed artifacts.
 	# Existing tracked lockfiles with unstaged developer changes must not
 	# be overwritten.
 	if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1 &&
@@ -152,18 +152,19 @@ module_owns_lockfile() {
 	local module=$1
 	local lockfile="${module}/.terraform.lock.hcl"
 
-	# The repository root is treated as an explicit OpenTofu root
-	# configuration when this profile is selected.
+	# A repository-root configuration owns its dependency lockfile even
+	# before the lockfile has been created.
 	if [[ $module == "." ]]; then
 		return 0
 	fi
 
-	# A nested configuration owns a dependency lockfile only when that
-	# ownership has already been made explicit by the presence of one.
-	#
-	# This prevents reusable child modules from receiving lockfiles merely
-	# because their source files were changed.
-	[[ -e $lockfile ]]
+	# Nested configurations own lockfiles only when that ownership is
+	# explicit in Git. Merely finding an ignored or untracked leftover
+	# lockfile must not turn a reusable child module into a lockfile owner.
+	git ls-files \
+		--error-unmatch \
+		-- "$lockfile" \
+		>/dev/null 2>&1
 }
 
 resolve_terraform_docs_config() {
@@ -239,7 +240,7 @@ format_files() {
 		esac
 
 		case "/${file}/" in
-		*/.terraform/*)
+		*/.terraform/* | */.terragrunt-cache/*)
 			continue
 			;;
 		esac
@@ -291,11 +292,29 @@ generate_docs() {
 	return "$failed"
 }
 
+stage_lockfile() {
+	local lockfile=$1
+
+	if git add -- "$lockfile"; then
+		return 0
+	fi
+
+	printf \
+		'opentofu: unable to stage dependency lockfile: %s\n' \
+		"$lockfile" >&2
+
+	if git check-ignore -q -- "$lockfile"; then
+		printf \
+			'opentofu: %s is ignored; root dependency lockfiles should normally be committed to version control\n' \
+			"$lockfile" >&2
+	fi
+
+	return 1
+}
+
 providers_lock() {
 	local module
 	local lockfile
-	local data_dir
-	local status
 	local failed=0
 
 	collect_module_directories "$@"
@@ -306,7 +325,7 @@ providers_lock() {
 
 		if ! module_owns_lockfile "$module"; then
 			printf \
-				'opentofu: skipping provider lock for %s; nested configurations must explicitly own a .terraform.lock.hcl before the shared hook manages it\n' \
+				'opentofu: skipping provider lock for %s; nested configurations must explicitly track .terraform.lock.hcl before the shared hook manages it\n' \
 				"$module"
 			continue
 		fi
@@ -317,46 +336,28 @@ providers_lock() {
 
 		printf 'locking OpenTofu providers: %s\n' "$module"
 
-		data_dir="$(
-			mktemp -d \
-				"${TMPDIR:-/tmp}/opentofu-lock.XXXXXX"
-		)"
-
-		status=0
-
-		TF_DATA_DIR="$data_dir" \
-			tofu \
+		if ! tofu \
 			-chdir="$module" \
-			init \
-			-backend=false \
-			-input=false \
-			-no-color ||
-			status=$?
-
-		if ((status == 0)); then
-			TF_DATA_DIR="$data_dir" \
-				tofu \
-				-chdir="$module" \
-				providers \
-				lock \
-				"${PROVIDER_PLATFORMS[@]}" ||
-				status=$?
-		fi
-
-		rm -rf -- "$data_dir"
-
-		if ((status != 0)); then
+			providers \
+			lock \
+			"${PROVIDER_PLATFORMS[@]}"; then
 			printf \
-				'opentofu: provider lock failed for %s with exit status %d\n' \
-				"$module" \
-				"$status" >&2
+				'opentofu: provider locking failed: %s\n' \
+				"$module" >&2
+			printf \
+				'opentofu: the hook does not run `tofu init -upgrade` automatically because that could change otherwise-valid provider selections\n' \
+				>&2
+			printf \
+				'opentofu: if provider constraints were intentionally changed, run `tofu -chdir=%s init -backend=false -upgrade`, review .terraform.lock.hcl, and rerun the hook\n' \
+				"$module" >&2
 
 			failed=1
 			continue
 		fi
 
-		if [[ -f $lockfile ]]; then
-			git add -- "$lockfile"
+		if [[ -f $lockfile ]] &&
+			! stage_lockfile "$lockfile"; then
+			failed=1
 		fi
 	done
 
@@ -408,6 +409,7 @@ scan_modules() {
 					--quiet \
 					--exit-code 1 \
 					--skip-dirs .terraform \
+					--skip-dirs .terragrunt-cache \
 					--config "$config" \
 					.
 			) || failed=1
@@ -419,6 +421,7 @@ scan_modules() {
 					--quiet \
 					--exit-code 1 \
 					--skip-dirs .terraform \
+					--skip-dirs .terragrunt-cache \
 					.
 			) || failed=1
 		fi
@@ -429,6 +432,7 @@ scan_modules() {
 
 validate_initialized_module() {
 	local module=$1
+	local lockfile="${module}/.terraform.lock.hcl"
 	local data_dir
 	local status=0
 	local had_lockfile=false
@@ -440,7 +444,7 @@ validate_initialized_module() {
 		-no-color
 	)
 
-	if [[ -e "${module}/.terraform.lock.hcl" ]]; then
+	if [[ -e $lockfile ]]; then
 		had_lockfile=true
 		init_args+=("-lockfile=readonly")
 	fi
@@ -467,12 +471,11 @@ validate_initialized_module() {
 
 	rm -rf -- "$data_dir"
 
-	# OpenTofu stores provider/module installation data under TF_DATA_DIR,
-	# but the dependency lockfile remains in the configuration directory.
-	# Remove a lockfile created solely for transient validation when this
-	# module did not own one before initialization.
+	# OpenTofu keeps provider/module installation state under TF_DATA_DIR,
+	# but creates the dependency lockfile in the configuration directory.
+	# Remove only a lockfile that did not exist before transient validation.
 	if [[ $had_lockfile == false ]]; then
-		rm -f -- "${module}/.terraform.lock.hcl"
+		rm -f -- "$lockfile"
 	fi
 
 	return "$status"
@@ -490,9 +493,6 @@ validate_modules() {
 
 		printf 'validating OpenTofu module: %s\n' "$module"
 
-		# Prefer already-initialized state. This avoids unnecessary provider
-		# installation during normal development when the configuration can
-		# already be validated.
 		if tofu \
 			-chdir="$module" \
 			validate \
