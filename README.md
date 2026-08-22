@@ -2,6 +2,9 @@
 
 Shared development-tooling policy for Apeiros repositories.
 
+> [!warning]
+> This project is still very experimental. Changes are being made rapidly.
+
 This repository provides:
 
 - reusable [Lefthook](https://lefthook.dev/) configurations;
