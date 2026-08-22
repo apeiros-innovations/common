@@ -38,3 +38,10 @@ sarif
 anchore
 buildx
 fluxcd
+tfvars
+tftest
+tfmock
+tfquery
+tflint
+tftest
+tfvars

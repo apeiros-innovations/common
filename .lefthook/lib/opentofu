@@ -1,0 +1,416 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+SCRIPT_DIR="$(
+	cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+		pwd -P
+)"
+
+# shellcheck source=common.sh
+source "${SCRIPT_DIR}/common.sh"
+
+REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+REMOTE_ROOT="$(common_remote_root)"
+
+readonly REPOSITORY_ROOT
+readonly REMOTE_ROOT
+
+readonly -a PROVIDER_PLATFORMS=(
+	"-platform=darwin_arm64"
+	"-platform=linux_amd64"
+)
+
+die() {
+	printf 'opentofu: %s\n' "$*" >&2
+	exit 1
+}
+
+absolute_file() {
+	local path=$1
+	local directory
+	local filename
+
+	directory="$(dirname -- "$path")"
+	filename="$(basename -- "$path")"
+
+	(
+		cd -- "$directory"
+		printf '%s/%s\n' "$(pwd -P)" "$filename"
+	)
+}
+
+add_unique_directory() {
+	local candidate=$1
+	local existing
+
+	for existing in "${MODULE_DIRECTORIES[@]:-}"; do
+		[[ $existing == "$candidate" ]] &&
+			return 0
+	done
+
+	MODULE_DIRECTORIES+=("$candidate")
+}
+
+module_has_configuration() {
+	local directory=$1
+
+	find "$directory" \
+		-maxdepth 1 \
+		-type f \
+		\( \
+		-name '*.tf' -o \
+		-name '*.tofu' -o \
+		-name '*.tf.json' -o \
+		-name '*.tofu.json' \
+		\) \
+		-print \
+		-quit |
+		grep -q .
+}
+
+collect_module_directories() {
+	local path
+	local directory
+
+	MODULE_DIRECTORIES=()
+
+	for path in "$@"; do
+		case "$path" in
+		*.tf | *.tofu | *.tfvars | *.tftest.hcl | *.tofutest.hcl | *.tfmock.hcl | *.tfquery.hcl | */.terraform.lock.hcl | .terraform.lock.hcl)
+			;;
+		*)
+			continue
+			;;
+		esac
+
+		case "/${path}/" in
+		*/.terraform/*)
+			continue
+			;;
+		esac
+
+		directory="$(dirname -- "$path")"
+
+		[[ -d $directory ]] ||
+			continue
+
+		module_has_configuration "$directory" ||
+			continue
+
+		add_unique_directory "$directory"
+	done
+}
+
+guard_generated_file() {
+	local path=$1
+
+	[[ -e $path ]] ||
+		return 0
+
+	if ! git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
+		die "${path}: refusing to overwrite an existing untracked file"
+	fi
+
+	if ! git diff --quiet -- "$path"; then
+		die "${path}: refusing to overwrite unstaged changes"
+	fi
+}
+
+resolve_terraform_docs_config() {
+	local module=$1
+	local config
+
+	config="$(
+		first_existing_file \
+			"${module}/.terraform-docs.yaml" \
+			"${module}/.terraform-docs.yml" \
+			"${REPOSITORY_ROOT}/.terraform-docs.yaml" \
+			"${REPOSITORY_ROOT}/.terraform-docs.yml" \
+			"${REMOTE_ROOT}/.terraform-docs.yaml" \
+			"${REMOTE_ROOT}/.terraform-docs.yml"
+	)" ||
+		die "unable to locate terraform-docs configuration"
+
+	absolute_file "$config"
+}
+
+resolve_tflint_config() {
+	local module=$1
+	local config
+
+	config="$(
+		first_existing_file \
+			"${module}/.tflint.hcl" \
+			"${module}/.tflint.json" \
+			"${REPOSITORY_ROOT}/.tflint.hcl" \
+			"${REPOSITORY_ROOT}/.tflint.json" \
+			"${REMOTE_ROOT}/.tflint.hcl"
+	)" ||
+		die "unable to locate TFLint configuration"
+
+	absolute_file "$config"
+}
+
+resolve_trivy_config() {
+	local module=$1
+	local config
+
+	config="$(
+		first_existing_file \
+			"${module}/.trivy.yaml" \
+			"${module}/.trivy.yml" \
+			"${REPOSITORY_ROOT}/.trivy.yaml" \
+			"${REPOSITORY_ROOT}/.trivy.yml"
+	)" || return 1
+
+	absolute_file "$config"
+}
+
+format_files() {
+	local file
+	local failed=0
+
+	for file in "$@"; do
+		[[ -f $file ]] ||
+			continue
+
+		case "$file" in
+		*.tf | *.tofu | *.tfvars | *.tftest.hcl | *.tofutest.hcl | *.tfmock.hcl | *.tfquery.hcl)
+			;;
+		*)
+			continue
+			;;
+		esac
+
+		case "/${file}/" in
+		*/.terraform/*)
+			continue
+			;;
+		esac
+
+		printf 'formatting OpenTofu: %s\n' "$file"
+
+		tofu fmt "$file" ||
+			failed=1
+	done
+
+	return "$failed"
+}
+
+generate_docs() {
+	local module
+	local config
+	local readme
+	local failed=0
+
+	collect_module_directories "$@"
+
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		config="$(resolve_terraform_docs_config "$module")"
+		readme="${module}/README.md"
+
+		guard_generated_file "$readme"
+
+		printf 'generating OpenTofu documentation: %s\n' "$module"
+
+		(
+			cd -- "$module"
+			terraform-docs \
+				--config "$config" \
+				.
+		) || {
+			failed=1
+			continue
+		}
+
+		if [[ -f $readme ]]; then
+			git add -- "$readme"
+		fi
+	done
+
+	return "$failed"
+}
+
+providers_lock() {
+	local module
+	local lockfile
+	local failed=0
+
+	collect_module_directories "$@"
+
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		lockfile="${module}/.terraform.lock.hcl"
+
+		guard_generated_file "$lockfile"
+
+		printf 'initializing OpenTofu module: %s\n' "$module"
+
+		(
+			cd -- "$module"
+
+			tofu init \
+				-backend=false \
+				-input=false \
+				-no-color
+
+			tofu providers lock \
+				"${PROVIDER_PLATFORMS[@]}"
+		) || {
+			failed=1
+			continue
+		}
+
+		if [[ -f $lockfile ]]; then
+			git add -- "$lockfile"
+		fi
+	done
+
+	return "$failed"
+}
+
+lint_modules() {
+	local module
+	local config
+	local failed=0
+
+	collect_module_directories "$@"
+
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		config="$(resolve_tflint_config "$module")"
+
+		printf 'linting OpenTofu module: %s\n' "$module"
+
+		tflint \
+			--chdir="$module" \
+			--config="$config" ||
+			failed=1
+	done
+
+	return "$failed"
+}
+
+scan_modules() {
+	local module
+	local config
+	local failed=0
+
+	collect_module_directories "$@"
+
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		printf 'scanning OpenTofu module: %s\n' "$module"
+
+		if config="$(resolve_trivy_config "$module")"; then
+			(
+				cd -- "$module"
+
+				trivy config \
+					--quiet \
+					--exit-code 1 \
+					--skip-dirs .terraform \
+					--config "$config" \
+					.
+			) || failed=1
+		else
+			(
+				cd -- "$module"
+
+				trivy config \
+					--quiet \
+					--exit-code 1 \
+					--skip-dirs .terraform \
+					.
+			) || failed=1
+		fi
+	done
+
+	return "$failed"
+}
+
+validate_modules() {
+	local module
+	local failed=0
+
+	collect_module_directories "$@"
+
+	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+		printf 'validating OpenTofu module: %s\n' "$module"
+
+		if (
+			cd -- "$module"
+			tofu validate -no-color
+		); then
+			continue
+		fi
+
+		printf \
+			'OpenTofu validation requires initialization; initializing without backend: %s\n' \
+			"$module" >&2
+
+		(
+			cd -- "$module"
+
+			tofu init \
+				-backend=false \
+				-input=false \
+				-lockfile=readonly \
+				-no-color
+
+			tofu validate -no-color
+		) || failed=1
+	done
+
+	return "$failed"
+}
+
+usage() {
+	cat >&2 <<'EOF'
+usage: opentofu <command> [files...]
+
+commands:
+  fmt
+  docs
+  providers-lock
+  tflint
+  trivy
+  validate
+EOF
+}
+
+main() {
+	local command=${1:-}
+
+	[[ -n $command ]] || {
+		usage
+		exit 2
+	}
+
+	shift
+
+	case "$command" in
+	fmt)
+		format_files "$@"
+		;;
+	docs)
+		generate_docs "$@"
+		;;
+	providers-lock)
+		providers_lock "$@"
+		;;
+	tflint)
+		lint_modules "$@"
+		;;
+	trivy)
+		scan_modules "$@"
+		;;
+	validate)
+		validate_modules "$@"
+		;;
+	*)
+		usage
+		exit 2
+		;;
+	esac
+}
+
+main "$@"

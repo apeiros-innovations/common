@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+readonly REPOSITORY_ROOT
+
+export TG_NON_INTERACTIVE=true
+
+die() {
+	printf 'terragrunt: %s\n' "$*" >&2
+	exit 1
+}
+
+add_unique_directory() {
+	local candidate=$1
+	local existing
+
+	for existing in "${DIRECTORIES[@]:-}"; do
+		[[ $existing == "$candidate" ]] &&
+			return 0
+	done
+
+	DIRECTORIES+=("$candidate")
+}
+
+collect_hcl_directories() {
+	local path
+	local directory
+
+	DIRECTORIES=()
+
+	for path in "$@"; do
+		[[ $path == *.hcl ]] ||
+			continue
+
+		case "$path" in
+		*/.terraform.lock.hcl | .terraform.lock.hcl)
+			continue
+			;;
+		esac
+
+		case "/${path}/" in
+		*/.terraform/* | */.terragrunt-cache/*)
+			continue
+			;;
+		esac
+
+		directory="$(dirname -- "$path")"
+
+		[[ -d $directory ]] ||
+			continue
+
+		add_unique_directory "$directory"
+	done
+}
+
+collect_unit_directories() {
+	local path
+	local directory
+
+	DIRECTORIES=()
+
+	for path in "$@"; do
+		case "$path" in
+		terragrunt.hcl | */terragrunt.hcl)
+			directory="$(dirname -- "$path")"
+			;;
+		.terraform.lock.hcl | */.terraform.lock.hcl)
+			directory="$(dirname -- "$path")"
+			;;
+		*)
+			continue
+			;;
+		esac
+
+		[[ -f "${directory}/terragrunt.hcl" ]] ||
+			continue
+
+		add_unique_directory "$directory"
+	done
+}
+
+guard_lockfile() {
+	local path=$1
+
+	[[ -e $path ]] ||
+		return 0
+
+	if ! git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
+		die "${path}: refusing to overwrite an existing untracked lockfile"
+	fi
+
+	if ! git diff --quiet -- "$path"; then
+		die "${path}: refusing to overwrite unstaged changes"
+	fi
+}
+
+format_files() {
+	local file
+	local failed=0
+
+	for file in "$@"; do
+		[[ -f $file ]] ||
+			continue
+
+		[[ $file == *.hcl ]] ||
+			continue
+
+		case "$file" in
+		*/.terraform.lock.hcl | .terraform.lock.hcl)
+			continue
+			;;
+		esac
+
+		case "/${file}/" in
+		*/.terraform/* | */.terragrunt-cache/*)
+			continue
+			;;
+		esac
+
+		printf 'formatting Terragrunt HCL: %s\n' "$file"
+
+		terragrunt hcl fmt \
+			--file="$file" ||
+			failed=1
+	done
+
+	return "$failed"
+}
+
+validate_hcl() {
+	local directory
+	local failed=0
+
+	collect_hcl_directories "$@"
+
+	for directory in "${DIRECTORIES[@]:-}"; do
+		printf 'validating Terragrunt HCL: %s\n' "$directory"
+
+		(
+			cd -- "$directory"
+			terragrunt hcl validate
+		) || failed=1
+	done
+
+	return "$failed"
+}
+
+validate_inputs() {
+	local directory
+	local failed=0
+
+	collect_hcl_directories "$@"
+
+	for directory in "${DIRECTORIES[@]:-}"; do
+		printf 'validating Terragrunt inputs: %s\n' "$directory"
+
+		(
+			cd -- "$directory"
+			terragrunt hcl validate --inputs
+		) || failed=1
+	done
+
+	return "$failed"
+}
+
+providers_lock() {
+	local directory
+	local lockfile
+	local failed=0
+
+	collect_unit_directories "$@"
+
+	for directory in "${DIRECTORIES[@]:-}"; do
+		lockfile="${directory}/.terraform.lock.hcl"
+
+		guard_lockfile "$lockfile"
+
+		printf 'locking Terragrunt providers: %s\n' "$directory"
+
+		(
+			cd -- "$directory"
+
+			terragrunt run -- \
+				providers lock \
+				-platform=darwin_arm64 \
+				-platform=linux_amd64
+		) || {
+			failed=1
+			continue
+		}
+
+		if [[ -f $lockfile ]]; then
+			git add -- "$lockfile"
+		fi
+	done
+
+	return "$failed"
+}
+
+usage() {
+	cat >&2 <<'EOF'
+usage: terragrunt <command> [files...]
+
+commands:
+  fmt
+  validate
+  validate-inputs
+  providers-lock
+EOF
+}
+
+main() {
+	local command=${1:-}
+
+	[[ -n $command ]] || {
+		usage
+		exit 2
+	}
+
+	shift
+
+	case "$command" in
+	fmt)
+		format_files "$@"
+		;;
+	validate)
+		validate_hcl "$@"
+		;;
+	validate-inputs)
+		validate_inputs "$@"
+		;;
+	providers-lock)
+		providers_lock "$@"
+		;;
+	*)
+		usage
+		exit 2
+		;;
+	esac
+}
+
+main "$@"

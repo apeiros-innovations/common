@@ -1,0 +1,93 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        jobs:
+          - name: opentofu fmt
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+            exclude:
+              - "**/.terraform/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: "fmt {staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - opentofu
+
+          - name: opentofu docs
+            glob:
+              - "**/*.{tf,tofu}"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: "docs {staged_files}"
+            tags:
+              - documentation
+              - opentofu
+              - terraform-docs
+
+          - name: opentofu provider lock
+            glob:
+              - "**/*.{tf,tofu}"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: "providers-lock {staged_files}"
+            tags:
+              - dependencies
+              - supply-chain
+              - opentofu
+              - providers
+
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: opentofu tflint
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: "tflint {staged_files}"
+            tags:
+              - lint
+              - validation
+              - opentofu
+              - tflint
+
+          - name: opentofu trivy
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+            exclude:
+              - "**/.terraform/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: "trivy {staged_files}"
+            tags:
+              - security
+              - opentofu
+              - trivy
+
+          - name: opentofu validate
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: "validate {staged_files}"
+            tags:
+              - validation
+              - opentofu

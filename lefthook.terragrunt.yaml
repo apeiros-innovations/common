@@ -1,0 +1,68 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      group:
+        jobs:
+          - name: terragrunt fmt
+            glob:
+              - "**/*.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+              - "**/.terraform.lock.hcl"
+            script: terragrunt
+            runner: mise x -- bash
+            args: "fmt {staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - terragrunt
+
+          - name: terragrunt provider lock
+            glob:
+              - "**/terragrunt.hcl"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            script: terragrunt
+            runner: mise x -- bash
+            args: "providers-lock {staged_files}"
+            tags:
+              - dependencies
+              - supply-chain
+              - terragrunt
+              - providers
+
+    - name: validate
+      group:
+        jobs:
+          - name: terragrunt validate
+            glob:
+              - "**/*.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+              - "**/.terraform.lock.hcl"
+            script: terragrunt
+            runner: mise x -- bash
+            args: "validate {staged_files}"
+            tags:
+              - validation
+              - terragrunt
+
+          - name: terragrunt validate inputs
+            glob:
+              - "**/*.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+              - "**/.terraform.lock.hcl"
+            script: terragrunt
+            runner: mise x -- bash
+            args: "validate-inputs {staged_files}"
+            tags:
+              - validation
+              - inputs
+              - terragrunt
