@@ -1,8 +1,12 @@
 ---
 pre-commit:
+  parallel: false
+
   jobs:
     - name: format
+      priority: 10
       group:
+        parallel: true
         jobs:
           - name: terragrunt fmt
             glob:
@@ -11,6 +15,8 @@ pre-commit:
               - "**/.terraform/**"
               - "**/.terragrunt-cache/**"
               - "**/.terraform.lock.hcl"
+              - "**/.tflint.hcl"
+              - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
             script: terragrunt
             runner: mise x -- bash
             args: "fmt {staged_files}"
@@ -19,6 +25,11 @@ pre-commit:
               - format
               - terragrunt
 
+    - name: generate
+      priority: 20
+      group:
+        parallel: true
+        jobs:
           - name: terragrunt provider lock
             glob:
               - "**/terragrunt.hcl"
@@ -36,33 +47,42 @@ pre-commit:
               - providers
 
     - name: validate
+      priority: 30
       group:
+        parallel: true
         jobs:
-          - name: terragrunt validate
-            glob:
-              - "**/*.hcl"
-            exclude:
-              - "**/.terraform/**"
-              - "**/.terragrunt-cache/**"
-              - "**/.terraform.lock.hcl"
-            script: terragrunt
-            runner: mise x -- bash
-            args: "validate {staged_files}"
-            tags:
-              - validation
-              - terragrunt
+          - name: terragrunt validation
+            group:
+              jobs:
+                - name: terragrunt validate
+                  glob:
+                    - "**/*.hcl"
+                  exclude:
+                    - "**/.terraform/**"
+                    - "**/.terragrunt-cache/**"
+                    - "**/.terraform.lock.hcl"
+                    - "**/.tflint.hcl"
+                    - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+                  script: terragrunt
+                  runner: mise x -- bash
+                  args: "validate {staged_files}"
+                  tags:
+                    - validation
+                    - terragrunt
 
-          - name: terragrunt validate inputs
-            glob:
-              - "**/*.hcl"
-            exclude:
-              - "**/.terraform/**"
-              - "**/.terragrunt-cache/**"
-              - "**/.terraform.lock.hcl"
-            script: terragrunt
-            runner: mise x -- bash
-            args: "validate-inputs {staged_files}"
-            tags:
-              - validation
-              - inputs
-              - terragrunt
+                - name: terragrunt validate inputs
+                  glob:
+                    - "**/*.hcl"
+                  exclude:
+                    - "**/.terraform/**"
+                    - "**/.terragrunt-cache/**"
+                    - "**/.terraform.lock.hcl"
+                    - "**/.tflint.hcl"
+                    - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+                  script: terragrunt
+                  runner: mise x -- bash
+                  args: "validate-inputs {staged_files}"
+                  tags:
+                    - validation
+                    - inputs
+                    - terragrunt

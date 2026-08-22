@@ -1,8 +1,12 @@
 ---
 pre-commit:
+  parallel: false
+
   jobs:
     - name: format
+      priority: 10
       group:
+        parallel: true
         jobs:
           - name: opentofu fmt
             glob:
@@ -10,6 +14,7 @@ pre-commit:
               - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
             exclude:
               - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
             script: opentofu
             runner: mise x -- bash
             args: "fmt {staged_files}"
@@ -18,12 +23,18 @@ pre-commit:
               - format
               - opentofu
 
+    - name: generate
+      priority: 20
+      group:
+        parallel: true
+        jobs:
           - name: opentofu docs
             glob:
               - "**/*.{tf,tofu}"
-              - "**/.terraform.lock.hcl"
+              - "**/*.{tf,tofu}.json"
             exclude:
               - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
             script: opentofu
             runner: mise x -- bash
             args: "docs {staged_files}"
@@ -35,9 +46,11 @@ pre-commit:
           - name: opentofu provider lock
             glob:
               - "**/*.{tf,tofu}"
+              - "**/*.{tf,tofu}.json"
               - "**/.terraform.lock.hcl"
             exclude:
               - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
             script: opentofu
             runner: mise x -- bash
             args: "providers-lock {staged_files}"
@@ -48,15 +61,18 @@ pre-commit:
               - providers
 
     - name: validate
+      priority: 30
       group:
         parallel: true
         jobs:
           - name: opentofu tflint
             glob:
               - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tf,tofu,tfvars}.json"
               - "**/.terraform.lock.hcl"
             exclude:
               - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
             script: opentofu
             runner: mise x -- bash
             args: "tflint {staged_files}"
@@ -69,8 +85,10 @@ pre-commit:
           - name: opentofu trivy
             glob:
               - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tf,tofu,tfvars}.json"
             exclude:
               - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
             script: opentofu
             runner: mise x -- bash
             args: "trivy {staged_files}"
@@ -82,9 +100,11 @@ pre-commit:
           - name: opentofu validate
             glob:
               - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tf,tofu,tfvars}.json"
               - "**/.terraform.lock.hcl"
             exclude:
               - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
             script: opentofu
             runner: mise x -- bash
             args: "validate {staged_files}"
