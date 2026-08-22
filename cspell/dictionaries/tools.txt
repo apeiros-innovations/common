@@ -45,3 +45,5 @@ tfquery
 tflint
 tftest
 tfvars
+tfstate
+terraformrc
