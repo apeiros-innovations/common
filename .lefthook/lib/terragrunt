@@ -2,8 +2,12 @@
 
 set -euo pipefail
 
-REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
-readonly REPOSITORY_ROOT
+readonly -a PROVIDER_PLATFORMS=(
+	"-platform=darwin_arm64"
+	"-platform=linux_amd64"
+)
+
+declare -a DIRECTORIES=()
 
 export TG_NON_INTERACTIVE=true
 
@@ -16,12 +20,41 @@ add_unique_directory() {
 	local candidate=$1
 	local existing
 
-	for existing in "${DIRECTORIES[@]:-}"; do
+	for existing in "${DIRECTORIES[@]}"; do
 		[[ $existing == "$candidate" ]] &&
 			return 0
 	done
 
 	DIRECTORIES+=("$candidate")
+}
+
+is_terragrunt_hcl_file() {
+	local path=$1
+
+	[[ $path == *.hcl ]] ||
+		return 1
+
+	# These HCL files belong to OpenTofu/TFLint rather than Terragrunt.
+	case "$path" in
+	*.tftest.hcl | \
+		*.tofutest.hcl | \
+		*.tfmock.hcl | \
+		*.tfquery.hcl | \
+		*/.terraform.lock.hcl | \
+		.terraform.lock.hcl | \
+		*/.tflint.hcl | \
+		.tflint.hcl)
+		return 1
+		;;
+	esac
+
+	case "/${path}/" in
+	*/.terraform/* | */.terragrunt-cache/*)
+		return 1
+		;;
+	esac
+
+	return 0
 }
 
 collect_hcl_directories() {
@@ -31,20 +64,8 @@ collect_hcl_directories() {
 	DIRECTORIES=()
 
 	for path in "$@"; do
-		[[ $path == *.hcl ]] ||
+		is_terragrunt_hcl_file "$path" ||
 			continue
-
-		case "$path" in
-		*/.terraform.lock.hcl | .terraform.lock.hcl)
-			continue
-			;;
-		esac
-
-		case "/${path}/" in
-		*/.terraform/* | */.terragrunt-cache/*)
-			continue
-			;;
-		esac
 
 		directory="$(dirname -- "$path")"
 
@@ -81,17 +102,34 @@ collect_unit_directories() {
 	done
 }
 
+directory_has_opentofu_configuration() {
+	local directory=$1
+
+	find "$directory" \
+		-maxdepth 1 \
+		-type f \
+		\( \
+		-name '*.tf' -o \
+		-name '*.tofu' -o \
+		-name '*.tf.json' -o \
+		-name '*.tofu.json' \
+		\) \
+		-print \
+		-quit |
+		grep -q .
+}
+
 guard_lockfile() {
 	local path=$1
 
 	[[ -e $path ]] ||
 		return 0
 
-	if ! git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
-		die "${path}: refusing to overwrite an existing untracked lockfile"
-	fi
-
-	if ! git diff --quiet -- "$path"; then
+	# New/untracked lockfiles are allowed to become managed artifacts.
+	# Existing tracked lockfiles with unstaged developer changes are not
+	# overwritten.
+	if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1 &&
+		! git diff --quiet -- "$path"; then
 		die "${path}: refusing to overwrite unstaged changes"
 	fi
 }
@@ -104,20 +142,8 @@ format_files() {
 		[[ -f $file ]] ||
 			continue
 
-		[[ $file == *.hcl ]] ||
+		is_terragrunt_hcl_file "$file" ||
 			continue
-
-		case "$file" in
-		*/.terraform.lock.hcl | .terraform.lock.hcl)
-			continue
-			;;
-		esac
-
-		case "/${file}/" in
-		*/.terraform/* | */.terragrunt-cache/*)
-			continue
-			;;
-		esac
 
 		printf 'formatting Terragrunt HCL: %s\n' "$file"
 
@@ -135,7 +161,7 @@ validate_hcl() {
 
 	collect_hcl_directories "$@"
 
-	for directory in "${DIRECTORIES[@]:-}"; do
+	for directory in "${DIRECTORIES[@]}"; do
 		printf 'validating Terragrunt HCL: %s\n' "$directory"
 
 		(
@@ -153,7 +179,7 @@ validate_inputs() {
 
 	collect_hcl_directories "$@"
 
-	for directory in "${DIRECTORIES[@]:-}"; do
+	for directory in "${DIRECTORIES[@]}"; do
 		printf 'validating Terragrunt inputs: %s\n' "$directory"
 
 		(
@@ -172,24 +198,33 @@ providers_lock() {
 
 	collect_unit_directories "$@"
 
-	for directory in "${DIRECTORIES[@]:-}"; do
+	for directory in "${DIRECTORIES[@]}"; do
+		# When Terragrunt and native OpenTofu configuration coexist in the
+		# same directory, OpenTofu owns the dependency lockfile. This avoids
+		# two independent hooks racing to regenerate the same artifact.
+		if directory_has_opentofu_configuration "$directory"; then
+			printf \
+				'terragrunt: skipping provider lock for %s; native OpenTofu configuration owns this lockfile\n' \
+				"$directory"
+			continue
+		fi
+
 		lockfile="${directory}/.terraform.lock.hcl"
 
 		guard_lockfile "$lockfile"
 
 		printf 'locking Terragrunt providers: %s\n' "$directory"
 
-		(
+		if ! (
 			cd -- "$directory"
 
 			terragrunt run -- \
 				providers lock \
-				-platform=darwin_arm64 \
-				-platform=linux_amd64
-		) || {
+				"${PROVIDER_PLATFORMS[@]}"
+		); then
 			failed=1
 			continue
-		}
+		fi
 
 		if [[ -f $lockfile ]]; then
 			git add -- "$lockfile"

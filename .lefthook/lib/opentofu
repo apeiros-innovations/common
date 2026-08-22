@@ -21,6 +21,8 @@ readonly -a PROVIDER_PLATFORMS=(
 	"-platform=linux_amd64"
 )
 
+declare -a MODULE_DIRECTORIES=()
+
 die() {
 	printf 'opentofu: %s\n' "$*" >&2
 	exit 1
@@ -44,7 +46,7 @@ add_unique_directory() {
 	local candidate=$1
 	local existing
 
-	for existing in "${MODULE_DIRECTORIES[@]:-}"; do
+	for existing in "${MODULE_DIRECTORIES[@]}"; do
 		[[ $existing == "$candidate" ]] &&
 			return 0
 	done
@@ -77,7 +79,18 @@ collect_module_directories() {
 
 	for path in "$@"; do
 		case "$path" in
-		*.tf | *.tofu | *.tfvars | *.tftest.hcl | *.tofutest.hcl | *.tfmock.hcl | *.tfquery.hcl | */.terraform.lock.hcl | .terraform.lock.hcl)
+		*.tf | \
+			*.tofu | \
+			*.tf.json | \
+			*.tofu.json | \
+			*.tfvars | \
+			*.tfvars.json | \
+			*.tftest.hcl | \
+			*.tofutest.hcl | \
+			*.tfmock.hcl | \
+			*.tfquery.hcl | \
+			*/.terraform.lock.hcl | \
+			.terraform.lock.hcl)
 			;;
 		*)
 			continue
@@ -115,6 +128,39 @@ guard_generated_file() {
 	if ! git diff --quiet -- "$path"; then
 		die "${path}: refusing to overwrite unstaged changes"
 	fi
+}
+
+guard_lockfile() {
+	local path=$1
+
+	[[ -e $path ]] ||
+		return 0
+
+	# A new untracked lockfile may become a managed generated artifact.
+	# Existing tracked lockfiles with unstaged developer changes must not
+	# be overwritten.
+	if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1 &&
+		! git diff --quiet -- "$path"; then
+		die "${path}: refusing to overwrite unstaged changes"
+	fi
+}
+
+module_owns_lockfile() {
+	local module=$1
+	local lockfile="${module}/.terraform.lock.hcl"
+
+	# The repository root is treated as an explicit OpenTofu root
+	# configuration when this profile is selected.
+	if [[ $module == "." ]]; then
+		return 0
+	fi
+
+	# A nested configuration owns a dependency lockfile only when that
+	# ownership has already been made explicit by the presence of one.
+	#
+	# This prevents reusable child modules from receiving lockfiles merely
+	# because their source files were changed.
+	[[ -e $lockfile ]]
 }
 
 resolve_terraform_docs_config() {
@@ -176,7 +222,13 @@ format_files() {
 			continue
 
 		case "$file" in
-		*.tf | *.tofu | *.tfvars | *.tftest.hcl | *.tofutest.hcl | *.tfmock.hcl | *.tfquery.hcl)
+		*.tf | \
+			*.tofu | \
+			*.tfvars | \
+			*.tftest.hcl | \
+			*.tofutest.hcl | \
+			*.tfmock.hcl | \
+			*.tfquery.hcl)
 			;;
 		*)
 			continue
@@ -206,7 +258,7 @@ generate_docs() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+	for module in "${MODULE_DIRECTORIES[@]}"; do
 		config="$(resolve_terraform_docs_config "$module")"
 		readme="${module}/README.md"
 
@@ -216,6 +268,7 @@ generate_docs() {
 
 		(
 			cd -- "$module"
+
 			terraform-docs \
 				--config "$config" \
 				.
@@ -235,31 +288,63 @@ generate_docs() {
 providers_lock() {
 	local module
 	local lockfile
+	local data_dir
+	local status
 	local failed=0
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+	for module in "${MODULE_DIRECTORIES[@]}"; do
+		if ! module_owns_lockfile "$module"; then
+			printf \
+				'opentofu: skipping provider lock for %s; nested configurations must explicitly own a .terraform.lock.hcl before the shared hook manages it\n' \
+				"$module"
+			continue
+		fi
+
 		lockfile="${module}/.terraform.lock.hcl"
 
-		guard_generated_file "$lockfile"
+		guard_lockfile "$lockfile"
 
-		printf 'initializing OpenTofu module: %s\n' "$module"
+		printf 'locking OpenTofu providers: %s\n' "$module"
 
-		(
-			cd -- "$module"
+		data_dir="$(
+			mktemp -d \
+				"${TMPDIR:-/tmp}/opentofu-lock.XXXXXX"
+		)"
 
-			tofu init \
-				-backend=false \
-				-input=false \
-				-no-color
+		status=0
 
-			tofu providers lock \
-				"${PROVIDER_PLATFORMS[@]}"
-		) || {
+		TF_DATA_DIR="$data_dir" \
+			tofu \
+			-chdir="$module" \
+			init \
+			-backend=false \
+			-input=false \
+			-no-color ||
+			status=$?
+
+		if ((status == 0)); then
+			TF_DATA_DIR="$data_dir" \
+				tofu \
+				-chdir="$module" \
+				providers \
+				lock \
+				"${PROVIDER_PLATFORMS[@]}" ||
+				status=$?
+		fi
+
+		rm -rf -- "$data_dir"
+
+		if ((status != 0)); then
+			printf \
+				'opentofu: provider lock failed for %s with exit status %d\n' \
+				"$module" \
+				"$status" >&2
+
 			failed=1
 			continue
-		}
+		fi
 
 		if [[ -f $lockfile ]]; then
 			git add -- "$lockfile"
@@ -276,7 +361,7 @@ lint_modules() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+	for module in "${MODULE_DIRECTORIES[@]}"; do
 		config="$(resolve_tflint_config "$module")"
 
 		printf 'linting OpenTofu module: %s\n' "$module"
@@ -297,7 +382,7 @@ scan_modules() {
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+	for module in "${MODULE_DIRECTORIES[@]}"; do
 		printf 'scanning OpenTofu module: %s\n' "$module"
 
 		if config="$(resolve_trivy_config "$module")"; then
@@ -327,37 +412,87 @@ scan_modules() {
 	return "$failed"
 }
 
+validate_initialized_module() {
+	local module=$1
+	local data_dir
+	local status=0
+	local had_lockfile=false
+
+	local -a init_args=(
+		init
+		-backend=false
+		-input=false
+		-no-color
+	)
+
+	if [[ -e "${module}/.terraform.lock.hcl" ]]; then
+		had_lockfile=true
+		init_args+=("-lockfile=readonly")
+	fi
+
+	data_dir="$(
+		mktemp -d \
+			"${TMPDIR:-/tmp}/opentofu-validate.XXXXXX"
+	)"
+
+	TF_DATA_DIR="$data_dir" \
+		tofu \
+		-chdir="$module" \
+		"${init_args[@]}" ||
+		status=$?
+
+	if ((status == 0)); then
+		TF_DATA_DIR="$data_dir" \
+			tofu \
+			-chdir="$module" \
+			validate \
+			-no-color ||
+			status=$?
+	fi
+
+	rm -rf -- "$data_dir"
+
+	# OpenTofu stores provider/module installation data under TF_DATA_DIR,
+	# but the dependency lockfile remains in the configuration directory.
+	# Remove a lockfile created solely for transient validation when this
+	# module did not own one before initialization.
+	if [[ $had_lockfile == false ]]; then
+		rm -f -- "${module}/.terraform.lock.hcl"
+	fi
+
+	return "$status"
+}
+
 validate_modules() {
 	local module
 	local failed=0
 
 	collect_module_directories "$@"
 
-	for module in "${MODULE_DIRECTORIES[@]:-}"; do
+	for module in "${MODULE_DIRECTORIES[@]}"; do
 		printf 'validating OpenTofu module: %s\n' "$module"
 
-		if (
-			cd -- "$module"
-			tofu validate -no-color
-		); then
+		# Prefer already-initialized state. This avoids unnecessary provider
+		# installation during normal development when the configuration can
+		# already be validated.
+		if tofu \
+			-chdir="$module" \
+			validate \
+			-no-color; then
 			continue
 		fi
 
 		printf \
-			'OpenTofu validation requires initialization; initializing without backend: %s\n' \
+			'opentofu: validation requires initialization; initializing transiently without backend: %s\n' \
 			"$module" >&2
 
-		(
-			cd -- "$module"
+		if ! validate_initialized_module "$module"; then
+			printf \
+				'opentofu: validation failed: %s\n' \
+				"$module" >&2
 
-			tofu init \
-				-backend=false \
-				-input=false \
-				-lockfile=readonly \
-				-no-color
-
-			tofu validate -no-color
-		) || failed=1
+			failed=1
+		fi
 	done
 
 	return "$failed"
