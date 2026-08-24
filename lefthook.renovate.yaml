@@ -6,41 +6,13 @@ pre-commit:
         parallel: true
         jobs:
           - name: renovate config
-            only:
-              - run: |
-                  for config in \
-                    renovate.json \
-                    renovate.jsonc \
-                    renovate.json5 \
-                    .github/renovate.json \
-                    .github/renovate.jsonc \
-                    .github/renovate.json5 \
-                    .gitlab/renovate.json \
-                    .gitlab/renovate.jsonc \
-                    .gitlab/renovate.json5 \
-                    .renovaterc \
-                    .renovaterc.json \
-                    .renovaterc.jsonc \
-                    .renovaterc.json5
-                  do
-                    [ -f "$config" ] && exit 0
-                  done
-
-                  if [ -f package.json ] &&
-                     grep -Eq '"renovate"[[:space:]]*:' package.json; then
-                    exit 0
-                  fi
-
-                  exit 1
             glob:
               - "renovate.{json,jsonc,json5}"
               - ".github/renovate.{json,jsonc,json5}"
               - ".gitlab/renovate.{json,jsonc,json5}"
               - ".renovaterc"
               - ".renovaterc.{json,jsonc,json5}"
-              - "package.json"
-            run: >-
-              mise x -- renovate-config-validator --strict
+            run: mise x -- renovate-config-validator --strict
             tags:
               - validation
               - dependency-management
