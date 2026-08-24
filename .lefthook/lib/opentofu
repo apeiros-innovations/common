@@ -17,7 +17,7 @@ readonly REPOSITORY_ROOT
 readonly REMOTE_ROOT
 
 # shellcheck source=lib/trivy.sh
-source "${REMOTE_ROOT}/lib/trivy.sh"
+source "${SCRIPT_DIR}/trivy.sh"
 
 readonly -a PROVIDER_PLATFORMS=(
 	"-platform=darwin_arm64"
