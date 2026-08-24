@@ -2,14 +2,53 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(
+	cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+		pwd -P
+)"
+
 # shellcheck source=../lib/common.sh
-source "$(dirname -- "$0")/../lib/common.sh"
+source "${SCRIPT_DIR}/../lib/common.sh"
 
-common_root="$(common_remote_root)"
+REMOTE_ROOT="$(common_remote_root)"
 
-exec mise x -- \
-  markdownlint-cli2 \
-  --config "$common_root/.markdownlint.yaml" \
-  --no-globs \
-  -- \
-  "$@"
+readonly REMOTE_ROOT
+
+die() {
+	printf 'markdownlint: %s\n' "$*" >&2
+	exit 1
+}
+
+resolve_shared_config() {
+	local config
+	config="$(
+		first_existing_file \
+			"${REMOTE_ROOT}/.markdownlint-cli2.jsonc" \
+			"${REMOTE_ROOT}/.markdownlint-cli2.yaml" \
+			"${REMOTE_ROOT}/.markdownlint-cli2.cjs" \
+			"${REMOTE_ROOT}/.markdownlint-cli2.mjs" \
+			"${REMOTE_ROOT}/.markdownlint.jsonc" \
+			"${REMOTE_ROOT}/.markdownlint.json" \
+			"${REMOTE_ROOT}/.markdownlint.yaml" \
+			"${REMOTE_ROOT}/.markdownlint.yml" \
+			"${REMOTE_ROOT}/.markdownlint.cjs" \
+			"${REMOTE_ROOT}/.markdownlint.mjs"
+	)" || die "unable to locate a shared markdownlint-cli2 configuration"
+
+	printf '%s\n' "$config"
+}
+
+main() {
+	local config
+
+	config="$(resolve_shared_config)"
+
+	exec mise x -- \
+		markdownlint-cli2 \
+		--config "$config" \
+		--no-globs \
+		-- \
+		"$@"
+}
+
+main "$@"
