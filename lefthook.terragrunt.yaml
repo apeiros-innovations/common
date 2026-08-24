@@ -1,7 +1,5 @@
 ---
 pre-commit:
-  parallel: false
-
   jobs:
     - name: format
       priority: 10
