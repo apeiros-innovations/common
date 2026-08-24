@@ -16,6 +16,9 @@ REMOTE_ROOT="$(common_remote_root)"
 readonly REPOSITORY_ROOT
 readonly REMOTE_ROOT
 
+# shellcheck source=lib/trivy.sh
+source "${REMOTE_ROOT}/lib/trivy.sh"
+
 readonly -a PROVIDER_PLATFORMS=(
 	"-platform=darwin_arm64"
 	"-platform=linux_amd64"
@@ -211,7 +214,9 @@ resolve_trivy_config() {
 			"${module}/.trivy.yaml" \
 			"${module}/.trivy.yml" \
 			"${REPOSITORY_ROOT}/.trivy.yaml" \
-			"${REPOSITORY_ROOT}/.trivy.yml"
+			"${REPOSITORY_ROOT}/.trivy.yml" \
+			"${REMOTE_ROOT}/.trivy.yaml" \
+			"${REMOTE_ROOT}/.trivy.yml"
 	)" || return 1
 
 	absolute_file "$config"
@@ -388,43 +393,49 @@ lint_modules() {
 	return "$failed"
 }
 
+guard_trivy_supported_files() {
+	local path
+
+	# OpenTofu supports .tofu and .tofu.json configuration files, but
+	# Trivy currently discovers Terraform configuration through .tf and
+	# .tf.json. Refuse an incomplete scan rather than report false success.
+	while IFS= read -r -d '' path; do
+		die "${path}: Trivy does not currently scan .tofu or .tofu.json configuration files; use .tf where OpenTofu-specific replacement behavior is not required"
+	done < <(
+		git ls-files \
+			-z \
+			-- \
+			'*.tofu' \
+			'*.tofu.json'
+	)
+}
+
 scan_modules() {
 	local module
 	local config
+	local resolved_config
 	local failed=0
 
+	guard_trivy_supported_files
 	collect_module_directories "$@"
 
 	for module in "${MODULE_DIRECTORIES[@]:-}"; do
 		[[ -n $module ]] ||
 			continue
 
-		printf 'scanning OpenTofu module: %s\n' "$module"
+		config=""
 
-		if config="$(resolve_trivy_config "$module")"; then
-			(
-				cd -- "$module"
-
-				trivy config \
-					--quiet \
-					--exit-code 1 \
-					--skip-dirs .terraform \
-					--skip-dirs .terragrunt-cache \
-					--config "$config" \
-					.
-			) || failed=1
-		else
-			(
-				cd -- "$module"
-
-				trivy config \
-					--quiet \
-					--exit-code 1 \
-					--skip-dirs .terraform \
-					--skip-dirs .terragrunt-cache \
-					.
-			) || failed=1
+		if resolved_config="$(resolve_trivy_config "$module")"; then
+			config=$resolved_config
 		fi
+
+		printf 'scanning OpenTofu module with Trivy: %s\n' "$module"
+
+		trivy_scan_directory \
+			terraform \
+			"$module" \
+			"$config" ||
+			failed=1
 	done
 
 	return "$failed"
