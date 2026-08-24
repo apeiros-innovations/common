@@ -109,49 +109,19 @@ url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/514851084"
 provenance = "github-attestations"
 
 [[tools."aqua:betterleaks/betterleaks"]]
-version = "1.7.4"
+version = "1.8.1"
 backend = "aqua:betterleaks/betterleaks"
 
-[tools."aqua:betterleaks/betterleaks"."platforms.linux-arm64"]
-checksum = "sha256:038d8379935fb6699e12c2c95d0d4901a1ef420cbc553b7c4d4710570d03024e"
-url = "https://github.com/betterleaks/betterleaks/releases/download/v1.7.4/betterleaks_1.7.4_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/508893143"
-provenance = "cosign"
-
-[tools."aqua:betterleaks/betterleaks"."platforms.linux-arm64-musl"]
-checksum = "sha256:038d8379935fb6699e12c2c95d0d4901a1ef420cbc553b7c4d4710570d03024e"
-url = "https://github.com/betterleaks/betterleaks/releases/download/v1.7.4/betterleaks_1.7.4_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/508893143"
-provenance = "cosign"
-
 [tools."aqua:betterleaks/betterleaks"."platforms.linux-x64"]
-checksum = "sha256:9ed7739a39a26a2217f38726bff8a8f4fe079d3b21272caa7959823ccc444d96"
-url = "https://github.com/betterleaks/betterleaks/releases/download/v1.7.4/betterleaks_1.7.4_linux_x64.tar.gz"
-url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/508893151"
-provenance = "cosign"
-
-[tools."aqua:betterleaks/betterleaks"."platforms.linux-x64-musl"]
-checksum = "sha256:9ed7739a39a26a2217f38726bff8a8f4fe079d3b21272caa7959823ccc444d96"
-url = "https://github.com/betterleaks/betterleaks/releases/download/v1.7.4/betterleaks_1.7.4_linux_x64.tar.gz"
-url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/508893151"
+checksum = "sha256:efa407244e1ea8e35f582b8a42becdeac08bdead04f68eb752adda722d583c2a"
+url = "https://github.com/betterleaks/betterleaks/releases/download/v1.8.1/betterleaks_1.8.1_linux_x64.tar.gz"
+url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/519981768"
 provenance = "cosign"
 
 [tools."aqua:betterleaks/betterleaks"."platforms.macos-arm64"]
-checksum = "sha256:9d68ab4a009a26f3f35131f321ddff11e53aaa5608a1633308836a802fe2f732"
-url = "https://github.com/betterleaks/betterleaks/releases/download/v1.7.4/betterleaks_1.7.4_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/508893148"
-provenance = "cosign"
-
-[tools."aqua:betterleaks/betterleaks"."platforms.macos-x64"]
-checksum = "sha256:36afd22f9cfc90c1de83a9fd4a6181e3d9a7ca473783bcfed826998a64029e11"
-url = "https://github.com/betterleaks/betterleaks/releases/download/v1.7.4/betterleaks_1.7.4_darwin_x64.tar.gz"
-url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/508893142"
-provenance = "cosign"
-
-[tools."aqua:betterleaks/betterleaks"."platforms.windows-x64"]
-checksum = "sha256:085cc79a0cdf1dc86bcf087b2bfbd337dd996fd55bfc3f9e63f9f5144437e2b2"
-url = "https://github.com/betterleaks/betterleaks/releases/download/v1.7.4/betterleaks_1.7.4_windows_x64.zip"
-url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/508893178"
+checksum = "sha256:8e80f33b5f2a7426b390347b9fd466033723cb94b6bdffa7572632e2eaec964e"
+url = "https://github.com/betterleaks/betterleaks/releases/download/v1.8.1/betterleaks_1.8.1_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/betterleaks/betterleaks/releases/assets/519981770"
 provenance = "cosign"
 
 [[tools."aqua:casey/just"]]
@@ -262,95 +232,35 @@ url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/dow
 url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/506306105"
 
 [[tools."aqua:evilmartians/lefthook"]]
-version = "2.1.10"
+version = "2.1.11"
 backend = "aqua:evilmartians/lefthook"
 
-[tools."aqua:evilmartians/lefthook"."platforms.linux-arm64"]
-checksum = "sha256:6380a6ad6dd484466fd69bd83f24491d6ec27dc0b84e837be025620f7c4e11e3"
-url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.10/lefthook_2.1.10_Linux_aarch64.gz"
-url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/470227512"
-provenance = "github-attestations"
-
-[tools."aqua:evilmartians/lefthook"."platforms.linux-arm64-musl"]
-checksum = "sha256:6380a6ad6dd484466fd69bd83f24491d6ec27dc0b84e837be025620f7c4e11e3"
-url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.10/lefthook_2.1.10_Linux_aarch64.gz"
-url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/470227512"
-provenance = "github-attestations"
-
 [tools."aqua:evilmartians/lefthook"."platforms.linux-x64"]
-checksum = "sha256:0b14162a0bb2f0c64ae0759f6102f6e19c4d00981666a8ac73d4f5a6878ada4f"
-url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.10/lefthook_2.1.10_Linux_x86_64.gz"
-url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/470227493"
-provenance = "github-attestations"
-
-[tools."aqua:evilmartians/lefthook"."platforms.linux-x64-musl"]
-checksum = "sha256:0b14162a0bb2f0c64ae0759f6102f6e19c4d00981666a8ac73d4f5a6878ada4f"
-url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.10/lefthook_2.1.10_Linux_x86_64.gz"
-url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/470227493"
+checksum = "sha256:435aff51fc767a7f135717a4e3e4f3282c15e0a4ca4e2dfd1b54ef8241ee5f3f"
+url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.11/lefthook_2.1.11_Linux_x86_64.gz"
+url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/523446768"
 provenance = "github-attestations"
 
 [tools."aqua:evilmartians/lefthook"."platforms.macos-arm64"]
-checksum = "sha256:1dd4dc7b4c50efb1f9d9122cd6535c793738d6e59751c228d49f768ec9dbb604"
-url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.10/lefthook_2.1.10_MacOS_arm64.gz"
-url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/470227499"
-provenance = "github-attestations"
-
-[tools."aqua:evilmartians/lefthook"."platforms.macos-x64"]
-checksum = "sha256:49d905f28ca46442cb236060058b252da650b5f7b864bd275b61aa46945e8c4a"
-url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.10/lefthook_2.1.10_MacOS_x86_64.gz"
-url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/470227495"
-provenance = "github-attestations"
-
-[tools."aqua:evilmartians/lefthook"."platforms.windows-x64"]
-checksum = "sha256:beabbce824641ae71229ed11dd8634f47148921cb649d25c90441b737481494a"
-url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.10/lefthook_2.1.10_Windows_x86_64.gz"
-url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/470227505"
+checksum = "sha256:2d2b312730f3d900354f5f0eb37abf31ff65a033021be761f25a2eb709c9cdbc"
+url = "https://github.com/evilmartians/lefthook/releases/download/v2.1.11/lefthook_2.1.11_MacOS_arm64.gz"
+url_api = "https://api.github.com/repos/evilmartians/lefthook/releases/assets/523446757"
 provenance = "github-attestations"
 
 [[tools."aqua:golangci/golangci-lint"]]
-version = "2.12.2"
+version = "2.13.1"
 backend = "aqua:golangci/golangci-lint"
 
-[tools."aqua:golangci/golangci-lint"."platforms.linux-arm64"]
-checksum = "sha256:44cd40a8c76c86755375adfeea52cfd3533cb43d7bd647771e0ae065e166df3a"
-url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-linux-arm64.tar.gz"
-url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413470996"
-provenance = "github-attestations"
-
-[tools."aqua:golangci/golangci-lint"."platforms.linux-arm64-musl"]
-checksum = "sha256:44cd40a8c76c86755375adfeea52cfd3533cb43d7bd647771e0ae065e166df3a"
-url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-linux-arm64.tar.gz"
-url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413470996"
-provenance = "github-attestations"
-
 [tools."aqua:golangci/golangci-lint"."platforms.linux-x64"]
-checksum = "sha256:8df580d2670fed8fa984aac0507099af8df275e665215f5c7a2ae3943893a553"
-url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-linux-amd64.tar.gz"
-url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413471054"
-provenance = "github-attestations"
-
-[tools."aqua:golangci/golangci-lint"."platforms.linux-x64-musl"]
-checksum = "sha256:8df580d2670fed8fa984aac0507099af8df275e665215f5c7a2ae3943893a553"
-url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-linux-amd64.tar.gz"
-url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413471054"
+checksum = "sha256:b17bfbc9d4aaa48be7f4f1ce3240bc3d8200c870c072bacf15c26219e2cfb9cc"
+url = "https://github.com/golangci/golangci-lint/releases/download/v2.13.1/golangci-lint-2.13.1-linux-amd64.tar.gz"
+url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/522396872"
 provenance = "github-attestations"
 
 [tools."aqua:golangci/golangci-lint"."platforms.macos-arm64"]
-checksum = "sha256:a9c54498731b3128f79e090be6110f3e5fffccc617b08142ed244d4126c73f29"
-url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413470950"
-provenance = "github-attestations"
-
-[tools."aqua:golangci/golangci-lint"."platforms.macos-x64"]
-checksum = "sha256:f6f06d94b6241521c53d15450c5209b028270bf966f842afb11c030c79f5bc16"
-url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-darwin-amd64.tar.gz"
-url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413470980"
-provenance = "github-attestations"
-
-[tools."aqua:golangci/golangci-lint"."platforms.windows-x64"]
-checksum = "sha256:bd42e3ebc8cb4ececb86941983baaf1dc221bbb04d838e94ce63b49cc91e02bb"
-url = "https://github.com/golangci/golangci-lint/releases/download/v2.12.2/golangci-lint-2.12.2-windows-amd64.zip"
-url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/413471017"
+checksum = "sha256:0c9818baf6fb8ad26c6d2ef51b68d5a1e260ef07727036b1431647cc44637c7c"
+url = "https://github.com/golangci/golangci-lint/releases/download/v2.13.1/golangci-lint-2.13.1-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/golangci/golangci-lint/releases/assets/522396798"
 provenance = "github-attestations"
 
 [[tools."aqua:google/osv-scanner"]]
@@ -602,18 +512,18 @@ url = "https://github.com/norwoodj/helm-docs/releases/download/v1.14.2/helm-docs
 url_api = "https://api.github.com/repos/norwoodj/helm-docs/releases/assets/178327219"
 
 [[tools."aqua:opentofu/opentofu"]]
-version = "1.12.5"
+version = "1.12.6"
 backend = "aqua:opentofu/opentofu"
 
 [tools."aqua:opentofu/opentofu"."platforms.linux-x64"]
-checksum = "sha256:a6894d45ae7a17ce83189cce8fe04b5a65f68cefceb62455b5a6a89fa53ab38f"
-url = "https://github.com/opentofu/opentofu/releases/download/v1.12.5/tofu_1.12.5_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/484602624"
+checksum = "sha256:50a6106fa4de523d09c87af85f3db1dd47535fc005727fdca6852146476b88ec"
+url = "https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/520762723"
 
 [tools."aqua:opentofu/opentofu"."platforms.macos-arm64"]
-checksum = "sha256:2ae38150a667f5c0bd57b318d18ad8091d08f93fcca40345f3d88998661de5a9"
-url = "https://github.com/opentofu/opentofu/releases/download/v1.12.5/tofu_1.12.5_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/484602544"
+checksum = "sha256:f958ec5e511063be9feb180ca015a4cb7977566a9cf6a8550bba8c2a9b5aba74"
+url = "https://github.com/opentofu/opentofu/releases/download/v1.12.6/tofu_1.12.6_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/520762710"
 
 [[tools."aqua:rhysd/actionlint"]]
 version = "1.7.12"
@@ -740,36 +650,16 @@ version = "1.0.90"
 backend = "dotnet:Microsoft.CST.DevSkim.CLI"
 
 [[tools.go]]
-version = "1.26.6"
+version = "1.27.0"
 backend = "core:go"
 
-[tools.go."platforms.linux-arm64"]
-checksum = "sha256:d0507e9e9d7fe012aae570108cbd76c15de879e17130ab8cb90d4d7445cb1f2e"
-url = "https://dl.google.com/go/go1.26.6.linux-arm64.tar.gz"
-
-[tools.go."platforms.linux-arm64-musl"]
-checksum = "sha256:d0507e9e9d7fe012aae570108cbd76c15de879e17130ab8cb90d4d7445cb1f2e"
-url = "https://dl.google.com/go/go1.26.6.linux-arm64.tar.gz"
-
 [tools.go."platforms.linux-x64"]
-checksum = "sha256:708effb774be8237570d0add163225abbdfaf4fca28b2611df167beba4feef89"
-url = "https://dl.google.com/go/go1.26.6.linux-amd64.tar.gz"
-
-[tools.go."platforms.linux-x64-musl"]
-checksum = "sha256:708effb774be8237570d0add163225abbdfaf4fca28b2611df167beba4feef89"
-url = "https://dl.google.com/go/go1.26.6.linux-amd64.tar.gz"
+checksum = "sha256:675c26c449cbb18fc24b74650de1eabbae6e16f64326fd85a283fb3b58280685"
+url = "https://dl.google.com/go/go1.27.0.linux-amd64.tar.gz"
 
 [tools.go."platforms.macos-arm64"]
-checksum = "sha256:2dc95ce4675829f2df0e86b28bcef3283635902062a5f0580ca659bf570f3204"
-url = "https://dl.google.com/go/go1.26.6.darwin-arm64.tar.gz"
-
-[tools.go."platforms.macos-x64"]
-checksum = "sha256:08b65a63f244115121ced6c3b55ad38d801a7442acad5c949a17aad84ae6d684"
-url = "https://dl.google.com/go/go1.26.6.darwin-amd64.tar.gz"
-
-[tools.go."platforms.windows-x64"]
-checksum = "sha256:5b6c5b556525810463b5c897b50dc7a82d6a3dc0bfaf55d990a7e9f31d6b2318"
-url = "https://dl.google.com/go/go1.26.6.windows-amd64.zip"
+checksum = "sha256:90493b3bbd5e10f91d12153198bf1994fd756399b4fec93b49b0c6e2acdeeb3e"
+url = "https://dl.google.com/go/go1.27.0.darwin-arm64.tar.gz"
 
 [[tools."go:golang.org/x/tools/cmd/goimports"]]
 version = "0.49.0"
@@ -867,18 +757,19 @@ version = "0.23.2"
 backend = "npm:markdownlint-cli2"
 
 [[tools."npm:oxfmt"]]
-version = "0.63.0"
+version = "0.64.0"
 backend = "npm:oxfmt"
 
 [[tools."npm:oxlint"]]
-version = "1.78.0"
+version = "1.79.0"
 backend = "npm:oxlint"
 
 [[tools."npm:renovate"]]
-version = "44.32.5"
+version = "44.39.1"
 backend = "npm:renovate"
 
 [tools."npm:renovate".options]
+allow_builds = '["re2"]'
 trust_policy_excludes = '["@yarnpkg/libzip@3.2.2"]'
 
 [[tools.oxfmt]]

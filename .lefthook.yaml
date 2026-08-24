@@ -3,3 +3,4 @@ extends:
   - lefthook.common.yaml
   - lefthook.python.yaml
   - lefthook.github.yaml
+  - lefthook.renovate.yaml

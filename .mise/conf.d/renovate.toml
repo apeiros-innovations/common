@@ -1,3 +1,4 @@
 [tools."npm:renovate"]
-version = "44.32.5"
+version = "44.39.1"
+allow_builds = ["re2"]
 trust_policy_excludes = ["@yarnpkg/libzip@3.2.2"]
