@@ -4,5 +4,11 @@ POETRY_VIRTUALENVS_CREATE = "true"
 POETRY_VIRTUALENVS_IN_PROJECT = "true"
 POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
 
-[tools]
-"pipx:poetry" = { version = "2.4.1", depends = ["python", "uv"] }
+[tools."pipx:poetry"]
+version = "2.4.1"
+depends = ["python", "aqua:astral-sh/uv"]
+
+[deps.poetry]
+auto = false
+run = "poetry sync --no-interaction"
+timeout = "10m"
