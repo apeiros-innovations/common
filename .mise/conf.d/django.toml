@@ -1,2 +1,3 @@
 [tools]
-"pipx:djlint" = "1.44.2"
+"pipx:djlint" = { version = "1.36.4", depends = ["python", "aqua:astral-sh/ruff"] }
+"pipx:django-upgrade" = { version = "1.29.1", depends = ["python", "aqua:astral-sh/uv"] }
