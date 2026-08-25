@@ -2,16 +2,111 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+    pwd -P
+)"
+
 # shellcheck source=../lib/common.sh
-source "$(dirname -- "$0")/../lib/common.sh"
+source "${SCRIPT_DIR}/../lib/common.sh"
 
-common_root="$(common_remote_root)"
+REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+REMOTE_ROOT="$(common_remote_root)"
 
-if has_commitlint_config; then
-  exec mise x -- commitlint --edit "$1"
-fi
+readonly REPOSITORY_ROOT
+readonly REMOTE_ROOT
 
-exec mise x -- \
-  commitlint \
-  --config "$common_root/.commitlintrc.yaml" \
-  --edit "$1"
+readonly -a COMMITLINT_CONFIG_NAMES=(
+  ".commitlintrc"
+  ".commitlintrc.json"
+  ".commitlintrc.yaml"
+  ".commitlintrc.yml"
+  ".commitlintrc.js"
+  ".commitlintrc.cjs"
+  ".commitlintrc.mjs"
+  ".commitlintrc.ts"
+  ".commitlintrc.cts"
+  ".commitlintrc.mts"
+  "commitlint.config.js"
+  "commitlint.config.cjs"
+  "commitlint.config.mjs"
+  "commitlint.config.ts"
+  "commitlint.config.cts"
+  "commitlint.config.mts"
+)
+
+die() {
+  printf 'commitlint: %s\n' "$*" >&2
+  exit 1
+}
+
+resolve_config_path() {
+  local config=$1
+
+  if [[ $config == /* ]]; then
+    printf '%s\n' "$config"
+  else
+    printf '%s/%s\n' "$REPOSITORY_ROOT" "$config"
+  fi
+}
+
+repository_has_config() {
+  local name
+
+  for name in "${COMMITLINT_CONFIG_NAMES[@]}"; do
+    [[ -f ${REPOSITORY_ROOT}/${name} ]] && return 0
+  done
+
+  if [[ -f ${REPOSITORY_ROOT}/package.json ]] &&
+    grep -Eq '"commitlint"[[:space:]]*:' \
+      "${REPOSITORY_ROOT}/package.json"; then
+    return 0
+  fi
+
+  if [[ -f ${REPOSITORY_ROOT}/package.yaml ]] &&
+    grep -Eq '^[[:space:]]*commitlint[[:space:]]*:' \
+      "${REPOSITORY_ROOT}/package.yaml"; then
+    return 0
+  fi
+
+  return 1
+}
+
+resolve_shared_config() {
+  local -a candidates=()
+  local name
+
+  for name in "${COMMITLINT_CONFIG_NAMES[@]}"; do
+    candidates+=("${REMOTE_ROOT}/${name}")
+  done
+
+  first_existing_file "${candidates[@]}" ||
+    die "unable to locate shared commitlint configuration"
+}
+
+main() {
+  local config
+  local message_file
+
+  (($# == 1)) || die "usage: commitlint <commit-message-file>"
+
+  message_file=$1
+  cd -- "$REPOSITORY_ROOT"
+
+  if [[ -n ${COMMITLINT_CONFIG:-} ]]; then
+    config="$(resolve_config_path "$COMMITLINT_CONFIG")"
+    [[ -f $config ]] || die "configuration not found: ${config}"
+
+    exec mise x -- commitlint --config "$config" --edit "$message_file"
+  fi
+
+  if repository_has_config; then
+    exec mise x -- commitlint --edit "$message_file"
+  fi
+
+  config="$(resolve_shared_config)"
+
+  exec mise x -- commitlint --config "$config" --edit "$message_file"
+}
+
+main "$@"

@@ -2,19 +2,86 @@
 
 set -euo pipefail
 
-failed=0
+SCRIPT_DIR="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+    pwd -P
+)"
 
-for file in "$@"; do
-  [[ -f "$file" ]] || continue
+# shellcheck source=../lib/common.sh
+source "${SCRIPT_DIR}/../lib/common.sh"
 
-  devskim analyze \
-    -I "$file" \
-    --options-json .devskim.json \
-    -f text \
-    -E \
-    --skip-git-ignored-files \
-    --skip-excerpts ||
-    failed=1
-done
+REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+REMOTE_ROOT="$(common_remote_root)"
 
-exit "$failed"
+readonly REPOSITORY_ROOT
+readonly REMOTE_ROOT
+
+die() {
+  printf 'devskim: %s\n' "$*" >&2
+  exit 1
+}
+
+resolve_config_path() {
+  local config=$1
+
+  if [[ $config == /* ]]; then
+    printf '%s\n' "$config"
+  else
+    printf '%s/%s\n' "$REPOSITORY_ROOT" "$config"
+  fi
+}
+
+resolve_options_json() {
+  local config
+
+  if [[ -n ${DEVSKIM_OPTIONS_JSON:-} ]]; then
+    config="$(resolve_config_path "$DEVSKIM_OPTIONS_JSON")"
+    [[ -f $config ]] || die "options file not found: ${config}"
+    printf '%s\n' "$config"
+    return 0
+  fi
+
+  first_existing_file \
+    "${REPOSITORY_ROOT}/.devskim.json" \
+    "${REMOTE_ROOT}/.devskim.json" ||
+    return 1
+}
+
+main() {
+  local file
+  local options_json=""
+  local failed=0
+
+  local -a command
+
+  cd -- "$REPOSITORY_ROOT"
+
+  options_json="$(resolve_options_json)" || true
+
+  for file in "$@"; do
+    [[ -f $file ]] || continue
+
+    command=(
+      mise x --
+      devskim analyze
+      -I "$file"
+    )
+
+    if [[ -n $options_json ]]; then
+      command+=(--options-json "$options_json")
+    fi
+
+    command+=(
+      -f text
+      -E
+      --skip-git-ignored-files
+      --skip-excerpts
+    )
+
+    "${command[@]}" || failed=1
+  done
+
+  return "$failed"
+}
+
+main "$@"

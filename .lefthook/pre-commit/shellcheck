@@ -2,16 +2,82 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+    pwd -P
+)"
+
 # shellcheck source=../lib/common.sh
-source "$(dirname -- "$0")/../lib/common.sh"
+source "${SCRIPT_DIR}/../lib/common.sh"
 
-common_root="$(common_remote_root)"
+REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+REMOTE_ROOT="$(common_remote_root)"
 
-if has_shellcheck_config; then
-  exec mise x -- shellcheck "$@"
-fi
+readonly REPOSITORY_ROOT
+readonly REMOTE_ROOT
 
-exec mise x -- \
-  shellcheck \
-  --rcfile "$common_root/.shellcheckrc" \
-  "$@"
+die() {
+  printf 'shellcheck: %s\n' "$*" >&2
+  exit 1
+}
+
+resolve_config_path() {
+  local config=$1
+
+  if [[ $config == /* ]]; then
+    printf '%s\n' "$config"
+  else
+    printf '%s/%s\n' "$REPOSITORY_ROOT" "$config"
+  fi
+}
+
+repository_has_config() {
+  local path
+
+  while IFS= read -r -d '' path; do
+    [[ -n $path ]] && return 0
+  done < <(
+    git -C "$REPOSITORY_ROOT" ls-files \
+      --cached \
+      --others \
+      --exclude-standard \
+      -z \
+      -- \
+      '.shellcheckrc' \
+      'shellcheckrc' \
+      ':(glob)**/.shellcheckrc' \
+      ':(glob)**/shellcheckrc'
+  )
+
+  return 1
+}
+
+resolve_shared_config() {
+  first_existing_file \
+    "${REMOTE_ROOT}/.shellcheckrc" \
+    "${REMOTE_ROOT}/shellcheckrc" ||
+    die "unable to locate shared ShellCheck configuration"
+}
+
+main() {
+  local config
+
+  cd -- "$REPOSITORY_ROOT"
+
+  if [[ -n ${SHELLCHECK_CONFIG:-} ]]; then
+    config="$(resolve_config_path "$SHELLCHECK_CONFIG")"
+    [[ -f $config ]] || die "configuration not found: ${config}"
+
+    exec mise x -- shellcheck --rcfile "$config" -- "$@"
+  fi
+
+  if repository_has_config; then
+    exec mise x -- shellcheck -- "$@"
+  fi
+
+  config="$(resolve_shared_config)"
+
+  exec mise x -- shellcheck --rcfile "$config" -- "$@"
+}
+
+main "$@"

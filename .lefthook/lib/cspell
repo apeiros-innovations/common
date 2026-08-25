@@ -3,60 +3,149 @@
 
 set -euo pipefail
 
-# shellcheck source=../lib/common.sh
-source "$(dirname -- "$0")/../lib/common.sh"
+SCRIPT_DIR="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+    pwd -P
+)"
 
-common_root="$(common_remote_root)"
+# shellcheck source=common.sh
+source "${SCRIPT_DIR}/common.sh"
 
-run_staged() {
-  if has_cspell_config; then
-    exec mise x -- \
-      cspell lint \
-      --no-progress \
-      --no-must-find-files \
-      -- \
-      "$@"
+REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+REMOTE_ROOT="$(common_remote_root)"
+
+readonly REPOSITORY_ROOT
+readonly REMOTE_ROOT
+
+readonly -a CSPELL_CONFIG_NAMES=(
+  ".cspell.config.yaml"
+  ".cspell.config.yml"
+  "cspell.config.yaml"
+  "cspell.config.yml"
+  ".cspell.yaml"
+  ".cspell.yml"
+  "cspell.yaml"
+  "cspell.yml"
+  ".cspell.json"
+  "cspell.json"
+  ".cSpell.json"
+  "cSpell.json"
+  ".cspell.jsonc"
+  "cspell.jsonc"
+  ".cspell.config.json"
+  ".cspell.config.jsonc"
+  "cspell.config.json"
+  "cspell.config.jsonc"
+  "cspell.config.mjs"
+  "cspell.config.cjs"
+  "cspell.config.js"
+  ".cspell.config.mjs"
+  ".cspell.config.cjs"
+  ".cspell.config.js"
+  "cspell.config.mts"
+  "cspell.config.ts"
+  "cspell.config.cts"
+  ".cspell.config.mts"
+  ".cspell.config.ts"
+  ".cspell.config.cts"
+  "cspell.config.toml"
+  ".cspell.config.toml"
+)
+
+die() {
+  printf 'cspell: %s\n' "$*" >&2
+  exit 1
+}
+
+resolve_config_path() {
+  local config=$1
+
+  if [[ $config == /* ]]; then
+    printf '%s\n' "$config"
+  else
+    printf '%s/%s\n' "$REPOSITORY_ROOT" "$config"
   fi
+}
+
+resolve_shared_config() {
+  local directory
+  local name
+  local config
+
+  for directory in "$REMOTE_ROOT" "${REMOTE_ROOT}/.config"; do
+    for name in "${CSPELL_CONFIG_NAMES[@]}"; do
+      config="${directory}/${name}"
+      [[ -f $config ]] || continue
+
+      printf '%s\n' "$config"
+      return 0
+    done
+  done
+
+  config="$(
+    first_existing_file \
+      "${REMOTE_ROOT}/.vscode/cspell.json" \
+      "${REMOTE_ROOT}/.vscode/cSpell.json" \
+      "${REMOTE_ROOT}/.vscode/.cspell.json"
+  )" || die "unable to locate shared CSpell configuration"
+
+  printf '%s\n' "$config"
+}
+
+resolve_config() {
+  local config
+
+  if [[ -n ${CSPELL_CONFIG:-} ]]; then
+    config="$(resolve_config_path "$CSPELL_CONFIG")"
+    [[ -f $config ]] || die "configuration not found: ${config}"
+    printf '%s\n' "$config"
+    return 0
+  fi
+
+  resolve_shared_config
+}
+
+run_cspell() {
+  local config=$1
+
+  shift
 
   exec mise x -- \
     cspell lint \
-    --config "$common_root/.cspell.yaml" \
+    --config "$config" \
+    --stop-config-search-at "$REPOSITORY_ROOT" \
     --no-progress \
     --no-must-find-files \
-    -- \
     "$@"
 }
 
-run_repository() {
-  if has_cspell_config; then
-    exec mise x -- \
-      cspell lint \
-      --dot \
-      --no-progress \
-      --no-must-find-files \
-      .
-  fi
+run_staged() {
+  local config
 
-  exec mise x -- \
-    cspell lint \
-    --config "$common_root/.cspell.yaml" \
-    --dot \
-    --no-progress \
-    --no-must-find-files \
-    .
+  config="$(resolve_config)"
+  run_cspell "$config" -- "$@"
 }
 
-if [[ "${1:-}" == "--repository" ]]; then
-  shift
+run_repository() {
+  local config
 
-  if [[ "$#" -ne 0 ]]; then
-    printf >&2 \
-      'cspell: --repository does not accept file arguments\n'
-    exit 2
+  config="$(resolve_config)"
+  run_cspell "$config" --dot .
+}
+
+main() {
+  cd -- "$REPOSITORY_ROOT"
+
+  if [[ ${1:-} == "--repository" ]]; then
+    shift
+
+    (($# == 0)) ||
+      die "--repository does not accept file arguments"
+
+    run_repository
   fi
 
-  run_repository
-  exit
-fi
+  run_staged "$@"
+}
 
-run_staged "$@"
+main "$@"

@@ -2,8 +2,168 @@
 
 set -euo pipefail
 
-exec mise x -- \
-	markdownlint-cli2 \
-	--no-globs \
-	-- \
-	"$@"
+SCRIPT_DIR="$(
+  cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &&
+    pwd -P
+)"
+
+# shellcheck source=../lib/common.sh
+source "${SCRIPT_DIR}/../lib/common.sh"
+
+REPOSITORY_ROOT="$(git rev-parse --show-toplevel)"
+REMOTE_ROOT="$(common_remote_root)"
+
+readonly REPOSITORY_ROOT
+readonly REMOTE_ROOT
+
+readonly -a STANDARD_CONFIG_NAMES=(
+  ".markdownlint-cli2.jsonc"
+  ".markdownlint-cli2.yaml"
+  ".markdownlint-cli2.cjs"
+  ".markdownlint-cli2.mjs"
+  ".markdownlint.jsonc"
+  ".markdownlint.json"
+  ".markdownlint.yaml"
+  ".markdownlint.yml"
+  ".markdownlint.cjs"
+  ".markdownlint.mjs"
+)
+
+die() {
+  printf 'markdownlint: %s\n' "$*" >&2
+  exit 1
+}
+
+repository_has_standard_config() {
+  local name
+
+  for name in "${STANDARD_CONFIG_NAMES[@]}"; do
+    [[ -f "${REPOSITORY_ROOT}/${name}" ]] &&
+      return 0
+  done
+
+  return 1
+}
+
+resolve_shared_config() {
+  local config
+
+  config="$(
+    first_existing_file \
+      "${REMOTE_ROOT}/.markdownlint-cli2.jsonc" \
+      "${REMOTE_ROOT}/.markdownlint-cli2.yaml" \
+      "${REMOTE_ROOT}/.markdownlint-cli2.cjs" \
+      "${REMOTE_ROOT}/.markdownlint-cli2.mjs" \
+      "${REMOTE_ROOT}/.markdownlint.jsonc" \
+      "${REMOTE_ROOT}/.markdownlint.json" \
+      "${REMOTE_ROOT}/.markdownlint.yaml" \
+      "${REMOTE_ROOT}/.markdownlint.yml" \
+      "${REMOTE_ROOT}/.markdownlint.cjs" \
+      "${REMOTE_ROOT}/.markdownlint.mjs" \
+      "${REMOTE_ROOT}/.markdownlint-cli2.toml" \
+      "${REMOTE_ROOT}/.markdownlint.toml"
+  )" || die "unable to locate a shared markdownlint-cli2 configuration"
+
+  printf '%s\n' "$config"
+}
+
+resolve_config_path() {
+  local config=$1
+
+  if [[ $config == /* ]]; then
+    printf '%s\n' "$config"
+  else
+    printf '%s/%s\n' "$REPOSITORY_ROOT" "$config"
+  fi
+}
+
+run_markdownlint() {
+  local config=${1:-}
+  local pointer=${2:-}
+
+  shift 2
+
+  local -a command=(
+    mise x --
+    markdownlint-cli2
+  )
+
+  if [[ -n $config ]]; then
+    command+=(--config "$config")
+  fi
+
+  if [[ -n $pointer ]]; then
+    command+=(--configPointer "$pointer")
+  fi
+
+  command+=(
+    --no-globs
+    --
+    "$@"
+  )
+
+  exec "${command[@]}"
+}
+
+main() {
+  local config
+  local pointer=${MARKDOWNLINT_CONFIG_POINTER:-}
+
+  (($# > 0)) || exit 0
+
+  cd -- "$REPOSITORY_ROOT"
+
+  # An explicit path supports any filename and format accepted by
+  # markdownlint-cli2. Relative paths are resolved from the repository root.
+  if [[ -n ${MARKDOWNLINT_CONFIG:-} ]]; then
+    config="$(resolve_config_path "$MARKDOWNLINT_CONFIG")"
+
+    [[ -f $config ]] ||
+      die "configuration not found: ${config}"
+
+    run_markdownlint "$config" "$pointer" "$@"
+  fi
+
+  [[ -z $pointer ]] ||
+    die "MARKDOWNLINT_CONFIG_POINTER requires MARKDOWNLINT_CONFIG"
+
+  # Standard JSON(C), YAML, and JavaScript files are discovered and merged
+  # automatically, including per-directory overrides.
+  if repository_has_standard_config; then
+    run_markdownlint "" "" "$@"
+  fi
+
+  # TOML is supported only as an explicit base configuration, not as a
+  # per-directory override. These names provide predictable root conventions.
+  if config="$(
+    first_existing_file \
+      "${REPOSITORY_ROOT}/.markdownlint-cli2.toml" \
+      "${REPOSITORY_ROOT}/.markdownlint.toml"
+  )"; then
+    run_markdownlint "$config" "" "$@"
+  fi
+
+  if [[ -f ${REPOSITORY_ROOT}/package.json ]] &&
+    grep -Eq '"markdownlint-cli2"[[:space:]]*:' \
+      "${REPOSITORY_ROOT}/package.json"; then
+    run_markdownlint \
+      "${REPOSITORY_ROOT}/package.json" \
+      "/markdownlint-cli2" \
+      "$@"
+  fi
+
+  if [[ -f ${REPOSITORY_ROOT}/pyproject.toml ]] &&
+    grep -Eq \
+      '^[[:space:]]*\[tool\.markdownlint-cli2([.]config)?\][[:space:]]*(#.*)?$' \
+      "${REPOSITORY_ROOT}/pyproject.toml"; then
+    run_markdownlint \
+      "${REPOSITORY_ROOT}/pyproject.toml" \
+      "/tool/markdownlint-cli2" \
+      "$@"
+  fi
+
+  config="$(resolve_shared_config)"
+  run_markdownlint "$config" "" "$@"
+}
+
+main "$@"
