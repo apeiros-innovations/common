@@ -20,8 +20,10 @@ pre-commit:
           - name: pylint
             only:
               - run: |
-                  [ -f pylintrc ] && exit 0
-                  [ -f .pylintrc ] && exit 0
+                  for config in pylintrc .pylintrc
+                  do
+                    [ -f "$config" ] && exit 0
+                  done
 
                   for config in \
                     pylintrc.toml \
