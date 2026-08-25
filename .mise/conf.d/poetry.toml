@@ -1,5 +1,6 @@
 [env]
 _.python.venv = { path = ".venv", create = true }
+
 POETRY_VIRTUALENVS_CREATE = "true"
 POETRY_VIRTUALENVS_IN_PROJECT = "true"
 POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
@@ -10,5 +11,5 @@ depends = ["python", "aqua:astral-sh/uv"]
 
 [deps.poetry]
 auto = false
-run = "poetry sync --no-interaction"
+run = "poetry sync --no-interaction --no-ansi"
 timeout = "10m"

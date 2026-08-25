@@ -7,65 +7,9 @@ pre-commit:
         jobs:
           - name: format python
             group:
+              parallel: false
               jobs:
-                - name: django upgrade
-                  only:
-                    - run: |
-                        [ -f pyproject.toml ] || exit 1
-
-                        mise x -- python3 - <<'PY'
-                        import pathlib
-                        import re
-                        import tomllib
-
-                        path = pathlib.Path("pyproject.toml")
-                        data = tomllib.loads(path.read_text(encoding="utf-8"))
-
-                        dependencies = data.get("project", {}).get(
-                            "dependencies",
-                            [],
-                        )
-
-                        pattern = re.compile(
-                            r"^\s*django(?:\[[^\]]+\])?"
-                            r"(?:\s*(?:===|==|~=|!=|<=|>=|<|>)|\s*;|\s*$)",
-                            re.IGNORECASE,
-                        )
-
-                        raise SystemExit(
-                            0
-                            if any(
-                                pattern.search(dependency)
-                                for dependency in dependencies
-                            )
-                            else 1
-                        )
-                        PY
-                  glob:
-                    - "**/*.py"
-                  run: >-
-                    mise x -- django-upgrade --exit-zero-even-if-changed {staged_files}
-                  stage_fixed: true
-                  tags:
-                    - format
-                    - python
-                    - django
-                    - django-upgrade
-
                 - name: ruff fix
-                  only: &ruff-config-present
-                    - run: |
-                        [ -f .ruff.toml ] && exit 0
-                        [ -f ruff.toml ] && exit 0
-
-                        if [ -f pyproject.toml ] &&
-                           grep -Eq \
-                             '^[[:space:]]*\[tool\.ruff([.][^]]+)?\]' \
-                             pyproject.toml; then
-                          exit 0
-                        fi
-
-                        exit 1
                   glob:
                     - "**/*.{py,pyi,pyw}"
                   run: >-
@@ -78,7 +22,6 @@ pre-commit:
                     - ruff
 
                 - name: ruff format
-                  only: *ruff-config-present
                   glob:
                     - "**/*.{py,pyi,pyw}"
                   run: >-
@@ -94,7 +37,6 @@ pre-commit:
         parallel: true
         jobs:
           - name: ruff
-            only: *ruff-config-present
             glob:
               - "**/*.{py,pyi,pyw}"
             run: >-
@@ -103,42 +45,3 @@ pre-commit:
               - lint
               - python
               - ruff
-
-          - name: pylint
-            only: &pylint-config-present
-              - run: |
-                  [ -f pylintrc ] && exit 0
-                  [ -f .pylintrc ] && exit 0
-                  [ -f pylintrc.toml ] && exit 0
-                  [ -f .pylintrc.toml ] && exit 0
-
-                  if [ -f pyproject.toml ] &&
-                     grep -Eq \
-                       '^[[:space:]]*\[tool\.pylint([.][^]]+)?\]' \
-                       pyproject.toml; then
-                    exit 0
-                  fi
-
-                  if [ -f setup.cfg ] &&
-                     grep -Eqi \
-                       '^[[:space:]]*\[pylint([.][^]]+)?\]' \
-                       setup.cfg; then
-                    exit 0
-                  fi
-
-                  if [ -f tox.ini ] &&
-                     grep -Eqi \
-                       '^[[:space:]]*\[pylint([.][^]]+)?\]' \
-                       tox.ini; then
-                    exit 0
-                  fi
-
-                  exit 1
-            glob:
-              - "**/*.{py,pyi,pyw}"
-            run: >-
-              mise x -- pylint -- {staged_files}
-            tags:
-              - lint
-              - python
-              - pylint
