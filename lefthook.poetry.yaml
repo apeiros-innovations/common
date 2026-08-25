@@ -1,0 +1,58 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      group:
+        parallel: true
+        jobs:
+          - name: poetry configuration
+            glob:
+              - "pyproject.toml"
+              - "poetry.lock"
+            run: >-
+              mise x -- poetry check --lock --strict
+            tags:
+              - validation
+              - python
+              - poetry
+              - dependencies
+
+          - name: pylint
+            only:
+              - run: |
+                  [ -f pylintrc ] && exit 0
+                  [ -f .pylintrc ] && exit 0
+
+                  for config in \
+                    pylintrc.toml \
+                    .pylintrc.toml \
+                    pyproject.toml
+                  do
+                    if [ -f "$config" ] &&
+                       grep -Eq \
+                         '^[[:space:]]*\[tool\.pylint([.][^]]+)?\]' \
+                         "$config"; then
+                      exit 0
+                    fi
+                  done
+
+                  for config in setup.cfg tox.ini
+                  do
+                    if [ -f "$config" ] &&
+                       grep -Eqi \
+                         '^[[:space:]]*\[pylint([.][^]]+)?\]' \
+                         "$config"; then
+                      exit 0
+                    fi
+                  done
+
+                  exit 1
+            glob:
+              - "**/*.{py,pyi,pyw}"
+            run: >-
+              mise x -- poetry run pylint -- {staged_files}
+            tags:
+              - lint
+              - python
+              - poetry
+              - pylint
