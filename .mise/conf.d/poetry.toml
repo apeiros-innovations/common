@@ -1,0 +1,8 @@
+[env]
+_.python.venv = { path = ".venv", create = true }
+POETRY_VIRTUALENVS_CREATE = "true"
+POETRY_VIRTUALENVS_IN_PROJECT = "true"
+POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
+
+[tools]
+"pipx:poetry" = { version = "2.4.1", depends = ["python", "uv"] }
