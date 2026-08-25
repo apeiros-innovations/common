@@ -6,16 +6,16 @@ pre-commit:
         parallel: true
         jobs:
           - name: poetry configuration
-            glob:
-              - "pyproject.toml"
-              - "poetry.lock"
             run: >-
               mise x -- poetry check --lock --strict
+            fail_text: >-
+              Poetry configuration or poetry.lock is inconsistent. Run `mise x -- poetry lock`, review poetry.lock, and stage the result.
             tags:
               - validation
               - python
               - poetry
               - dependencies
+              - supply-chain
 
           - name: pylint
             only:
