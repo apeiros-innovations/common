@@ -1,3 +1,2 @@
 [tools]
-"pipx:pylint" = "4.0.7"
-"pipx:django-upgrade" = "1.32.0"
+"aqua:astral-sh/ruff" = "0.14.10"
