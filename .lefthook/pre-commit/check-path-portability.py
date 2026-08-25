@@ -33,11 +33,7 @@ def tracked_paths() -> list[str]:
         ]
     )
 
-    return [
-        os.fsdecode(path)
-        for path in raw.split(b"\0")
-        if path
-    ]
+    return [os.fsdecode(path) for path in raw.split(b"\0") if path]
 
 
 def portable_key(path: str) -> str:
@@ -54,60 +50,30 @@ def check_component(
     problems: list[str] = []
 
     if component.endswith((" ", ".")):
-        problems.append(
-            "path component ends with a space or period"
-        )
+        problems.append("path component ends with a space or period")
 
-    invalid = sorted(
-        {
-            char
-            for char in component
-            if char in WINDOWS_INVALID
-        }
-    )
+    invalid = sorted({char for char in component if char in WINDOWS_INVALID})
 
     if invalid:
-        rendered = " ".join(
-            repr(char)
-            for char in invalid
-        )
+        rendered = " ".join(repr(char) for char in invalid)
 
         problems.append(
-            "path component contains "
-            f"Windows-reserved character(s): {rendered}"
+            f"path component contains Windows-reserved character(s): {rendered}"
         )
 
-    controls = sorted(
-        {
-            ord(char)
-            for char in component
-            if ord(char) < 32
-        }
-    )
+    controls = sorted({ord(char) for char in component if ord(char) < 32})
 
     if controls:
-        rendered = ", ".join(
-            f"U+{code:04X}"
-            for code in controls
-        )
+        rendered = ", ".join(f"U+{code:04X}" for code in controls)
 
-        problems.append(
-            "path component contains control "
-            f"character(s): {rendered}"
-        )
+        problems.append(f"path component contains control character(s): {rendered}")
 
     stem = component.split(".", 1)[0].upper()
 
     if stem in WINDOWS_RESERVED:
-        problems.append(
-            "path component uses Windows-reserved "
-            f"name {stem!r}"
-        )
+        problems.append(f"path component uses Windows-reserved name {stem!r}")
 
-    return [
-        f"{path}: {problem}"
-        for problem in problems
-    ]
+    return [f"{path}: {problem}" for problem in problems]
 
 
 seen: dict[str, str] = {}

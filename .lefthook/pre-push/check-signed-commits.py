@@ -40,9 +40,7 @@ def outgoing_commits(
     local_oid: str,
     remote_oid: str,
 ) -> list[str]:
-    local_commit = peel_commit(
-        local_oid
-    )
+    local_commit = peel_commit(local_oid)
 
     if local_commit is None:
         return []
@@ -55,9 +53,7 @@ def outgoing_commits(
             f"--remotes={remote_name}",
         )
     else:
-        remote_commit = peel_commit(
-            remote_oid
-        )
+        remote_commit = peel_commit(remote_oid)
 
         if remote_commit is None:
             output = git_output(
@@ -72,11 +68,7 @@ def outgoing_commits(
                 f"{remote_commit}..{local_commit}",
             )
 
-    return (
-        output.splitlines()
-        if output
-        else []
-    )
+    return output.splitlines() if output else []
 
 
 def has_signature(
@@ -92,9 +84,7 @@ def has_signature(
         stderr=subprocess.DEVNULL,
     )
 
-    headers, _, _ = raw.partition(
-        b"\n\n"
-    )
+    headers, _, _ = raw.partition(b"\n\n")
 
     return any(
         line.startswith(
@@ -116,11 +106,7 @@ def describe(commit: str) -> str:
     )
 
 
-remote_name = (
-    sys.argv[1]
-    if len(sys.argv) > 1
-    else "origin"
-)
+remote_name = sys.argv[1] if len(sys.argv) > 1 else "origin"
 
 failed = False
 checked: set[str] = set()
@@ -141,9 +127,7 @@ for line in sys.stdin:
     if is_zero_oid(local_oid):
         continue
 
-    if not local_ref.startswith(
-        "refs/heads/"
-    ):
+    if not local_ref.startswith("refs/heads/"):
         continue
 
     for commit in outgoing_commits(
@@ -160,8 +144,7 @@ for line in sys.stdin:
             continue
 
         print(
-            f"{remote_ref}: unsigned outgoing commit: "
-            f"{describe(commit)}",
+            f"{remote_ref}: unsigned outgoing commit: {describe(commit)}",
             file=sys.stderr,
         )
 

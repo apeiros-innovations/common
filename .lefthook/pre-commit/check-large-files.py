@@ -30,11 +30,7 @@ added_raw = git_output(
     *paths,
 )
 
-added_paths = [
-    os.fsdecode(path)
-    for path in added_raw.split(b"\0")
-    if path
-]
+added_paths = [os.fsdecode(path) for path in added_raw.split(b"\0") if path]
 
 if not added_paths:
     raise SystemExit(0)

@@ -3,12 +3,7 @@
 import runpy
 from pathlib import Path
 
-script = (
-    Path(__file__).resolve().parent
-    / ".."
-    / "lib"
-    / "dependency-security.py"
-)
+script = Path(__file__).resolve().parent / ".." / "lib" / "dependency-security.py"
 
 runpy.run_path(
     str(script),

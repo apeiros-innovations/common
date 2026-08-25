@@ -49,10 +49,7 @@ def run_git(
     if result.returncode not in allowed_returncodes:
         detail = os.fsdecode(result.stderr).strip()
         command = shlex.join(("git", *args))
-        message = (
-            f"{command} failed with exit status "
-            f"{result.returncode}"
-        )
+        message = f"{command} failed with exit status {result.returncode}"
 
         if detail:
             message = f"{message}: {detail}"
@@ -75,11 +72,7 @@ def repository_root() -> Path:
         "rev-parse",
         "--show-toplevel",
     )
-    raw_path = (
-        result.stdout
-        .removesuffix(b"\n")
-        .removesuffix(b"\r")
-    )
+    raw_path = result.stdout.removesuffix(b"\n").removesuffix(b"\r")
 
     return Path(os.fsdecode(raw_path))
 
@@ -117,9 +110,7 @@ def untracked_ds_store_paths(
             *DS_STORE_PATHS,
             cwd=root,
         )
-        paths.update(
-            nul_fields(result.stdout)
-        )
+        paths.update(nul_fields(result.stdout))
 
     return paths
 
@@ -130,18 +121,10 @@ def remove_ds_store_files(
 ) -> None:
     """Remove .DS_Store files and stage tracked deletions."""
     tracked_ds_store = {
-        path
-        for path in tracked
-        if PurePosixPath(
-            os.fsdecode(path)
-        ).name
-        == DS_STORE
+        path for path in tracked if PurePosixPath(os.fsdecode(path)).name == DS_STORE
     }
 
-    discovered = (
-        untracked_ds_store_paths(root)
-        | tracked_ds_store
-    )
+    discovered = untracked_ds_store_paths(root) | tracked_ds_store
 
     for relative_raw in sorted(discovered):
         relative = os.fsdecode(relative_raw)
@@ -150,9 +133,7 @@ def remove_ds_store_files(
         try:
             path.unlink(missing_ok=True)
         except OSError as error:
-            raise HookError(
-                f"unable to remove {relative}: {error}"
-            ) from error
+            raise HookError(f"unable to remove {relative}: {error}") from error
 
         print(
             f"removed macOS metadata: {relative}",
@@ -162,10 +143,7 @@ def remove_ds_store_files(
     if not tracked_ds_store:
         return
 
-    pathspecs = b"".join(
-        path + b"\0"
-        for path in sorted(tracked_ds_store)
-    )
+    pathspecs = b"".join(path + b"\0" for path in sorted(tracked_ds_store))
 
     # Stage removal of tracked or force-added copies.
     run_git(
@@ -188,10 +166,7 @@ def added_paths(
 
     # Treat hook arguments as literal filenames rather than
     # allowing Git pathspec metacharacters.
-    literal_pathspecs = [
-        f":(top,literal){path}"
-        for path in requested_paths
-    ]
+    literal_pathspecs = [f":(top,literal){path}" for path in requested_paths]
 
     result = run_git(
         "diff",
@@ -213,10 +188,7 @@ def tracked_gitignores(
     return {
         path
         for path in tracked
-        if PurePosixPath(
-            os.fsdecode(path)
-        ).name
-        == ".gitignore"
+        if PurePosixPath(os.fsdecode(path)).name == ".gitignore"
     }
 
 
@@ -226,10 +198,7 @@ def parse_ignore_matches(
     fields = nul_fields(output)
 
     if len(fields) % 4 != 0:
-        raise HookError(
-            "git check-ignore returned malformed "
-            "verbose output"
-        )
+        raise HookError("git check-ignore returned malformed verbose output")
 
     matches: list[IgnoreMatch] = []
 
@@ -271,28 +240,17 @@ def forced_ignored_additions(
         "-z",
         "--stdin",
         cwd=root,
-        input_data=b"".join(
-            path + b"\0"
-            for path in added
-        ),
+        input_data=b"".join(path + b"\0" for path in added),
         allowed_returncodes=frozenset({0, 1}),
     )
 
-    matches = parse_ignore_matches(
-        result.stdout
-    )
-    tracked_sources = {
-        os.fsdecode(path)
-        for path in gitignores
-    }
+    matches = parse_ignore_matches(result.stdout)
+    tracked_sources = {os.fsdecode(path) for path in gitignores}
 
     return [
         match
         for match in matches
-        if (
-            match.source in tracked_sources
-            and not match.pattern.startswith("!")
-        )
+        if (match.source in tracked_sources and not match.pattern.startswith("!"))
     ]
 
 
@@ -330,6 +288,4 @@ def main(argv: Sequence[str]) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(
-        main(sys.argv[1:])
-    )
+    raise SystemExit(main(sys.argv[1:]))

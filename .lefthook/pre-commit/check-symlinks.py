@@ -6,9 +6,7 @@ import re
 import subprocess
 import sys
 
-WINDOWS_DRIVE = re.compile(
-    r"^[A-Za-z]:"
-)
+WINDOWS_DRIVE = re.compile(r"^[A-Za-z]:")
 
 
 def git_output(*args: str) -> bytes:
@@ -27,10 +25,7 @@ def escapes_repository(
         "/",
     )
 
-    if (
-        portable_target.startswith("/")
-        or WINDOWS_DRIVE.match(target)
-    ):
+    if portable_target.startswith("/") or WINDOWS_DRIVE.match(target):
         return True
 
     resolved = posixpath.normpath(
@@ -40,10 +35,7 @@ def escapes_repository(
         )
     )
 
-    return (
-        resolved == ".."
-        or resolved.startswith("../")
-    )
+    return resolved == ".." or resolved.startswith("../")
 
 
 paths = sys.argv[1:]
@@ -71,10 +63,7 @@ for record in raw.split(b"\0"):
         3,
     )
 
-    if (
-        stage != b"0"
-        or mode != b"120000"
-    ):
+    if stage != b"0" or mode != b"120000":
         continue
 
     path = os.fsdecode(path_raw)
@@ -99,8 +88,7 @@ for record in raw.split(b"\0"):
         target,
     ):
         print(
-            f"{path}: symlink target {target!r} "
-            "resolves outside the repository",
+            f"{path}: symlink target {target!r} resolves outside the repository",
             file=sys.stderr,
         )
         failed = True
