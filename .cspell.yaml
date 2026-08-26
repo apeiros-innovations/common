@@ -79,6 +79,7 @@ ignorePaths:
   - .yarn/**
   - .github/**
   - .gitignore
+  - schemas/**
 patterns:
   - name: markdown-inline-code
     pattern: /`+[^`\r\n]*`+/g
