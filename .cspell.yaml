@@ -37,6 +37,8 @@ dictionaries:
   - software-tools
   - k8s
   - cpp-compound-words
+files:
+  - "**/*.{md,mdx}"
 ignorePaths:
   - CHANGELOG.md
   - LICENSE
