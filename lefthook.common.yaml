@@ -29,6 +29,8 @@ pre-commit:
 
   jobs:
     - name: format
+      exclude:
+        - "**/schemas/**"
       group:
         parallel: true
         jobs:
