@@ -44,6 +44,8 @@ ignorePaths:
   - LICENSE
   - .mise/**
   - .vscode/**
+  - go.mod
+  - go.sum
   - pnpm-lock.yaml
   - package-lock.json
   - yarn.lock
