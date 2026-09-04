@@ -2,8 +2,6 @@ min_version = { hard = "2026.8.12" }
 [settings]
 lockfile = true
 lockfile_platforms = ["macos-arm64", "linux-x64"]
-locked = true
-minimum_release_age = "3d"
 experimental = true
 
 [hooks]
