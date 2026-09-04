@@ -83,8 +83,7 @@ ignorePaths:
   - .yarn/**
   - .github/**
   - .gitignore
-  - "**/*.sops.yaml"
-  - .sops.yaml
+  - "**/*sops*"
   - schemas/**
 patterns:
   - name: markdown-inline-code
