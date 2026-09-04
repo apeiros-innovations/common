@@ -1,2 +1,2 @@
 [tools]
-"aqua:astral-sh/ruff" = "0.14.10"
+"aqua:astral-sh/ruff" = "0.16.5"

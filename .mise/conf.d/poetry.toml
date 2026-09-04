@@ -6,7 +6,7 @@ POETRY_VIRTUALENVS_IN_PROJECT = "true"
 POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
 
 [tools."pipx:poetry"]
-version = "2.4.1"
+version = "2.4.2"
 depends = ["python", "aqua:astral-sh/uv"]
 
 [deps.poetry]
