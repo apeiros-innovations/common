@@ -84,6 +84,7 @@ ignorePaths:
   - .github/**
   - .gitignore
   - "**/*.sops.yaml"
+  - .sops.yaml
   - schemas/**
 patterns:
   - name: markdown-inline-code
