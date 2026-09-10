@@ -16,7 +16,11 @@
     ".markdownlintignore": "ignore",
     ".trivyignore": "ignore",
     ".betterleaksignore": "ignore",
-    "**/*.json5": "json5"
+    "**/*.json5": "json5",
+    "**/terragrunt.hcl": "hcl",
+    "**/terragrunt.stack.hcl": "hcl",
+    "**/terragrunt.values.hcl": "hcl",
+    "**/*.tofu": "terraform"
   },
   "yaml.schemas": {
     "https://raw.githubusercontent.com/streetsidesoftware/cspell/main/cspell.schema.json": "**/.cspell.yaml"
@@ -77,5 +81,18 @@
   },
   "[toml]": {
     "editor.defaultFormatter": "tamasfe.even-better-toml"
-  }
+  },
+  "[terraform]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true
+  },
+  "[terraform-vars]": {
+    "editor.defaultFormatter": "hashicorp.terraform",
+    "editor.formatOnSave": true
+  },
+  "[hcl]": {
+    "editor.formatOnSave": false
+  },
+  "terraform.validation.enableEnhancedValidation": false,
+  "terraform.experimentalFeatures.validateOnSave": false
 }
