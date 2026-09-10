@@ -384,6 +384,16 @@ lint_modules() {
 
 		printf 'linting OpenTofu module: %s\n' "$module"
 
+		# Plugin selection belongs to the resolved module/repository config.
+		# TFLint reuses installed plugins; do not require a manual bootstrap.
+		if ! tflint \
+			--chdir="$module" \
+			--config="$config" \
+			--init; then
+			failed=1
+			continue
+		fi
+
 		tflint \
 			--chdir="$module" \
 			--config="$config" ||
