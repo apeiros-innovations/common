@@ -1,0 +1,32 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "format toml"
+            glob:
+              - "**/*.toml"
+            exclude:
+              - "mise.toml"
+              - ".mise.toml"
+              - "mise/config.toml"
+              - "mise/conf.d/*.toml"
+              - ".mise/config.toml"
+              - ".mise/conf.d/*.toml"
+              - ".config/mise/config.toml"
+              - ".config/mise/conf.d/*.toml"
+              - "mise.lock"
+              - ".mise/mise.lock"
+              - ".config/mise/mise.lock"
+            script: oxfmt
+            runner: bash
+            args: "--write {staged_files}"
+            stage_fixed: true
+            tags:
+              - common-tools:oxfmt
+              - format
+              - toml
+              - oxfmt

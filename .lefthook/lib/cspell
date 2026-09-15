@@ -68,28 +68,50 @@ resolve_config_path() {
 }
 
 resolve_shared_config() {
+  local config="${REMOTE_ROOT}/.cspell.yaml"
+  [[ -f $config ]] || die "shared configuration not found: ${config}"
+  printf '%s\n' "$config"
+}
+
+resolve_repository_config() {
   local directory
   local name
   local config
+  local -a configs=()
 
-  for directory in "$REMOTE_ROOT" "${REMOTE_ROOT}/.config"; do
+  for directory in "$REPOSITORY_ROOT" "${REPOSITORY_ROOT}/.config"; do
     for name in "${CSPELL_CONFIG_NAMES[@]}"; do
       config="${directory}/${name}"
-      [[ -f $config ]] || continue
-
-      printf '%s\n' "$config"
-      return 0
+      [[ ! -f $config ]] || configs+=("$config")
     done
   done
 
-  config="$(
-    first_existing_file \
-      "${REMOTE_ROOT}/.vscode/cspell.json" \
-      "${REMOTE_ROOT}/.vscode/cSpell.json" \
-      "${REMOTE_ROOT}/.vscode/.cspell.json"
-  )" || die "unable to locate shared CSpell configuration"
+  for name in cspell.json cSpell.json .cspell.json; do
+    config="${REPOSITORY_ROOT}/.vscode/${name}"
+    [[ ! -f $config ]] || configs+=("$config")
+  done
 
-  printf '%s\n' "$config"
+  if [[ -f ${REPOSITORY_ROOT}/package.json ]]; then
+    # Only a real top-level CSpell setting makes package.json a config.
+    # A dependency named cspell must not change configuration discovery.
+    local has_config
+    has_config="$(mise x -- node -e '
+      const fs = require("node:fs");
+      const pkg = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+      process.stdout.write(String(Object.hasOwn(pkg, "cspell")));
+    ' "${REPOSITORY_ROOT}/package.json")" || return "$?"
+    [[ $has_config != true ]] || configs+=("${REPOSITORY_ROOT}/package.json")
+  fi
+
+  if ((${#configs[@]} > 1)); then
+    printf 'cspell: multiple project configurations found:\n' >&2
+    printf '  %s\n' "${configs[@]}" >&2
+    die "keep one project config and import other settings, or set CSPELL_CONFIG to the intended file"
+  fi
+
+  if ((${#configs[@]} == 1)); then
+    printf '%s\n' "${configs[0]}"
+  fi
 }
 
 resolve_config() {
@@ -102,7 +124,12 @@ resolve_config() {
     return 0
   fi
 
-  resolve_shared_config
+  config="$(resolve_repository_config)" || return "$?"
+  if [[ -n $config ]]; then
+    printf '%s\n' "$config"
+  else
+    resolve_shared_config
+  fi
 }
 
 run_cspell() {
@@ -110,42 +137,41 @@ run_cspell() {
 
   shift
 
-  exec mise x -- \
-    cspell lint \
-    --config "$config" \
-    --stop-config-search-at "$REPOSITORY_ROOT" \
-    --no-progress \
-    --no-must-find-files \
-    "$@"
-}
+  local -a command=(
+    mise x -- cspell lint
+    --config "$config"
+    --gitignore
+    --gitignore-root "$REPOSITORY_ROOT"
+    --no-progress
+    --no-must-find-files
+  )
 
-run_staged() {
-  local config
+  if [[ -n ${CSPELL_CONFIG:-} || $config != "$REPOSITORY_ROOT/"* ]]; then
+    # With a shared fallback there is no project config to stop discovery.
+    # CSpell 10.2.1 does not apply --stop-config-search-at to document lookup.
+    command+=(--no-config-search)
+  else
+    command+=(--stop-config-search-at "$REPOSITORY_ROOT")
+  fi
 
-  config="$(resolve_config)"
-  run_cspell "$config" -- "$@"
-}
+  # Explicit files preserve literal names (including glob characters).
+  # Prefix relative paths so a filename beginning with '-' is not an option.
+  local file
+  for file in "$@"; do
+    [[ $file == /* ]] || file="./${file}"
+    command+=(--file "$file")
+  done
 
-run_repository() {
-  local config
-
-  config="$(resolve_config)"
-  run_cspell "$config" --dot .
+  exec "${command[@]}"
 }
 
 main() {
+  local config
+
+  (($# > 0)) || return 0
   cd -- "$REPOSITORY_ROOT"
-
-  if [[ ${1:-} == "--repository" ]]; then
-    shift
-
-    (($# == 0)) ||
-      die "--repository does not accept file arguments"
-
-    run_repository
-  fi
-
-  run_staged "$@"
+  config="$(resolve_config)"
+  run_cspell "$config" "$@"
 }
 
 main "$@"

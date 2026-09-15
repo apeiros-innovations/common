@@ -1,0 +1,21 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "renovate config"
+            glob:
+              - "renovate.{json,jsonc,json5}"
+              - ".github/renovate.{json,jsonc,json5}"
+              - ".gitlab/renovate.{json,jsonc,json5}"
+              - ".renovaterc"
+              - ".renovaterc.{json,jsonc,json5}"
+            run: "mise x -- renovate-config-validator --strict"
+            tags:
+              - common-tools:renovate
+              - validation
+              - dependency-management
+              - renovate

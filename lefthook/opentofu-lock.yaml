@@ -1,0 +1,26 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: generate
+      skip: false
+      group:
+        jobs:
+          - name: "opentofu provider lock"
+            glob:
+              - "**/*.{tf,tofu}"
+              - "**/*.{tf,tofu}.json"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            script: opentofu
+            runner: "mise x -- bash"
+            args: "providers-lock {staged_files}"
+            tags:
+              - common-tools:opentofu-runtime
+              - dependencies
+              - generation
+              - supply-chain
+              - opentofu
+              - providers

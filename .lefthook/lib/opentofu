@@ -290,6 +290,12 @@ generate_docs() {
 		}
 
 		if [[ -f $readme ]]; then
+			# Lefthook caches the initial staged-file list. Format new output
+			# here so it does not need a second commit attempt to be formatted.
+			bash "${REMOTE_ROOT}/.lefthook/pre-commit/oxfmt" --write "$readme" || {
+				failed=1
+				continue
+			}
 			git add -- "$readme"
 		fi
 	done
@@ -349,9 +355,12 @@ providers_lock() {
 			printf \
 				'opentofu: provider locking failed: %s\n' \
 				"$module" >&2
+			# These backticks quote suggested commands; they must remain literal.
+			# shellcheck disable=SC2016
 			printf \
 				'opentofu: the hook does not run `tofu init -upgrade` automatically because that could change otherwise-valid provider selections\n' \
 				>&2
+			# shellcheck disable=SC2016
 			printf \
 				'opentofu: if provider constraints were intentionally changed, run `tofu -chdir=%s init -backend=false -upgrade`, review .terraform.lock.hcl, and rerun the hook\n' \
 				"$module" >&2

@@ -5,4 +5,12 @@ lockfile_platforms = ["macos-arm64", "linux-x64"]
 experimental = true
 
 [hooks]
-postinstall = "lefthook install"
+postinstall = "MISE_AUTO_INSTALL=false mise x -- lefthook install"
+
+[tasks."tools:sync"]
+description = "Generate common tool requirements from the selected Lefthook checks"
+run = "lefthook run common-tools --"
+
+[tasks."tools:check"]
+description = "Check that generated common tool requirements are current"
+run = "lefthook run common-tools -- --check"

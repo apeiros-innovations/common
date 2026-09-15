@@ -1,0 +1,18 @@
+---
+extends: []
+pre-push:
+  jobs:
+    - name: "cspell repository"
+      script: cspell
+      runner: bash
+      args: "{all_files}"
+      tags:
+        - common-tools:cspell
+        - lint
+        - spelling
+        - cspell
+      file_types:
+        - text
+        - "not symlink"
+      exclude:
+        - "**/*.svg"

@@ -1,0 +1,35 @@
+---
+extends: []
+pre-push:
+  jobs:
+    - name: "go mod tidy"
+      only:
+        - run: "git ls-files | grep -Eq '(^|/)go\\.mod$'"
+      run: |
+        mise x -- \
+          bash -e -o pipefail -c '
+            failed=0
+
+            while IFS= read -r -d "" path; do
+              case "$path" in
+                go.mod|*/go.mod)
+                  dir=$(dirname "$path")
+
+                  printf "checking module metadata: %s\n" "$dir"
+
+                  (
+                    cd "$dir"
+                    go mod tidy -diff
+                  ) || failed=1
+                  ;;
+              esac
+            done < <(git ls-files -z)
+
+            exit "$failed"
+          '
+      tags:
+        - common-tools:go-runtime
+        - validation
+        - go
+        - modules
+        - dependencies

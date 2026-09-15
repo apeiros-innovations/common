@@ -1,0 +1,21 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "lint yaml"
+            glob:
+              - "**/*.{yaml,yml}"
+            exclude:
+              - "**/templates/**"
+            script: yamllint
+            runner: bash
+            args: "{staged_files}"
+            tags:
+              - common-tools:yamllint
+              - lint
+              - yaml
+              - yamllint

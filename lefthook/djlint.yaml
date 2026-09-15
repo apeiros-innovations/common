@@ -1,0 +1,33 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "format django templates"
+            glob:
+              - "**/templates/**/*.{html,htm}"
+            run: "mise x -- djlint --profile=django --reformat --quiet {staged_files}"
+            stage_fixed: true
+            tags:
+              - common-tools:djlint
+              - format
+              - django
+              - templates
+              - djlint
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "lint django templates"
+            glob:
+              - "**/templates/**/*.{html,htm}"
+            run: "mise x -- djlint --profile=django --lint {staged_files}"
+            tags:
+              - common-tools:djlint
+              - lint
+              - django
+              - templates
+              - djlint

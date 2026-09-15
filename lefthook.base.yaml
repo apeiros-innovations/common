@@ -1,0 +1,40 @@
+---
+min_version: "2.1.12"
+assert_lefthook_installed: true
+glob_matcher: doublestar
+extends: []
+output:
+  - meta
+  - summary
+  - jobs
+common-tools:
+  jobs:
+    - name: "sync common tools"
+      script: sync.py
+      runner: python
+      tags:
+        - common-tools:base
+pre-commit:
+  parallel: false
+  piped: true
+  skip:
+    - merge
+    - rebase
+  jobs:
+    - name: generate
+      skip: true
+      group:
+        parallel: false
+        jobs: []
+    - name: format
+      skip: true
+      exclude:
+        - "**/schemas/**"
+      group:
+        parallel: false
+        jobs: []
+    - name: validate
+      skip: true
+      group:
+        parallel: true
+        jobs: []

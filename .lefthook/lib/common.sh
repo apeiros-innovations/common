@@ -73,20 +73,3 @@ has_shellcheck_config() {
 	git ls-files |
 		grep -Eq '(^|/)(\.shellcheckrc|shellcheckrc)$'
 }
-
-has_cspell_config() {
-	git ls-files |
-		grep -Eq '(^|/)(\.?cspell(\.config)?\.(yaml|yml|json|jsonc|mjs|cjs|js|mts|ts|cts|toml)|\.?cSpell\.json)$' &&
-		return 0
-
-	git ls-files |
-		grep -Eq '(^|/)\.vscode/(cspell|cSpell|\.cspell)\.json$' &&
-		return 0
-
-	if [[ -f package.json ]] &&
-		grep -Eq '"cspell"[[:space:]]*:' package.json; then
-		return 0
-	fi
-
-	return 1
-}

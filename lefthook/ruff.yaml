@@ -1,0 +1,46 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "format python"
+            group:
+              jobs:
+                - name: "ruff fix"
+                  glob:
+                    - "**/*.{py,pyi,pyw}"
+                  run: "mise x -- ruff check --fix-only --force-exclude {staged_files}"
+                  stage_fixed: true
+                  tags:
+                    - common-tools:ruff
+                    - format
+                    - lint
+                    - python
+                    - ruff
+                - name: "ruff format"
+                  glob:
+                    - "**/*.{py,pyi,pyw}"
+                  run: "mise x -- ruff format --force-exclude {staged_files}"
+                  stage_fixed: true
+                  tags:
+                    - common-tools:ruff
+                    - format
+                    - python
+                    - ruff
+              piped: true
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: ruff
+            glob:
+              - "**/*.{py,pyi,pyw}"
+            run: "mise x -- ruff check --force-exclude {staged_files}"
+            tags:
+              - common-tools:ruff
+              - lint
+              - python
+              - ruff

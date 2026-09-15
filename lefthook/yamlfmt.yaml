@@ -1,0 +1,22 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "format yaml"
+            glob:
+              - "**/*.{yaml,yml}"
+            exclude:
+              - "**/templates/**"
+            script: yamlfmt
+            runner: bash
+            args: "{staged_files}"
+            stage_fixed: true
+            tags:
+              - common-tools:yamlfmt
+              - format
+              - yaml
+              - yamlfmt

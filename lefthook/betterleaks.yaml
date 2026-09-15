@@ -1,0 +1,16 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: betterleaks
+            script: betterleaks
+            runner: bash
+            tags:
+              - common-tools:betterleaks
+              - security
+              - secrets
+              - betterleaks

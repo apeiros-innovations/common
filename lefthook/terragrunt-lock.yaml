@@ -1,0 +1,24 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: generate
+      skip: false
+      group:
+        jobs:
+          - name: "terragrunt provider lock"
+            glob:
+              - "**/terragrunt.hcl"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            script: terragrunt
+            runner: "mise x -- bash"
+            args: "providers-lock {staged_files}"
+            tags:
+              - common-tools:terragrunt
+              - dependencies
+              - supply-chain
+              - terragrunt
+              - providers

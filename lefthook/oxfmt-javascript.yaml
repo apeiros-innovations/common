@@ -1,0 +1,21 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "format javascript typescript"
+            glob:
+              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+            script: oxfmt
+            runner: bash
+            args: "--write {staged_files}"
+            stage_fixed: true
+            tags:
+              - common-tools:oxfmt
+              - format
+              - javascript
+              - typescript
+              - oxfmt

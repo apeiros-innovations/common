@@ -1,0 +1,32 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: devskim
+            glob:
+              - "**/*.{c,h,cc,cpp,cxx,hpp,hxx,m,mm}"
+              - "**/*.{cs,csx}"
+              - "**/*.{cob,cbl,cpy}"
+              - "**/*.go"
+              - "**/*.java"
+              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+              - "**/*.{php,phtml}"
+              - "**/*.{ps1,psm1,psd1}"
+              - "**/*.{py,pyi,pyw}"
+              - "**/*.{rb,rake}"
+              - "**/*.rs"
+              - "**/*.sql"
+              - "**/*.swift"
+              - "**/*.{vb,vbs}"
+            script: devskim
+            runner: "mise x -- bash"
+            args: "{staged_files}"
+            tags:
+              - common-tools:devskim
+              - security
+              - sast
+              - devskim

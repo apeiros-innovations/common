@@ -1,0 +1,171 @@
+# Shared tool pins and requirements. This catalog is not loaded by Mise.
+# cspell:ignore norwoodj rhysd
+schema_version = 1
+
+[tools]
+"aqua:aquasecurity/trivy" = "0.74.0"
+"aqua:astral-sh/ruff" = "0.16.5"
+"aqua:astral-sh/uv" = "0.12.9"
+"aqua:betterleaks/betterleaks" = "1.8.1"
+"aqua:casey/just" = "1.58.0"
+"aqua:dotenv-linter/dotenv-linter" = "4.0.0"
+"aqua:evilmartians/lefthook" = "2.1.12"
+"aqua:golangci/golangci-lint" = "2.13.2"
+"aqua:google/osv-scanner" = "2.5.1"
+"aqua:google/yamlfmt" = "0.21.0"
+"aqua:gruntwork-io/terragrunt" = "1.1.4"
+"aqua:hadolint/hadolint" = "2.15.1"
+"aqua:helm/helm" = "4.2.4"
+"aqua:koalaman/shellcheck" = "0.11.0"
+"aqua:mvdan/sh" = "3.14.0"
+"aqua:norwoodj/helm-docs" = "1.14.2"
+"aqua:opentofu/opentofu" = "1.12.6"
+"aqua:rhysd/actionlint" = "1.7.12"
+"aqua:terraform-docs/terraform-docs" = "0.24.0"
+"aqua:terraform-linters/tflint" = "0.64.0"
+"aqua:zizmorcore/zizmor" = "1.30.0"
+"dotnet" = "10.0.400"
+"dotnet:Microsoft.CST.DevSkim.CLI" = { "version" = "1.0.90" }
+"go" = "1.27.1"
+"go:golang.org/x/tools/cmd/goimports" = "0.49.0"
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.7.0"
+"node" = "26.8.1"
+"npm:@commitlint/cli" = "21.2.2"
+"npm:@commitlint/config-conventional" = "21.2.2"
+"npm:cspell" = "10.2.1"
+"npm:markdownlint-cli2" = "0.23.2"
+"npm:oxfmt" = "0.66.0"
+"npm:oxlint" = "1.81.0"
+"npm:renovate" = { "allow_builds" = [
+  "re2",
+], "trust_policy_excludes" = [
+  "@yarnpkg/libzip@3.2.2",
+], "version" = "44.61.2" }
+"pipx:djlint" = { "depends" = ["python", "aqua:astral-sh/uv"], "version" = "1.45.0" }
+"pipx:poetry" = { "depends" = ["python", "aqua:astral-sh/uv"], "version" = "2.4.2" }
+"pipx:yamllint" = { "depends" = ["python", "aqua:astral-sh/uv"], "version" = "1.38.0" }
+"pnpm" = "11.25.0"
+"python" = "3.14.7"
+
+[groups.actionlint]
+tools = ["aqua:rhysd/actionlint"]
+
+[groups.base]
+tools = ["aqua:evilmartians/lefthook", "python"]
+
+[groups.betterleaks]
+tools = ["aqua:betterleaks/betterleaks"]
+
+[groups.commitlint]
+tools = ["node", "npm:@commitlint/cli", "npm:@commitlint/config-conventional"]
+
+[groups.cspell]
+tools = ["node", "npm:cspell"]
+
+[groups.dependencies]
+tools = ["aqua:google/osv-scanner", "python"]
+
+[groups.devskim]
+tools = ["dotnet", "dotnet:Microsoft.CST.DevSkim.CLI"]
+
+[groups.devskim.env]
+"DOTNET_CLI_TELEMETRY_OPTOUT" = "1"
+
+[groups.djlint]
+tools = ["aqua:astral-sh/uv", "pipx:djlint", "python"]
+
+[groups.dotenv]
+tools = ["aqua:dotenv-linter/dotenv-linter"]
+
+[groups.go-format]
+tools = ["go", "go:golang.org/x/tools/cmd/goimports"]
+
+[groups.go-runtime]
+tools = ["go"]
+
+[groups.golangci-lint]
+tools = ["aqua:golangci/golangci-lint", "go"]
+
+[groups.govulncheck]
+tools = ["go", "go:golang.org/x/vuln/cmd/govulncheck"]
+
+[groups.hadolint]
+tools = ["aqua:hadolint/hadolint"]
+
+[groups.helm-docs]
+tools = ["aqua:norwoodj/helm-docs", "node", "npm:oxfmt"]
+
+[groups.helm-lint]
+tools = ["aqua:helm/helm"]
+
+[groups.just]
+tools = ["aqua:casey/just"]
+
+[groups.markdownlint]
+tools = ["node", "npm:markdownlint-cli2"]
+
+[groups.opentofu-runtime]
+tools = ["aqua:opentofu/opentofu"]
+
+[groups.osv]
+tools = ["aqua:google/osv-scanner"]
+
+[groups.oxfmt]
+tools = ["node", "npm:oxfmt"]
+
+[groups.oxlint]
+tools = ["node", "npm:oxlint"]
+
+[groups.pnpm]
+tools = ["node", "pnpm"]
+
+[groups.poetry]
+tools = ["aqua:astral-sh/uv", "pipx:poetry", "python"]
+
+[groups.poetry.env]
+"POETRY_VIRTUALENVS_CREATE" = "true"
+"POETRY_VIRTUALENVS_IN_PROJECT" = "true"
+"POETRY_VIRTUALENVS_USE_POETRY_PYTHON" = "false"
+"_" = { "python" = { "venv" = { "create" = true, "path" = ".venv" } } }
+
+[groups.poetry.deps]
+"poetry" = { "auto" = false, "run" = "poetry sync --no-interaction --no-ansi", "timeout" = "10m" }
+
+[groups.renovate]
+tools = ["node", "npm:renovate"]
+
+[groups.repository]
+tools = ["python"]
+
+[groups.ruff]
+tools = ["aqua:astral-sh/ruff", "python"]
+
+[groups.shellcheck]
+tools = ["aqua:koalaman/shellcheck"]
+
+[groups.shfmt]
+tools = ["aqua:mvdan/sh"]
+
+[groups.system]
+tools = []
+
+[groups.terraform-docs]
+tools = ["aqua:terraform-docs/terraform-docs", "node", "npm:oxfmt"]
+
+[groups.terragrunt]
+tools = ["aqua:gruntwork-io/terragrunt", "aqua:opentofu/opentofu"]
+
+[groups.tflint]
+tools = ["aqua:terraform-linters/tflint"]
+
+[groups.trivy]
+tools = ["aqua:aquasecurity/trivy"]
+
+[groups.yamlfmt]
+tools = ["aqua:google/yamlfmt"]
+
+[groups.yamllint]
+tools = ["aqua:astral-sh/uv", "pipx:yamllint", "python"]
+
+[groups.zizmor]
+tools = ["aqua:zizmorcore/zizmor"]

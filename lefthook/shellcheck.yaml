@@ -1,0 +1,19 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: shellcheck
+            glob:
+              - "**/*.{sh,bash,bats,ksh}"
+            script: shellcheck
+            runner: bash
+            args: "{staged_files}"
+            tags:
+              - common-tools:shellcheck
+              - lint
+              - shell
+              - shellcheck

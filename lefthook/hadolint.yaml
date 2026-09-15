@@ -1,0 +1,20 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: hadolint
+            glob:
+              - "**/{Dockerfile,Containerfile}"
+              - "**/{Dockerfile,Containerfile}.*"
+              - "**/*.{Dockerfile,Containerfile}"
+            run: "mise x -- hadolint -- {staged_files}"
+            tags:
+              - common-tools:hadolint
+              - lint
+              - container
+              - dockerfile
+              - hadolint

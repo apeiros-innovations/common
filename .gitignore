@@ -5,3 +5,4 @@
 /.task/
 /.venv/
 Thumbs.db
+__pycache__/
