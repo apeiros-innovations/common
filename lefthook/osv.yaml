@@ -39,6 +39,7 @@ pre-commit:
             runner: "mise x -- bash"
             args: "{staged_files}"
             tags:
+              - common-tools:osv
               - security
               - dependencies
               - osv
@@ -48,6 +49,7 @@ osv-scan:
     - name: repository
       run: "mise x -- osv-scanner scan source --format=vertical --verbosity=error --recursive ."
       tags:
+        - common-tools:osv
         - security
         - dependencies
         - osv
@@ -59,6 +61,7 @@ osv-remediate-npm:
       run: "mise x -- osv-scanner fix --interactive -M package.json -L package-lock.json"
       interactive: true
       tags:
+        - common-tools:osv
         - security
         - dependencies
         - osv

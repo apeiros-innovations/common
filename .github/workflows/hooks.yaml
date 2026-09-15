@@ -22,5 +22,7 @@ jobs:
           version: "2026.8.12"
           install_args: python node aqua:evilmartians/lefthook npm:cspell
           cache: false
+      - name: Verify generated tool requirements
+        run: mise run tools:check
       - name: Verify module composition and hook behavior
         run: mise x -- python -m unittest discover -s tests -v

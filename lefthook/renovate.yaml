@@ -15,6 +15,7 @@ pre-commit:
               - ".renovaterc.{json,jsonc,json5}"
             run: "mise x -- renovate-config-validator --strict"
             tags:
+              - common-tools:renovate
               - validation
               - dependency-management
               - renovate

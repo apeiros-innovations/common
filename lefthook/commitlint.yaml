@@ -7,6 +7,7 @@ commit-msg:
       runner: bash
       args: "{1}"
       tags:
+        - common-tools:commitlint
         - lint
         - git
         - commit-message

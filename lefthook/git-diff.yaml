@@ -11,6 +11,7 @@ pre-commit:
               - "schemas/**"
             run: "git --no-pager diff --cached --check --no-ext-diff --no-textconv -- {staged_files}"
             tags:
+              - common-tools:system
               - validation
               - git
               - repository

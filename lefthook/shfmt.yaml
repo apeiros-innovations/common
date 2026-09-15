@@ -12,6 +12,7 @@ pre-commit:
             run: "mise x -- shfmt -w -s {staged_files}"
             stage_fixed: true
             tags:
+              - common-tools:shfmt
               - format
               - shell
               - shfmt

@@ -12,6 +12,7 @@ pre-commit:
               - "**/*.{astro,vue,svelte}"
             run: "mise x -- oxlint --deny-warnings -- {staged_files}"
             tags:
+              - common-tools:oxlint
               - lint
               - javascript
               - typescript

@@ -7,6 +7,7 @@ pre-push:
       runner: bash
       args: "{all_files}"
       tags:
+        - common-tools:cspell
         - lint
         - spelling
         - cspell

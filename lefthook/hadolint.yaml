@@ -13,6 +13,7 @@ pre-commit:
               - "**/*.{Dockerfile,Containerfile}"
             run: "mise x -- hadolint -- {staged_files}"
             tags:
+              - common-tools:hadolint
               - lint
               - container
               - dockerfile

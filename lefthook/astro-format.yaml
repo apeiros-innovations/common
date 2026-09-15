@@ -12,6 +12,7 @@ pre-commit:
             run: "mise x -- pnpm exec prettier --write {staged_files}"
             stage_fixed: true
             tags:
+              - common-tools:pnpm
               - format
               - astro
               - prettier

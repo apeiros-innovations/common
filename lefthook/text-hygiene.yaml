@@ -35,5 +35,6 @@ pre-commit:
             args: "{staged_files}"
             stage_fixed: true
             tags:
+              - common-tools:repository
               - format
               - text

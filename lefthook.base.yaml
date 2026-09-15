@@ -7,6 +7,13 @@ output:
   - meta
   - summary
   - jobs
+common-tools:
+  jobs:
+    - name: "sync common tools"
+      script: sync.py
+      runner: python
+      tags:
+        - common-tools:base
 pre-commit:
   parallel: false
   piped: true

@@ -15,6 +15,7 @@ pre-commit:
                     - ".golangci.{yml,yaml,toml,json}"
                   run: "mise x -- golangci-lint config verify"
                   tags:
+                    - common-tools:golangci-lint
                     - validation
                     - lint
                     - go
@@ -43,6 +44,7 @@ pre-commit:
                           --whole-files
                       '
                   tags:
+                    - common-tools:golangci-lint
                     - lint
                     - go
                     - golangci-lint

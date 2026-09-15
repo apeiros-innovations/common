@@ -13,6 +13,7 @@ pre-commit:
             runner: "mise x -- python3"
             args: "{staged_files}"
             tags:
+              - common-tools:repository
               - validation
               - json
               - repository

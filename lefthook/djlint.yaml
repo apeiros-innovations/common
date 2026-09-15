@@ -12,6 +12,7 @@ pre-commit:
             run: "mise x -- djlint --profile=django --reformat --quiet {staged_files}"
             stage_fixed: true
             tags:
+              - common-tools:djlint
               - format
               - django
               - templates
@@ -25,6 +26,7 @@ pre-commit:
               - "**/templates/**/*.{html,htm}"
             run: "mise x -- djlint --profile=django --lint {staged_files}"
             tags:
+              - common-tools:djlint
               - lint
               - django
               - templates

@@ -18,5 +18,6 @@ pre-commit:
             runner: "mise x -- bash"
             args: "validate {staged_files}"
             tags:
+              - common-tools:opentofu-runtime
               - validation
               - opentofu

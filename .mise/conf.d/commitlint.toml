@@ -1,4 +1,0 @@
-[tools]
-"node" = "26.8.1"
-"npm:@commitlint/cli" = "21.2.2"
-"npm:@commitlint/config-conventional" = "21.2.2"

@@ -12,6 +12,7 @@ pre-commit:
               - "**/.env.*"
             run: "mise x -- dotenv-linter check {staged_files}"
             tags:
+              - common-tools:dotenv
               - lint
               - environment
               - dotenv

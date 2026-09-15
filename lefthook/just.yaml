@@ -19,5 +19,6 @@ pre-commit:
                 ' -- {staged_files}
             stage_fixed: true
             tags:
+              - common-tools:just
               - format
               - just

@@ -1,5 +1,0 @@
-[tools]
-"node" = "26.8.1"
-"npm:oxfmt" = "0.66.0"
-"aqua:helm/helm" = "4.2.4"
-"aqua:norwoodj/helm-docs" = "1.14.2"

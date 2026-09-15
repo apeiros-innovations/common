@@ -71,7 +71,9 @@ class RepositoryTest(unittest.TestCase):
             SOURCE,
             self.repo,
             dirs_exist_ok=True,
-            ignore=shutil.ignore_patterns(".git", ".mise", "tests", "__pycache__"),
+            ignore=shutil.ignore_patterns(
+                ".git", ".mise", ".venv", "tests", "__pycache__"
+            ),
         )
         (self.repo / ".lefthook.yaml").unlink()
 
@@ -103,7 +105,9 @@ def job_names(config):
             else:
                 names.append(job["name"])
 
-    for hook in config.values():
+    for name, hook in config.items():
+        if name == "common-tools":
+            continue
         if isinstance(hook, dict) and "jobs" in hook:
             walk(hook["jobs"])
     return names

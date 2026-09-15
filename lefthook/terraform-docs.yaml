@@ -17,6 +17,7 @@ pre-commit:
             runner: "mise x -- bash"
             args: "docs {staged_files}"
             tags:
+              - common-tools:terraform-docs
               - documentation
               - generation
               - opentofu

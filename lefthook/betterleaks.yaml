@@ -10,6 +10,7 @@ pre-commit:
             script: betterleaks
             runner: bash
             tags:
+              - common-tools:betterleaks
               - security
               - secrets
               - betterleaks

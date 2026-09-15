@@ -73,6 +73,7 @@ pre-commit:
                   done
                 ' -- {staged_files}
             tags:
+              - common-tools:helm-docs
               - format
               - helm
               - documentation

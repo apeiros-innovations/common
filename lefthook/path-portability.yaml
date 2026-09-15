@@ -10,6 +10,7 @@ pre-commit:
             script: "check-path-portability.py"
             runner: "mise x -- python3"
             tags:
+              - common-tools:repository
               - validation
               - repository
               - portability

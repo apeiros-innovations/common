@@ -1,4 +1,15 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
   extends: ["github>home-operations/renovate-presets#8.1.0", ":timezone(America/New_York)"],
+  mise: {
+    managerFilePatterns: ["/^tools/catalog\\.toml$/"],
+  },
+  packageRules: [
+    {
+      description: "Shared pins are maintained in the catalog; regenerate consumer requirements after updating it.",
+      matchManagers: ["mise"],
+      matchFileNames: [".mise/conf.d/common.toml"],
+      enabled: false,
+    },
+  ],
 }

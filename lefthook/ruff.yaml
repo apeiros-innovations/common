@@ -15,6 +15,7 @@ pre-commit:
                   run: "mise x -- ruff check --fix-only --force-exclude {staged_files}"
                   stage_fixed: true
                   tags:
+                    - common-tools:ruff
                     - format
                     - lint
                     - python
@@ -25,6 +26,7 @@ pre-commit:
                   run: "mise x -- ruff format --force-exclude {staged_files}"
                   stage_fixed: true
                   tags:
+                    - common-tools:ruff
                     - format
                     - python
                     - ruff
@@ -38,6 +40,7 @@ pre-commit:
               - "**/*.{py,pyi,pyw}"
             run: "mise x -- ruff check --force-exclude {staged_files}"
             tags:
+              - common-tools:ruff
               - lint
               - python
               - ruff

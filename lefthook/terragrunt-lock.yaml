@@ -17,6 +17,7 @@ pre-commit:
             runner: "mise x -- bash"
             args: "providers-lock {staged_files}"
             tags:
+              - common-tools:terragrunt
               - dependencies
               - supply-chain
               - terragrunt

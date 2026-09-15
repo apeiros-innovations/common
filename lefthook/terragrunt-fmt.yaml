@@ -20,5 +20,6 @@ pre-commit:
             args: "fmt {staged_files}"
             stage_fixed: true
             tags:
+              - common-tools:terragrunt
               - format
               - terragrunt

@@ -40,6 +40,7 @@ pre-commit:
             runner: "mise x -- python3"
             args: "scan {staged_files}"
             tags:
+              - common-tools:dependencies
               - security
               - dependencies
               - osv
@@ -51,6 +52,7 @@ dependency-scan:
       runner: "mise x -- python3"
       args: scan
       tags:
+        - common-tools:dependencies
         - security
         - dependencies
         - osv
@@ -61,6 +63,7 @@ dependency-remediate:
       runner: "mise x -- python3"
       args: remediate
       tags:
+        - common-tools:dependencies
         - security
         - dependencies
         - remediation

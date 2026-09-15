@@ -16,6 +16,7 @@ pre-commit:
             args: "{staged_files}"
             stage_fixed: true
             tags:
+              - common-tools:yamlfmt
               - format
               - yaml
               - yamlfmt

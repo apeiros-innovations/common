@@ -15,6 +15,7 @@ pre-commit:
             runner: bash
             args: "{staged_files}"
             tags:
+              - common-tools:zizmor
               - lint
               - security
               - github

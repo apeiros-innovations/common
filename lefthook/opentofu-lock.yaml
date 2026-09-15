@@ -18,6 +18,7 @@ pre-commit:
             runner: "mise x -- bash"
             args: "providers-lock {staged_files}"
             tags:
+              - common-tools:opentofu-runtime
               - dependencies
               - generation
               - supply-chain

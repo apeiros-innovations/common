@@ -18,6 +18,7 @@ pre-commit:
             runner: "mise x -- bash"
             args: "tflint {staged_files}"
             tags:
+              - common-tools:tflint
               - lint
               - validation
               - opentofu

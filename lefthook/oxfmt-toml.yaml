@@ -26,6 +26,7 @@ pre-commit:
             args: "--write {staged_files}"
             stage_fixed: true
             tags:
+              - common-tools:oxfmt
               - format
               - toml
               - oxfmt

@@ -26,6 +26,7 @@ pre-commit:
             runner: "mise x -- bash"
             args: "{staged_files}"
             tags:
+              - common-tools:devskim
               - security
               - sast
               - devskim

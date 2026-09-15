@@ -11,6 +11,7 @@ pre-commit:
               - "**/*.{py,pyi,pyw}"
             run: "mise x -- poetry run pylint -- {staged_files}"
             tags:
+              - common-tools:poetry
               - lint
               - python
               - poetry

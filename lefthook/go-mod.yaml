@@ -28,6 +28,7 @@ pre-push:
             exit "$failed"
           '
       tags:
+        - common-tools:go-runtime
         - validation
         - go
         - modules

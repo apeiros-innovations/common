@@ -22,6 +22,7 @@ pre-commit:
                   runner: "mise x -- bash"
                   args: "validate {staged_files}"
                   tags:
+                    - common-tools:terragrunt
                     - validation
                     - terragrunt
                 - name: "terragrunt validate inputs"
@@ -37,6 +38,7 @@ pre-commit:
                   runner: "mise x -- bash"
                   args: "validate-inputs {staged_files}"
                   tags:
+                    - common-tools:terragrunt
                     - validation
                     - inputs
                     - terragrunt

@@ -23,30 +23,34 @@ remotes:
       - lefthook/cspell.yaml
 ```
 
-Copy `.mise/config.toml` and these tool fragments into the consuming repository:
-
-- `.mise/conf.d/base.toml`
-- `.mise/conf.d/yamlfmt.toml`
-- `.mise/conf.d/yamllint.toml`
-- `.mise/conf.d/cspell.toml`
-
-Then run:
+Copy `.mise/config.toml` from the same release into the consumer, or merge its settings and tasks into an existing file. Bootstrap the generator once:
 
 ```bash
+mise --no-hooks x python@3.14.7 aqua:evilmartians/lefthook@2.1.12 -- lefthook run common-tools
 mise install
 mise lock
-lefthook install
 lefthook validate
 lefthook dump
 ```
 
-Commit the selected configuration and the resulting Mise lockfile. Lefthook downloads the remote hooks and their helpers; it does not install tools from the remote repository. Copy only the desired Mise fragments, since Mise loads all fragments present in a project's `conf.d` directory.
+Lefthook installs the remote hooks automatically on the first run. The `common-tools` command uses the catalog and generator from that same remote release to write `.mise/conf.d/common.toml`. It includes only the selected checks' requirements plus Python and Lefthook for the generator. No tool fragments need to be selected or copied.
 
-Remove `lefthook/cspell.yaml` and `cspell.toml` when spelling is unwanted. Keeping a CSpell config for editor use does not enable a Git hook.
+Commit `.lefthook.yaml`, `.mise/config.toml`, the generated `.mise/conf.d/common.toml`, and `.mise/mise.lock`. Subsequent developers run `mise install`; the configured postinstall hook installs Lefthook's Git hooks. They do not need to regenerate configuration to start working.
+
+To change the checks or update the shared release:
+
+```bash
+mise run tools:sync
+mise install
+mise lock
+mise run tools:check
+```
+
+Remove `lefthook/cspell.yaml` from the selection and sync again when spelling is unwanted. Keeping a CSpell config for editor use does not enable a Git hook. If the repository-wide spelling module is still selected, CSpell remains a required tool.
 
 ## Modules and presets
 
-`lefthook.base.yaml` establishes the execution phases and requires Lefthook 2.1.12 or newer. Include it **once, first**, before modules and presets. Always include the matching `base.toml` tool fragment.
+`lefthook.base.yaml` establishes the execution phases and requires Lefthook 2.1.12 or newer. Include it **once, first**, before modules and presets. It also exposes the manual `common-tools` synchronization command; this is not a Git event.
 
 Individual modules live in `lefthook/`. The existing `lefthook.<profile>.yaml` files are optional presets containing only `extends` lists. Presets do not include the base or other presets, so several presets can be composed without repeated base imports.
 
@@ -66,7 +70,7 @@ remotes:
       - lefthook/signed-commits.yaml
 ```
 
-The matching tool fragments are `base.toml`, `common.toml`, `go.toml`, `cspell.toml`, `commitlint.toml`, and `repository.toml` under `.mise/conf.d/`. The repository fragment supplies Python for Git-policy helpers; `common.toml` already includes that runtime.
+Run `mise run tools:sync` after changing this selection. The generated `common.toml` includes the combined requirements, with each tool declared once. Its filename does not imply selection of the `common` hook preset.
 
 A preset inside this repository is ordinary Lefthook configuration:
 
@@ -77,79 +81,111 @@ extends:
   - lefthook/yamllint.yaml
 ```
 
-For local use within this repository, see [`.lefthook.yaml`](.lefthook.yaml). To vendor the configurations elsewhere, preserve paths relative to the consumer's root and copy `.lefthook/` plus the shared tool configuration and dictionary assets needed by the selected helpers.
+For local use within this repository, see [`.lefthook.yaml`](.lefthook.yaml). To vendor the configurations elsewhere, preserve paths relative to the consumer's root and copy `.lefthook/`, `tools/catalog.toml`, and the shared tool configuration and dictionary assets needed by the selected helpers. Keep local extension paths within the consuming repository.
 
 ### Available checks
 
-Module paths below are relative to `lefthook/`; tool fragments are relative to `.mise/conf.d/`. Several modules can use the same tool fragment. Project-owned dependencies, such as Astro, Prettier's Astro plugin, and Pylint, must be installed by the project's package manager.
+Module paths below are relative to `lefthook/`. Tool groups are declared in `tools/catalog.toml` and selected automatically by the modules; consumers do not maintain a separate group list. Project-owned dependencies, such as Astro, Prettier's Astro plugin, and Pylint, must be installed by the project's package manager.
 
-| Module                      | When                                                    | Tool fragment                |
-| --------------------------- | ------------------------------------------------------- | ---------------------------- |
-| `just.yaml`                 | `pre-commit`                                            | `just.toml`                  |
-| `mise.yaml`                 | `pre-commit`                                            | Git / Mise already available |
-| `oxfmt-json.yaml`           | `pre-commit`                                            | `oxfmt.toml`                 |
-| `oxfmt-markdown.yaml`       | `pre-commit`                                            | `oxfmt.toml`                 |
-| `oxfmt-css.yaml`            | `pre-commit`                                            | `oxfmt.toml`                 |
-| `oxfmt-html.yaml`           | `pre-commit`                                            | `oxfmt.toml`                 |
-| `oxfmt-graphql.yaml`        | `pre-commit`                                            | `oxfmt.toml`                 |
-| `oxfmt-toml.yaml`           | `pre-commit`                                            | `oxfmt.toml`                 |
-| `yamlfmt.yaml`              | `pre-commit`                                            | `yamlfmt.toml`               |
-| `shfmt.yaml`                | `pre-commit`                                            | `shfmt.toml`                 |
-| `text-hygiene.yaml`         | `pre-commit`                                            | `repository.toml`            |
-| `shebang-permissions.yaml`  | `pre-commit`                                            | `repository.toml`            |
-| `git-diff.yaml`             | `pre-commit`                                            | Git / Mise already available |
-| `path-portability.yaml`     | `pre-commit`                                            | `repository.toml`            |
-| `check-json.yaml`           | `pre-commit`                                            | `repository.toml`            |
-| `yamllint.yaml`             | `pre-commit`                                            | `yamllint.toml`              |
-| `shellcheck.yaml`           | `pre-commit`                                            | `shellcheck.toml`            |
-| `dotenv.yaml`               | `pre-commit`                                            | `dotenv.toml`                |
-| `cspell.yaml`               | `pre-commit`                                            | `cspell.toml`                |
-| `markdownlint.yaml`         | `pre-commit`                                            | `markdownlint.toml`          |
-| `large-files.yaml`          | `pre-commit`                                            | `repository.toml`            |
-| `symlinks.yaml`             | `pre-commit`                                            | `repository.toml`            |
-| `gitlinks.yaml`             | `pre-commit`                                            | `repository.toml`            |
-| `forced-ignored-files.yaml` | `pre-commit`                                            | `repository.toml`            |
-| `betterleaks.yaml`          | `pre-commit`                                            | `betterleaks.toml`           |
-| `commitlint.yaml`           | `commit-msg`                                            | `commitlint.toml`            |
-| `signed-commits.yaml`       | `pre-push`                                              | `repository.toml`            |
-| `cspell-repository.yaml`    | `pre-push`                                              | `cspell.toml`                |
-| `go-format.yaml`            | `pre-commit`                                            | `go-format.toml`             |
-| `golangci-lint.yaml`        | `pre-commit`                                            | `golangci-lint.toml`         |
-| `go-mod.yaml`               | `pre-push`                                              | `go-runtime.toml`            |
-| `go-test.yaml`              | `pre-push`                                              | `go-runtime.toml`            |
-| `govulncheck.yaml`          | `pre-push`                                              | `govulncheck.toml`           |
-| `ruff.yaml`                 | `pre-commit`                                            | `ruff-tools.toml`            |
-| `oxfmt-javascript.yaml`     | `pre-commit`                                            | `oxfmt.toml`                 |
-| `oxlint.yaml`               | `pre-commit`                                            | `oxlint.toml`                |
-| `astro-format.yaml`         | `pre-commit`                                            | `pnpm.toml`                  |
-| `astro-check.yaml`          | `pre-push`                                              | `pnpm.toml`                  |
-| `astro-build.yaml`          | `pre-push`                                              | `pnpm.toml`                  |
-| `actionlint.yaml`           | `pre-commit`                                            | `actionlint.toml`            |
-| `zizmor.yaml`               | `pre-commit`                                            | `zizmor.toml`                |
-| `hadolint.yaml`             | `pre-commit`                                            | `hadolint.toml`              |
-| `trivy-dockerfile.yaml`     | `pre-commit`                                            | `trivy.toml`                 |
-| `helm-docs.yaml`            | `pre-commit`                                            | `helm-docs.toml`             |
-| `helm-lint.yaml`            | `pre-commit`                                            | `helm-lint.toml`             |
-| `opentofu-fmt.yaml`         | `pre-commit`                                            | `opentofu-runtime.toml`      |
-| `terraform-docs.yaml`       | `pre-commit`                                            | `terraform-docs.toml`        |
-| `opentofu-lock.yaml`        | `pre-commit`                                            | `opentofu-runtime.toml`      |
-| `tflint.yaml`               | `pre-commit`                                            | `tflint.toml`                |
-| `trivy-opentofu.yaml`       | `pre-commit`                                            | `trivy.toml`                 |
-| `opentofu-validate.yaml`    | `pre-commit`                                            | `opentofu-runtime.toml`      |
-| `terragrunt-fmt.yaml`       | `pre-commit`                                            | `terragrunt.toml`            |
-| `terragrunt-lock.yaml`      | `pre-commit`                                            | `terragrunt.toml`            |
-| `terragrunt-validate.yaml`  | `pre-commit`                                            | `terragrunt.toml`            |
-| `djlint.yaml`               | `pre-commit`                                            | `djlint.toml`                |
-| `poetry-check.yaml`         | `pre-commit`                                            | `poetry.toml`                |
-| `pylint.yaml`               | `pre-commit`                                            | `poetry.toml`                |
-| `devskim.yaml`              | `pre-commit`                                            | `devskim.toml`               |
-| `renovate.yaml`             | `pre-commit`                                            | `renovate.toml`              |
-| `dependencies.yaml`         | `pre-commit`, `dependency-scan`, `dependency-remediate` | `dependencies.toml`          |
-| `osv.yaml`                  | `pre-commit`, `osv-scan`, `osv-remediate-npm`           | `osv.toml`                   |
+| Module                      | When                                                    | Tool group         |
+| --------------------------- | ------------------------------------------------------- | ------------------ |
+| `just.yaml`                 | `pre-commit`                                            | `just`             |
+| `mise.yaml`                 | `pre-commit`                                            | `system`           |
+| `oxfmt-json.yaml`           | `pre-commit`                                            | `oxfmt`            |
+| `oxfmt-markdown.yaml`       | `pre-commit`                                            | `oxfmt`            |
+| `oxfmt-css.yaml`            | `pre-commit`                                            | `oxfmt`            |
+| `oxfmt-html.yaml`           | `pre-commit`                                            | `oxfmt`            |
+| `oxfmt-graphql.yaml`        | `pre-commit`                                            | `oxfmt`            |
+| `oxfmt-toml.yaml`           | `pre-commit`                                            | `oxfmt`            |
+| `yamlfmt.yaml`              | `pre-commit`                                            | `yamlfmt`          |
+| `shfmt.yaml`                | `pre-commit`                                            | `shfmt`            |
+| `text-hygiene.yaml`         | `pre-commit`                                            | `repository`       |
+| `shebang-permissions.yaml`  | `pre-commit`                                            | `repository`       |
+| `git-diff.yaml`             | `pre-commit`                                            | `system`           |
+| `path-portability.yaml`     | `pre-commit`                                            | `repository`       |
+| `check-json.yaml`           | `pre-commit`                                            | `repository`       |
+| `yamllint.yaml`             | `pre-commit`                                            | `yamllint`         |
+| `shellcheck.yaml`           | `pre-commit`                                            | `shellcheck`       |
+| `dotenv.yaml`               | `pre-commit`                                            | `dotenv`           |
+| `cspell.yaml`               | `pre-commit`                                            | `cspell`           |
+| `markdownlint.yaml`         | `pre-commit`                                            | `markdownlint`     |
+| `large-files.yaml`          | `pre-commit`                                            | `repository`       |
+| `symlinks.yaml`             | `pre-commit`                                            | `repository`       |
+| `gitlinks.yaml`             | `pre-commit`                                            | `repository`       |
+| `forced-ignored-files.yaml` | `pre-commit`                                            | `repository`       |
+| `betterleaks.yaml`          | `pre-commit`                                            | `betterleaks`      |
+| `commitlint.yaml`           | `commit-msg`                                            | `commitlint`       |
+| `signed-commits.yaml`       | `pre-push`                                              | `repository`       |
+| `cspell-repository.yaml`    | `pre-push`                                              | `cspell`           |
+| `go-format.yaml`            | `pre-commit`                                            | `go-format`        |
+| `golangci-lint.yaml`        | `pre-commit`                                            | `golangci-lint`    |
+| `go-mod.yaml`               | `pre-push`                                              | `go-runtime`       |
+| `go-test.yaml`              | `pre-push`                                              | `go-runtime`       |
+| `govulncheck.yaml`          | `pre-push`                                              | `govulncheck`      |
+| `ruff.yaml`                 | `pre-commit`                                            | `ruff`             |
+| `oxfmt-javascript.yaml`     | `pre-commit`                                            | `oxfmt`            |
+| `oxlint.yaml`               | `pre-commit`                                            | `oxlint`           |
+| `astro-format.yaml`         | `pre-commit`                                            | `pnpm`             |
+| `astro-check.yaml`          | `pre-push`                                              | `pnpm`             |
+| `astro-build.yaml`          | `pre-push`                                              | `pnpm`             |
+| `actionlint.yaml`           | `pre-commit`                                            | `actionlint`       |
+| `zizmor.yaml`               | `pre-commit`                                            | `zizmor`           |
+| `hadolint.yaml`             | `pre-commit`                                            | `hadolint`         |
+| `trivy-dockerfile.yaml`     | `pre-commit`                                            | `trivy`            |
+| `helm-docs.yaml`            | `pre-commit`                                            | `helm-docs`        |
+| `helm-lint.yaml`            | `pre-commit`                                            | `helm-lint`        |
+| `opentofu-fmt.yaml`         | `pre-commit`                                            | `opentofu-runtime` |
+| `terraform-docs.yaml`       | `pre-commit`                                            | `terraform-docs`   |
+| `opentofu-lock.yaml`        | `pre-commit`                                            | `opentofu-runtime` |
+| `tflint.yaml`               | `pre-commit`                                            | `tflint`           |
+| `trivy-opentofu.yaml`       | `pre-commit`                                            | `trivy`            |
+| `opentofu-validate.yaml`    | `pre-commit`                                            | `opentofu-runtime` |
+| `terragrunt-fmt.yaml`       | `pre-commit`                                            | `terragrunt`       |
+| `terragrunt-lock.yaml`      | `pre-commit`                                            | `terragrunt`       |
+| `terragrunt-validate.yaml`  | `pre-commit`                                            | `terragrunt`       |
+| `djlint.yaml`               | `pre-commit`                                            | `djlint`           |
+| `poetry-check.yaml`         | `pre-commit`                                            | `poetry`           |
+| `pylint.yaml`               | `pre-commit`                                            | `poetry`           |
+| `devskim.yaml`              | `pre-commit`                                            | `devskim`          |
+| `renovate.yaml`             | `pre-commit`                                            | `renovate`         |
+| `dependencies.yaml`         | `pre-commit`, `dependency-scan`, `dependency-remediate` | `dependencies`     |
+| `osv.yaml`                  | `pre-commit`, `osv-scan`, `osv-remediate-npm`           | `osv`              |
 
 The `common` preset contains general formatting, repository hygiene, YAML/Shell/Markdown linting, and Betterleaks. It excludes CSpell, Commitlint, signed-commit enforcement, and EditorConfig checking. Each remaining preset lists its component modules in the corresponding root configuration file.
 
 `cspell.yaml` checks staged text. `cspell-repository.yaml` independently adds a pre-push scan of Git-tracked text files. Neither selection requires the other.
+
+## Generated tool configuration
+
+`tools/catalog.toml` is the single maintained source for shared tool versions. Its `[tools]` table uses Mise's tool definitions, including backend options and installation dependencies. `[groups.<name>]` lists the tools for each capability; a group can also carry its necessary `env` and `deps` settings. The catalog itself is outside Mise's automatic configuration search.
+
+```toml
+schema_version = 1
+
+[tools]
+node = "26.8.1"
+"npm:cspell" = "10.2.1"
+
+[groups.cspell]
+tools = ["node", "npm:cspell"]
+```
+
+Each shared job declares a `common-tools:<group>` tag. The generator asks `lefthook dump --format json` to resolve configuration, collects those tags, and combines their requirements. Presets remain ordinary `extends` lists. It does not parse shell commands or implement Lefthook's merge rules. Unknown groups, missing tool definitions, dependency cycles, and conflicting group settings fail clearly.
+
+| File                       | Ownership                                                     |
+| -------------------------- | ------------------------------------------------------------- |
+| `.lefthook.yaml`           | Project selection of modules and presets                      |
+| `.mise/config.toml`        | Project tools, overrides, settings, and synchronization tasks |
+| `.mise/conf.d/common.toml` | Generated requirements for the selected shared checks         |
+| `.mise/mise.lock`          | Tool installations locked by Mise                             |
+
+Project tools and intentional version overrides belong in `.mise/config.toml`, which takes precedence over the generated fragment. Other project fragments are left intact. Keep the `common-tools:` tags when overriding shared jobs; project-owned jobs can declare a known group when they need its tools. The generator only manages requirements declared by these tags.
+
+`mise run tools:sync --check` and `mise run tools:check` both verify that generated configuration is current without modifying files. Ordinary TOML formatting is allowed. Synchronization writes only `common.toml`, removes requirements no longer selected, and refuses to overwrite a file without its generated-file marker. It neither installs tools nor changes the lockfile or Git index; run `mise install` and `mise lock` explicitly after a change.
+
+Generation reads the current team configuration so edits can be previewed before committing. Untracked personal Lefthook override files, including ignored overrides, are excluded through a temporary directory view; the originals are never moved or edited. A deliberately tracked override participates in generation. Conditional skips, tags used to exclude execution, and the current staged-file list do not remove selected tools. Linked Git worktrees keep their own output.
+
+Renovate is configured to update the catalog's native `[tools]` entries and leave generated pins alone. After a catalog update, run `mise run tools:sync` and `mise lock` on that branch and commit the results. CI detects stale generated output. Consumers update the pinned common release and regenerate to adopt its tool versions. This keeps version changes in the shared catalog reviewable and avoids independently updating derived pins.
 
 ## Execution and overrides
 
@@ -255,10 +291,10 @@ Repository-policy modules remain independently selectable:
 
 When upgrading a consumer from the previous profiles:
 
-1. Add `lefthook.base.yaml` first and copy `base.toml`.
+1. Add `lefthook.base.yaml` first and copy or merge `.mise/config.toml` from the selected shared release.
 2. Keep desired presets or replace them with individual modules.
 3. Explicitly select `cspell.yaml`, `commitlint.yaml`, or `signed-commits.yaml` if those policies are wanted. Add `cspell-repository.yaml` only when a full push scan is wanted.
-4. Copy the corresponding Mise fragments. Remove unused CSpell, Commitlint, and EditorConfig checker pins from an old `common.toml`; `.editorconfig` itself can remain.
+4. Move any project-specific settings out of the old `common.toml` into `.mise/config.toml`, then remove the old shared tool fragments. Run the bootstrap command above to generate the new `.mise/conf.d/common.toml`. Keep unrelated project fragments. Remove any remaining EditorConfig checker pin; `.editorconfig` itself can remain.
 5. Remove redundant tool-config existence gates. Selected tools now run with defaults or report missing prerequisites.
 6. Update overrides to the named phases. Generators now precede formatters, and Terragrunt's unsupported job `priority` fields are gone.
 7. Regenerate the consumer's Mise lockfile, run `lefthook install`, inspect `lefthook dump`, and validate the selected checks before committing.
@@ -267,13 +303,14 @@ Keep consumers pinned to their existing release until this migration is intentio
 
 ## Verify changes to common
 
-The tests require Python 3.14, Lefthook 2.1.12, and CSpell 10.2.1, matching the tool fragments. Install only those tools for the regression suite:
+The tests require Mise 2026.8.12 or newer and the Python, Lefthook, and CSpell versions in the tool catalog. Install only those tools for the regression suite:
 
 ```bash
 mise install python node aqua:evilmartians/lefthook npm:cspell
+MISE_AUTO_INSTALL=false mise run tools:check
 MISE_AUTO_INSTALL=false mise x -- python -m unittest discover -s tests -v
 ```
 
 Tests use real Lefthook and CSpell binaries in temporary Git repositories. They cover every module and preset, composition, remote script resolution, local overrides, phase ordering and failure propagation, partial staging, generated output, CSpell discovery, literal filenames, and tracked-only push scans. Generator tools are substituted only when testing their orchestration and staging contracts; these tests do not claim to validate a Terraform or Helm deployment.
 
-CI runs the same suite with the pinned toolchain. For a consuming project, `lefthook validate` checks configuration and `lefthook dump` shows the assembled result. See the [Lefthook usage documentation](https://lefthook.dev/usage/) for selecting jobs, tags, and files.
+Catalog coverage also checks every module, remote release selection, deduplication, removal of unused tools, personal and tracked overrides, linked worktrees, preservation of project settings, and detection of stale output. CI verifies generated configuration and runs the same suite with the pinned toolchain. For a consuming project, `lefthook validate` checks configuration and `lefthook dump` shows the assembled result. See the [Lefthook usage documentation](https://lefthook.dev/usage/) for selecting jobs, tags, and files.
