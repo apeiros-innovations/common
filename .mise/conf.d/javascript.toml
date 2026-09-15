@@ -1,2 +1,4 @@
 [tools]
+"node" = "26.8.1"
+"npm:oxfmt" = "0.66.0"
 "npm:oxlint" = "1.81.0"

@@ -1,0 +1,16 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "check added large files"
+            script: "check-large-files.py"
+            runner: "mise x -- python3"
+            args: "{staged_files}"
+            tags:
+              - validation
+              - repository
+              - large-files

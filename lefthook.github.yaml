@@ -1,33 +1,4 @@
 ---
-pre-commit:
-  jobs:
-    - name: validate
-      group:
-        parallel: true
-        jobs:
-          - name: actionlint
-            glob:
-              - ".github/workflows/**/*.{yaml,yml}"
-            script: actionlint
-            runner: bash
-            args: "{staged_files}"
-            tags:
-              - lint
-              - github
-              - github-actions
-              - actionlint
-
-          - name: zizmor
-            glob:
-              - ".github/workflows/**/*.{yaml,yml}"
-              - ".github/actions/**/action.{yaml,yml}"
-              - ".github/dependabot.{yaml,yml}"
-            script: zizmor
-            runner: bash
-            args: "{staged_files}"
-            tags:
-              - lint
-              - security
-              - github
-              - github-actions
-              - zizmor
+extends:
+  - "lefthook/actionlint.yaml"
+  - "lefthook/zizmor.yaml"

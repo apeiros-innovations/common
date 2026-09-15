@@ -1,0 +1,9 @@
+---
+extends: []
+pre-push:
+  jobs:
+    - name: "astro build"
+      run: "mise x -- pnpm exec astro build"
+      tags:
+        - validation
+        - astro

@@ -1,0 +1,10 @@
+---
+extends: []
+pre-push:
+  jobs:
+    - name: "astro check"
+      run: "mise x -- pnpm exec astro check"
+      tags:
+        - validation
+        - astro
+        - typescript

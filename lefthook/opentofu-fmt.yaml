@@ -1,0 +1,22 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "opentofu fmt"
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            script: opentofu
+            runner: "mise x -- bash"
+            args: "fmt {staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - opentofu

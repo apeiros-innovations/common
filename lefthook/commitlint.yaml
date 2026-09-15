@@ -1,0 +1,13 @@
+---
+extends: []
+commit-msg:
+  jobs:
+    - name: commitlint
+      script: commitlint
+      runner: bash
+      args: "{1}"
+      tags:
+        - lint
+        - git
+        - commit-message
+        - commitlint

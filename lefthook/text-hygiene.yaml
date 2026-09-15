@@ -1,0 +1,39 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "text hygiene"
+            exclude:
+              - "**/*.go"
+              - "**/*.rs"
+              - "**/*.{py,pyi,pyw}"
+              - "**/*.just"
+              - "**/*.{json,json5,jsonc}"
+              - "**/*.{md,markdown,mdx}"
+              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+              - "**/*.{astro,vue,svelte}"
+              - "**/*.{css,scss,less,pcss,postcss}"
+              - "**/*.{html,htm,xhtml}"
+              - "**/*.{graphql,gql,graphqls}"
+              - "**/*.toml"
+              - "**/*.{yaml,yml}"
+              - "**/*.{sh,bash,ksh}"
+              - "**/*.{tf,tofu,tfvars,hcl}"
+              - "**/{.justfile,justfile,Justfile}"
+              - ".config/mise/config.toml"
+              - ".config/mise/conf.d/*.toml"
+              - "mise.lock"
+            file_types:
+              - text
+              - "not symlink"
+            script: "text-hygiene.py"
+            runner: "mise x -- python3"
+            args: "{staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - text

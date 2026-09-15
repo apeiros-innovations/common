@@ -56,7 +56,11 @@ main() {
 
   cd -- "$REPOSITORY_ROOT"
 
-  options_json="$(resolve_options_json)" || true
+  if [[ -n ${DEVSKIM_OPTIONS_JSON:-} ]]; then
+    options_json="$(resolve_options_json)"
+  else
+    options_json="$(resolve_options_json)" || true
+  fi
 
   for file in "$@"; do
     [[ -f $file ]] || continue

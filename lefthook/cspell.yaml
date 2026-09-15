@@ -1,0 +1,21 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: cspell
+            exclude:
+              - "**/*.svg"
+            file_types:
+              - text
+              - "not symlink"
+            script: cspell
+            runner: bash
+            args: "{staged_files}"
+            tags:
+              - lint
+              - spelling
+              - cspell

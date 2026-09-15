@@ -1,0 +1,18 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: markdownlint
+            glob:
+              - "**/*.{md,markdown}"
+            script: markdownlint
+            runner: bash
+            args: "{staged_files}"
+            tags:
+              - lint
+              - markdown
+              - markdownlint

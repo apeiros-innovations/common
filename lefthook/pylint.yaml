@@ -1,0 +1,17 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: pylint
+            glob:
+              - "**/*.{py,pyi,pyw}"
+            run: "mise x -- poetry run pylint -- {staged_files}"
+            tags:
+              - lint
+              - python
+              - poetry
+              - pylint

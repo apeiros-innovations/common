@@ -1,0 +1,70 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "helm lint"
+            glob:
+              - "**/Chart.yaml"
+              - "**/Chart.lock"
+              - "**/values.yaml"
+              - "**/values.schema.json"
+              - "**/templates/**"
+              - "**/crds/**"
+            run: |
+              mise x -- \
+                bash -e -o pipefail -c '
+                  charts=()
+
+                  add_chart() {
+                    candidate="$1"
+
+                    for existing in "${charts[@]}"; do
+                      [ "$existing" = "$candidate" ] && return 0
+                    done
+
+                    charts+=("$candidate")
+                  }
+
+                  find_chart() {
+                    file="$1"
+                    dir=$(dirname "$file")
+
+                    while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+                      if [ -f "$dir/Chart.yaml" ]; then
+                        printf "%s\n" "$dir"
+                        return 0
+                      fi
+
+                      dir=$(dirname "$dir")
+                    done
+
+                    if [ -f Chart.yaml ]; then
+                      printf "%s\n" "."
+                    fi
+
+                    return 0
+                  }
+
+                  for file do
+                    [ -e "$file" ] || continue
+
+                    chart=$(find_chart "$file")
+                    [ -n "$chart" ] || continue
+                    add_chart "$chart"
+                  done
+
+                  failed=0
+
+                  for chart in "${charts[@]}"; do
+                    helm lint "$chart" --strict || failed=1
+                  done
+
+                  exit "$failed"
+                ' -- {staged_files}
+            tags:
+              - lint
+              - helm

@@ -1,0 +1,2 @@
+[tools]
+"aqua:aquasecurity/trivy" = "0.74.0"

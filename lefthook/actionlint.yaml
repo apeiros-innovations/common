@@ -1,0 +1,19 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: actionlint
+            glob:
+              - ".github/workflows/**/*.{yaml,yml}"
+            script: actionlint
+            runner: bash
+            args: "{staged_files}"
+            tags:
+              - lint
+              - github
+              - github-actions
+              - actionlint

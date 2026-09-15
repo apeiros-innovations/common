@@ -1,0 +1,43 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "terragrunt validation"
+            group:
+              jobs:
+                - name: "terragrunt validate"
+                  glob:
+                    - "**/*.hcl"
+                  exclude:
+                    - "**/.terraform/**"
+                    - "**/.terragrunt-cache/**"
+                    - "**/.terraform.lock.hcl"
+                    - "**/.tflint.hcl"
+                    - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+                  script: terragrunt
+                  runner: "mise x -- bash"
+                  args: "validate {staged_files}"
+                  tags:
+                    - validation
+                    - terragrunt
+                - name: "terragrunt validate inputs"
+                  glob:
+                    - "**/*.hcl"
+                  exclude:
+                    - "**/.terraform/**"
+                    - "**/.terragrunt-cache/**"
+                    - "**/.terraform.lock.hcl"
+                    - "**/.tflint.hcl"
+                    - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+                  script: terragrunt
+                  runner: "mise x -- bash"
+                  args: "validate-inputs {staged_files}"
+                  tags:
+                    - validation
+                    - inputs
+                    - terragrunt
+              piped: true

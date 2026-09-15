@@ -1,0 +1,16 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "check forced ignored files"
+            script: "check-forced-ignored-files.py"
+            runner: "mise x -- python3"
+            args: "{staged_files}"
+            tags:
+              - validation
+              - repository
+              - gitignore

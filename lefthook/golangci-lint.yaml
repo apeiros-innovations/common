@@ -1,0 +1,48 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: "golangci validation"
+            group:
+              piped: true
+              jobs:
+                - name: "golangci config"
+                  glob:
+                    - ".golangci.{yml,yaml,toml,json}"
+                  run: "mise x -- golangci-lint config verify"
+                  tags:
+                    - validation
+                    - lint
+                    - go
+                    - golangci-lint
+                - name: "golangci lint"
+                  glob:
+                    - "**/*.go"
+                  run: |
+                    mise x -- \
+                      bash -e -o pipefail -c '
+                        patch="$(mktemp)"
+                        trap "rm -f -- \"$patch\"" EXIT
+
+                        git --no-pager diff \
+                          --cached \
+                          --no-ext-diff \
+                          --no-textconv \
+                          --unified=0 \
+                          -- \
+                          ":(glob)**/*.go" >"$patch"
+
+                        [ -s "$patch" ] || exit 0
+
+                        golangci-lint run \
+                          --new-from-patch="$patch" \
+                          --whole-files
+                      '
+                  tags:
+                    - lint
+                    - go
+                    - golangci-lint

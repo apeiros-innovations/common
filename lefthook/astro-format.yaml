@@ -1,0 +1,17 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "format astro"
+            glob:
+              - "**/*.astro"
+            run: "mise x -- pnpm exec prettier --write {staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - astro
+              - prettier

@@ -1,0 +1,24 @@
+---
+extends: []
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: "terragrunt fmt"
+            glob:
+              - "**/*.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+              - "**/.terraform.lock.hcl"
+              - "**/.tflint.hcl"
+              - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+            script: terragrunt
+            runner: "mise x -- bash"
+            args: "fmt {staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - terragrunt
