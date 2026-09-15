@@ -1,7 +1,8 @@
 ---
 name: Bug report
 description: Report a bug
-labels: ["bug"]
+labels:
+  - "bug"
 body:
   - type: markdown
     attributes:

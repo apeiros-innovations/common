@@ -5,7 +5,6 @@ lockfile_platforms = ["macos-arm64", "linux-x64"]
 experimental = true
 
 [hooks]
-# Installing a subset of tools must not bootstrap the rest through `mise x`.
 postinstall = "MISE_AUTO_INSTALL=false mise x -- lefthook install"
 
 [tasks."tools:sync"]

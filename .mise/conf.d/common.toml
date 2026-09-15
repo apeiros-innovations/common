@@ -25,5 +25,8 @@
 ], "trust_policy_excludes" = [
   "@yarnpkg/libzip@3.2.2",
 ], "version" = "44.61.2" }
-"pipx:yamllint" = { "depends" = ["python", "aqua:astral-sh/uv"], "version" = "1.38.0" }
+"pipx:yamllint" = { "depends" = [
+  "python",
+  "aqua:astral-sh/uv",
+], "version" = "1.38.0" }
 "python" = "3.14.7"
