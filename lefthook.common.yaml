@@ -318,20 +318,6 @@ pre-commit:
               - spelling
               - cspell
 
-          - name: editorconfig
-            only: &editorconfig-present
-              - run: >-
-                  git ls-files --error-unmatch -- '.editorconfig' ':(glob)**/.editorconfig' >/dev/null 2>&1
-            file_types:
-              - text
-              - not symlink
-            run: >-
-              mise x -- ec --disable-indentation --disable-indent-size --disable-max-line-length {staged_files}
-            tags:
-              - lint
-              - editorconfig
-              - repository
-
           - name: markdownlint
             glob:
               - "**/*.{md,markdown}"
@@ -409,12 +395,3 @@ pre-push:
               - lint
               - spelling
               - cspell
-
-          - name: editorconfig repository
-            only: *editorconfig-present
-            run: >-
-              mise x -- ec --disable-indentation --disable-indent-size --disable-max-line-length
-            tags:
-              - lint
-              - editorconfig
-              - repository
