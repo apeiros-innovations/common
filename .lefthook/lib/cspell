@@ -136,6 +136,11 @@ run_repository() {
 main() {
   cd -- "$REPOSITORY_ROOT"
 
+  if [[ -z ${CSPELL_CONFIG:-} ]] && ! has_cspell_config; then
+    printf 'cspell: no compatible configuration found; skipping\n'
+    return 0
+  fi
+
   if [[ ${1:-} == "--repository" ]]; then
     shift
 
