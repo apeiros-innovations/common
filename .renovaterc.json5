@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "github>apeiros-innovations/renovate-presets#419a0093ef45b77edebdc3a37804e74f3a8fee16",
+    "github>apeiros-innovations/renovate-presets#main",
     ":timezone(America/New_York)",
   ],
 }
