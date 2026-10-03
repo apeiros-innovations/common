@@ -2,7 +2,7 @@
   "name": "mise-npm-install",
   "private": true,
   "dependencies": {
-    "renovate": "44.126.0"
+    "renovate": "44.132.4"
   },
   "aube": {
     "allowBuilds": {
