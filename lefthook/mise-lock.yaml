@@ -1,0 +1,49 @@
+---
+pre-commit:
+  jobs:
+    - name: generate
+      skip: false
+      group:
+        jobs:
+          - name: mise lock
+            glob:
+              - .config/mise.toml
+              - .config/mise/config.toml
+              - .config/mise/conf.d/*.toml
+              - .mise/config.toml
+              - .mise/conf.d/*.toml
+              - mise.toml
+              - .mise.toml
+              - .config/mise.lock
+              - .config/mise/mise.lock
+              - .mise/mise.lock
+              - mise.lock
+            run: |
+              set -eu
+
+              # Preserve developer edits before regenerating or staging any lockfile.
+              for lockfile in mise.lock .mise/mise.lock .config/mise.lock .config/mise/mise.lock; do
+                if [ -f "$lockfile" ] && ! git diff --quiet -- "$lockfile"; then
+                  printf >&2 '%s: refusing to overwrite unstaged changes\n' "$lockfile"
+                  exit 1
+                fi
+              done
+
+              mise lock
+
+              found=false
+              for lockfile in mise.lock .mise/mise.lock .config/mise.lock .config/mise/mise.lock; do
+                [ -f "$lockfile" ] || continue
+                git add -- "$lockfile"
+                found=true
+              done
+
+              if [ "$found" = false ]; then
+                printf >&2 'mise.lock: missing after `mise lock`; ensure [settings].lockfile = true\n'
+                exit 1
+              fi
+            tags:
+              - generation
+              - mise
+              - dependencies
+              - supply-chain

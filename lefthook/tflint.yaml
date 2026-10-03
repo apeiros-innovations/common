@@ -1,0 +1,23 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: opentofu tflint
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tf,tofu,tfvars}.json"
+              - "**/.terraform.lock.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: tflint {staged_files}
+            tags:
+              - lint
+              - validation
+              - opentofu
+              - tflint

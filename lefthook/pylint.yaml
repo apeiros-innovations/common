@@ -1,0 +1,47 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: pylint
+            only:
+              - run: |
+                  for config in pylintrc .pylintrc
+                  do
+                    [ -f "$config" ] && exit 0
+                  done
+
+                  for config in \
+                    pylintrc.toml \
+                    .pylintrc.toml \
+                    pyproject.toml
+                  do
+                    if [ -f "$config" ] &&
+                       grep -Eq \
+                         '^[[:space:]]*\[tool\.pylint([.][^]]+)?\]' \
+                         "$config"; then
+                      exit 0
+                    fi
+                  done
+
+                  for config in setup.cfg tox.ini
+                  do
+                    if [ -f "$config" ] &&
+                       grep -Eqi \
+                         '^[[:space:]]*\[pylint([.][^]]+)?\]' \
+                         "$config"; then
+                      exit 0
+                    fi
+                  done
+
+                  exit 1
+            glob:
+              - "**/*.{py,pyi,pyw}"
+            run: mise x -- poetry run pylint -- {staged_files}
+            tags:
+              - lint
+              - python
+              - poetry
+              - pylint

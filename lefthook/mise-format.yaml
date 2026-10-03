@@ -1,0 +1,25 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format mise
+            glob:
+              - .config/mise.toml
+              - .config/mise/config.toml
+              - .config/mise/conf.d/*.toml
+              - .mise/config.toml
+              - .mise/conf.d/*.toml
+              - mise.toml
+              - .mise.toml
+              - .config/mise.lock
+              - .config/mise/mise.lock
+              - .mise/mise.lock
+              - mise.lock
+            run: mise fmt
+            stage_fixed: true
+            tags:
+              - format
+              - mise

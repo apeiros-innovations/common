@@ -1,0 +1,36 @@
+---
+pre-push:
+  jobs:
+    - name: go validation
+      group:
+        parallel: true
+        jobs:
+          - name: go test
+            only:
+              - run: git ls-files | grep -Eq '(^|/)go\.mod$'
+            run: |
+              mise x -- \
+                bash -e -o pipefail -c '
+                  failed=0
+
+                  while IFS= read -r -d "" path; do
+                    case "$path" in
+                      go.mod|*/go.mod)
+                        dir=$(dirname "$path")
+
+                        printf "testing module: %s\n" "$dir"
+
+                        (
+                          cd "$dir"
+                          go test ./...
+                        ) || failed=1
+                        ;;
+                    esac
+                  done < <(git ls-files -z)
+
+                  exit "$failed"
+                '
+            tags:
+              - test
+              - validation
+              - go

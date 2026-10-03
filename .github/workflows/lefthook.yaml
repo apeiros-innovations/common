@@ -1,0 +1,44 @@
+---
+name: Lefthook composition
+on:
+  pull_request:
+    paths:
+      - "lefthook*.yaml"
+      - ".lefthook.yaml"
+      - "lefthook/**"
+      - ".lefthook/**"
+      - "tests/**"
+      - ".mise/**"
+      - ".github/workflows/lefthook.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "lefthook*.yaml"
+      - ".lefthook.yaml"
+      - "lefthook/**"
+      - ".lefthook/**"
+      - "tests/**"
+      - ".mise/**"
+      - ".github/workflows/lefthook.yaml"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MISE_AUTO_INSTALL: "false"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install test tools
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+        with:
+          install_args: python aqua:evilmartians/lefthook
+          cache: false
+      - name: Test composition and execution
+        run: mise x -- python -m unittest discover -s tests -v

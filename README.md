@@ -3,192 +3,27 @@
 Shared development-tooling policy for Apeiros repositories.
 
 > [!warning]
-> This project is still very experimental. Changes are being made rapidly.
+> This project is experimental. Consumers should upgrade the shared configuration intentionally.
 
-This repository provides:
+Common provides reusable [Lefthook](https://lefthook.dev/) checks, presets, tool definitions, and shared formatter and linter configuration.
 
-- reusable [Lefthook](https://lefthook.dev/) configurations;
-- matching [Mise](https://mise.jdx.dev/) tool definitions;
-- shared formatter, linter, security, and repository-policy configuration;
-- small hook helpers for checks that are not provided directly by Git or an existing tool.
+## Composition
 
-This README documents the conventions specific to this repository. For Lefthook or Mise behavior, configuration syntax, and CLI usage, use the upstream documentation.
+| Layer  | Owns                                                          | Example                                                 |
+| ------ | ------------------------------------------------------------- | ------------------------------------------------------- |
+| Base   | Global settings, phase order, concurrency, failure boundaries | `lefthook.base.yaml`                                    |
+| Preset | A short, explicit list of checks                              | `lefthook.common.yaml`, `lefthook.go.yaml`              |
+| Check  | One selectable job and its file selection                     | `lefthook/actionlint.yaml`, `lefthook/ruff-format.yaml` |
 
-## Design
+The existing `lefthook.<profile>.yaml` entrypoints are presets. Each extends small files under `lefthook/`. Helpers remain under `.lefthook/`; configuration and implementation are separate.
 
-Tool ownership is intentionally separated:
+`lefthook.common.yaml` loads the base once and selects baseline checks. Other presets are additive and do not load the base. For a custom selection without common, load `lefthook.base.yaml` first.
 
-| Layer                | Owns                                                                       |
-| -------------------- | -------------------------------------------------------------------------- |
-| Git                  | index, refs, object metadata, ignore rules, attributes, staged-diff checks |
-| `.gitattributes`     | Git text and line-ending behavior                                          |
-| `.gitignore`         | repository ignore policy                                                   |
-| EditorConfig         | editor-facing file conventions                                             |
-| Mise                 | runtimes, tool versions, lockfiles, installation                           |
-| Lefthook             | hook composition, file selection, execution order                          |
-| Hook helpers         | repository invariants that require structured logic                        |
-| Tool-specific config | formatter, linter, spelling, and security policy                           |
+Use one composition path for each check. In local `extends` trees, Lefthook rejects the same file reached twice, including a preset plus one of its checks. Customize an included check by job name instead of extending its file again. Presets stay at the repository root because remote extensions resolve from the selected entrypoint's directory. Check files contain no further extensions.
 
-Hook helpers should use Git directly when Git already exposes the required state. They should not reimplement Git semantics.
+## Remote use
 
-Bash is used for thin wrappers around external tools. Python is used for structured repository-policy checks.
-
-## Profiles
-
-`common` is the mandatory baseline. Other profiles are additive.
-
-A Lefthook profile and its corresponding Mise fragment should be selected together.
-
-| Profile    | Lefthook configuration     | Mise fragment                  | Purpose                                                                                       |
-| ---------- | -------------------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
-| Common     | `lefthook.common.yaml`     | `.mise/conf.d/common.toml`     | Baseline formatting, validation, repository policy, commit policy, spelling, secrets scanning |
-| JavaScript | `lefthook.javascript.yaml` | `.mise/conf.d/javascript.toml` | JavaScript and TypeScript linting                                                             |
-| Astro      | `lefthook.astro.yaml`      | `.mise/conf.d/astro.toml`      | Astro project checks and package-manager tooling                                              |
-| Python     | `lefthook.python.yaml`     | `.mise/conf.d/python.toml`     | Python formatting, linting, upgrade checks, tests                                             |
-| Django     | `lefthook.django.yaml`     | `.mise/conf.d/django.toml`     | Django-specific template checks                                                               |
-| Go         | `lefthook.go.yaml`         | `.mise/conf.d/go.toml`         | Go formatting, linting, tests, module checks, vulnerability scanning                          |
-| Container  | `lefthook.container.yaml`  | `.mise/conf.d/container.toml`  | Dockerfile linting and container/configuration security scanning                              |
-| GitHub     | `lefthook.github.yaml`     | `.mise/conf.d/github.toml`     | GitHub Actions validation and security analysis                                               |
-| Helm       | `lefthook.helm.yaml`       | `.mise/conf.d/helm.toml`       | Helm linting, rendering checks, and documentation                                             |
-| Renovate   | `lefthook.renovate.yaml`   | `.mise/conf.d/renovate.toml`   | Renovate configuration validation                                                             |
-| DevSkim    | `lefthook.devskim.yaml`    | `.mise/conf.d/devskim.toml`    | Optional DevSkim SAST when `.devskim.json` is present                                         |
-
-## Common hooks
-
-### Commit message
-
-| Hook       | Implementation                    | Purpose                                                                                                                    |
-| ---------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Commitlint | `.lefthook/commit-msg/commitlint` | Validates commit messages. Uses repository Commitlint configuration when present; otherwise uses the shared configuration. |
-
-### Pre-commit
-
-| Hook                     | Implementation                                       | Purpose                                                                                                                                         |
-| ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Just formatting          | Lefthook command                                     | Runs `just --fmt` for staged Justfiles.                                                                                                         |
-| Mise formatting          | Lefthook command                                     | Formats Mise configuration.                                                                                                                     |
-| Mise lock                | Lefthook command                                     | Updates the Mise lockfile when Mise configuration changes.                                                                                      |
-| Oxfmt                    | `.lefthook/pre-commit/oxfmt`                         | Formats supported JSON, Markdown, CSS, HTML, GraphQL, and TOML files.                                                                           |
-| YAML formatting          | `.lefthook/pre-commit/yamlfmt`                       | Formats YAML using repository configuration when present or the shared default.                                                                 |
-| Shell formatting         | Lefthook command                                     | Formats shell scripts with `shfmt`.                                                                                                             |
-| Text hygiene             | `.lefthook/pre-commit/text-hygiene.py`               | Removes trailing whitespace and normalizes the final newline for files not owned by another formatter.                                          |
-| Shebang permissions      | `.lefthook/pre-commit/shebang-permissions.py`        | Ensures staged shebang scripts are executable and rejects executable text files without a shebang.                                              |
-| Git diff check           | Lefthook command                                     | Uses `git diff --cached --check` for Git-native whitespace and conflict-marker validation.                                                      |
-| Path portability         | `.lefthook/pre-commit/check-path-portability.py`     | Rejects case/Unicode path collisions and path components that are not portable across supported developer platforms.                            |
-| JSON validation          | `.lefthook/pre-commit/check-json.py`                 | Performs strict JSON parsing, including duplicate-key and non-standard constant detection.                                                      |
-| YAML linting             | `.lefthook/pre-commit/yamllint`                      | Lints YAML using repository configuration when present or the shared default.                                                                   |
-| ShellCheck               | `.lefthook/pre-commit/shellcheck`                    | Lints shell scripts using repository configuration when present or the shared default.                                                          |
-| dotenv-linter            | Lefthook command                                     | Validates staged `.env` files.                                                                                                                  |
-| CSpell                   | `.lefthook/pre-commit/cspell`                        | Spell-checks staged text files through the shared CSpell implementation.                                                                        |
-| EditorConfig             | Lefthook command                                     | Validates tracked text files when the consuming repository contains an `.editorconfig`.                                                         |
-| Markdownlint             | `.lefthook/pre-commit/markdownlint`                  | Lints Markdown using the shared baseline configuration.                                                                                         |
-| Large-file guard         | `.lefthook/pre-commit/check-large-files.py`          | Rejects newly added staged Git blobs larger than 5 MiB. Correctly filtered Git LFS pointers pass naturally because the staged pointer is small. |
-| Symlink safety           | `.lefthook/pre-commit/check-symlinks.py`             | Rejects staged symlinks whose target is absolute or escapes the repository.                                                                     |
-| Gitlink validation       | `.lefthook/pre-commit/check-gitlinks.py`             | Detects accidental Gitlinks and validates staged submodule paths against staged `.gitmodules`.                                                  |
-| Forced-ignore validation | `.lefthook/pre-commit/check-forced-ignored-files.py` | Rejects newly added files that were force-added despite a tracked `.gitignore` rule.                                                            |
-| Betterleaks              | `.lefthook/pre-commit/betterleaks`                   | Scans staged content for secrets using repository configuration when present or the shared default.                                             |
-| DevSkim                  | `.lefthook/pre-commit/devskim`                       | Runs DevSkim against staged supported source files when the DevSkim profile is enabled and `.devskim.json` exists.                              |
-
-### Pre-push
-
-| Hook                    | Implementation                               | Purpose                                                                                                                        |
-| ----------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Signed commits          | `.lefthook/pre-push/check-signed-commits.py` | Rejects outgoing branch commits that do not contain a Git commit signature. Server-side repository rules remain authoritative. |
-| CSpell repository       | `.lefthook/pre-push/cspell`                  | Spell-checks Git-tracked repository files using the shared CSpell implementation.                                              |
-| EditorConfig repository | Lefthook command                             | Runs repository-wide EditorConfig validation when `.editorconfig` is tracked.                                                  |
-
-## Hook script layout
-
-Lefthook resolves `script:` entries relative to the Git hook that invokes them:
-
-```text
-script: cspell under pre-commit
-→ .lefthook/pre-commit/cspell
-
-script: cspell under pre-push
-→ .lefthook/pre-push/cspell
-```
-
-Shared implementation belongs under `.lefthook/lib/`.
-
-For example:
-
-```text
-.lefthook/
-├── lib/
-│   └── cspell
-├── pre-commit/
-│   └── cspell
-└── pre-push/
-    └── cspell
-```
-
-The hook-specific files are entrypoints. `.lefthook/lib/cspell` contains the shared implementation.
-
-See the Lefthook documentation for script and `source_dir` behavior:
-
-- <https://lefthook.dev/configuration/Scripts/>
-- <https://lefthook.dev/configuration/source_dir/>
-
-## Configuration precedence
-
-Where a tool supports repository-specific configuration, the consuming repository owns its policy.
-
-The general rule is:
-
-```text
-repository configuration exists
-→ use repository configuration
-
-repository configuration does not exist
-→ use the shared configuration from common
-```
-
-This applies to the shared wrappers for tools such as Commitlint, CSpell, Oxfmt, ShellCheck, yamlfmt, yamllint, and Betterleaks.
-
-EditorConfig is intentionally different. The common repository does not impose its `.editorconfig` remotely; EditorConfig checks run only when the consuming repository tracks its own `.editorconfig`.
-
-DevSkim checks run only when the DevSkim profile is selected and `.devskim.json` exists.
-
-## Mise
-
-Mise owns the development toolchain. Lefthook configurations should not pin tool versions or bootstrap tools themselves.
-
-The repository layout is:
-
-```text
-.mise/
-├── config.toml
-├── mise.lock
-└── conf.d/
-    ├── astro.toml
-    ├── common.toml
-    ├── container.toml
-    ├── devskim.toml
-    ├── django.toml
-    ├── github.toml
-    ├── go.toml
-    ├── helm.toml
-    ├── javascript.toml
-    ├── python.toml
-    └── renovate.toml
-```
-
-`common.toml` provides tools required by `lefthook.common.yaml`. Additional fragments provide the tools required by their matching Lefthook profile.
-
-Consuming repositories copy the required Mise files into the repository. The common Mise configuration is not remotely executed by Lefthook.
-
-For Mise configuration loading, settings, lockfiles, and CLI behavior, use the upstream documentation:
-
-- <https://mise.jdx.dev/configuration.html>
-- <https://mise.jdx.dev/configuration/settings.html>
-- <https://mise.jdx.dev/dev-tools/mise-lock.html>
-
-## Lefthook
-
-Consuming repositories use Lefthook remote configuration to select the required profiles.
-
-Example:
+A consuming repository can use `.config/lefthook.yaml`:
 
 ```yaml
 ---
@@ -198,76 +33,160 @@ remotes:
     configs:
       - lefthook.common.yaml
       - lefthook.go.yaml
-      - lefthook.container.yaml
+      - lefthook.github.yaml
 ```
 
-Pin `ref` to the intended common release rather than tracking `main`.
+Replace `vX.Y.Z` with an existing release tag and protect release tags against mutation. Lefthook 2.1.15 uses `git clone --branch` for an initial remote fetch, so a raw commit SHA does not work as a cold-cache remote `ref`. A failed fetch can produce a warning while installation succeeds; inspect the merged configuration after installation.
 
-The matching Mise files for the example are:
+For a smaller custom selection:
 
-```text
-.mise/config.toml
-.mise/conf.d/common.toml
-.mise/conf.d/go.toml
-.mise/conf.d/container.toml
+```yaml
+---
+remotes:
+  - git_url: https://github.com/apeiros-innovations/common.git
+    ref: vX.Y.Z
+    configs:
+      - lefthook.base.yaml
+      - lefthook/yamlfmt.yaml
+      - lefthook/yamllint.yaml
+      - lefthook/actionlint.yaml
+      - lefthook/zizmor.yaml
 ```
 
-After changing the selected Mise profiles, regenerate and commit the appropriate Mise lockfile.
-
-For remote configuration, merge behavior, jobs, groups, scripts, tags, file selection, and hook-specific behavior, use the upstream Lefthook documentation:
-
-- <https://lefthook.dev/>
-- <https://lefthook.dev/configuration/remotes/>
-- <https://lefthook.dev/configuration/Scripts/>
-
-## Bootstrap
-
-For a newly configured repository:
+Install tools through Mise, then install and inspect the hooks:
 
 ```bash
 mise install
-lefthook install
+mise x -- lefthook install
+mise x -- lefthook validate
+mise x -- lefthook dump
 ```
 
-Validate Lefthook configuration with:
+## Presets and optional policies
 
-```bash
-lefthook validate
+| Preset                     | Checks                                                                                                                           |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `lefthook.common.yaml`     | General formatting, YAML/Shell/Markdown linting, strict JSON, repository invariants, staged secrets, Mise formatting and locking |
+| `lefthook.javascript.yaml` | JavaScript/TypeScript formatting and Oxlint                                                                                      |
+| `lefthook.astro.yaml`      | Astro formatting, project checks, and build                                                                                      |
+| `lefthook.python.yaml`     | Ruff fixes, formatting, and linting                                                                                              |
+| `lefthook.django.yaml`     | Django template formatting and linting                                                                                           |
+| `lefthook.go.yaml`         | Go imports/formatting, GolangCI-Lint, module metadata, tests, vulnerabilities                                                    |
+| `lefthook.container.yaml`  | Hadolint and Trivy for Dockerfiles                                                                                               |
+| `lefthook.github.yaml`     | Actionlint and Zizmor                                                                                                            |
+| `lefthook.helm.yaml`       | Helm documentation and linting                                                                                                   |
+| `lefthook.opentofu.yaml`   | Formatting, documentation, provider locks, TFLint, Trivy, validation                                                             |
+| `lefthook.terragrunt.yaml` | Formatting, provider locks, configuration and input validation                                                                   |
+| `lefthook.poetry.yaml`     | Poetry configuration/lock validation and Pylint                                                                                  |
+| `lefthook.renovate.yaml`   | Renovate configuration validation                                                                                                |
+| `lefthook.devskim.yaml`    | DevSkim when `.devskim.json` exists                                                                                              |
+
+CSpell, Commitlint, and signed-commit checks are opt-in. Select the desired files explicitly alongside a preset or custom base:
+
+| Check file                        | Hook         | Purpose                                |
+| --------------------------------- | ------------ | -------------------------------------- |
+| `lefthook/cspell.yaml`            | `pre-commit` | Spelling for selected text files       |
+| `lefthook/cspell-repository.yaml` | `pre-push`   | Spelling for the tracked repository    |
+| `lefthook/commitlint.yaml`        | `commit-msg` | Conventional commit messages           |
+| `lefthook/signed-commits.yaml`    | `pre-push`   | Signature presence on outgoing commits |
+
+EditorConfig remains an editor convention. There is no EditorConfig enforcement hook. Server-side rules remain authoritative for commit-signature policy.
+
+Every check file is independently selectable. For example, `goimports.yaml` and `gofmt.yaml`, `ruff-fix.yaml` and `ruff-format.yaml`, or `mise-format.yaml` and `mise-lock.yaml` can be chosen separately.
+
+## Execution and overrides
+
+Pre-commit uses named phases in a fixed order: **format → generate → validate**, retaining the current baseline's order. Mutating phases run sequentially; validation runs in parallel. A failed phase prevents later phases from running. The base has skipped empty groups; selecting a check enables its phase, so base-only and lint-only selections are valid.
+
+Nested groups retain their order: Ruff fixes precede Ruff formatting, and Go imports precede Go formatting when their presets are selected. Unsupported job `priority` fields are removed. Phase order comes from the base and named-job merging.
+
+The consuming repository's primary configuration can override a shared job by name. For example:
+
+```yaml
+---
+remotes:
+  - git_url: https://github.com/apeiros-innovations/common.git
+    ref: vX.Y.Z
+    configs:
+      - lefthook.common.yaml
+      - lefthook.github.yaml
+pre-commit:
+  jobs:
+    - name: validate
+      group:
+        jobs:
+          - name: zizmor
+            skip: true
 ```
 
-Inspect the fully merged Lefthook configuration with:
+Change properties such as `exclude`, `env`, or `run` through the same named path. Match the full group nesting shown by `lefthook dump`. Use `.config/lefthook-local.yaml` for personal overrides; keep team policy in the tracked primary configuration.
 
-```bash
-lefthook dump
-```
+Existing configuration-existence gates remain in language checks. Install their tools and project dependencies and inspect the merged configuration when customizing checks.
 
-For locked CI/toolchain installation:
+## GitHub CI
+
+Jobs tagged `ci` support tracked files in a clean checkout. Reuse them after installing the project's tools and fetching remote configuration:
 
 ```bash
 mise install --locked
+mise x -- lefthook install
+mise x -- lefthook dump
+mise x -- lefthook run pre-commit \
+  --tag ci \
+  --all-files \
+  --no-stage-fixed \
+  --fail-on-changes \
+  --no-auto-install \
+  --no-tty
 ```
 
-Where provenance re-verification is required:
+`--all-files` replaces staged-file templates with tracked files; globs, exclusions, and file types still apply. Formatters can change the checkout. `--fail-on-changes` makes those changes fail CI, and `--no-stage-fixed` keeps formatter changes out of the index.
+
+The tag covers file-based formatting/linting, strict JSON, path portability, symlink safety, and Gitlink metadata. It excludes staged-diff checks, newly added file checks, staged secret scanning, generators that explicitly stage output, and commit/push checks. GolangCI-Lint's staged-patch job also stays outside this tag. Run full tests, builds, repository-wide vulnerability/secret scans, and deployment checks through their appropriate CI commands.
+
+`--no-stage-fixed` does not disable a helper's explicit `git add`. Keep generation jobs outside this generic CI command. Tags select existing jobs; they do not create a separate hook or relocate scripts. An unknown tag can select no jobs, so a CI integration should assert that its intended job names appear in `lefthook dump --format json`.
+
+The repository's `Lefthook composition` workflow runs the native fixture suite on pull requests and main. Consumers should additionally run their selected `ci` checks.
+
+## Mise and helpers
+
+Use `.config/mise.toml` for a consuming repository's tool manifest. Mise owns tool versions, installation, and lockfiles. Current common tool definitions live under `.mise/config.toml` and `.mise/conf.d/`; tool-manifest redesign is a separate change.
+
+Mise formatting and locking recognize `.config/mise.toml`, the existing `.mise/` and `.config/mise/` layouts, and root Mise files. Lock generation preserves unstaged lockfile edits and stages generated lockfiles at those locations. General TOML formatting excludes Mise configuration.
+
+| Layer            | Responsibility                                          |
+| ---------------- | ------------------------------------------------------- |
+| Git              | Index, refs, ignore rules, attributes, staged blobs     |
+| Mise             | Toolchain versions and installation                     |
+| Lefthook         | Check selection, file selection, scheduling, staging    |
+| Formatter/linter | Language and tool policy                                |
+| Helper           | Structured repository checks or configuration discovery |
+
+Simple tools run directly through `run: mise x -- ...`. Bash wrappers provide shared defaults for Commitlint, CSpell, Oxfmt, ShellCheck, yamlfmt, yamllint, Markdownlint, and Betterleaks. Repository configuration takes precedence where supported. The GitHub wrappers currently use common's Actionlint and Zizmor configuration.
+
+Structured Git checks use Python and invoke Git for authoritative state. Hook entrypoints stay under `.lefthook/<hook-name>/`, with shared implementations under `.lefthook/lib/`. This preserves native remote script resolution.
+
+A future Go helper can replace structured checks and repeated discovery logic while preserving check files and job names. Mise would install its release binary and upstream tools; Lefthook would call it through `mise x --`. The helper should expose explicit staged/repository modes, preserve arguments and exit codes, and invoke tools from Mise's PATH. Versions, installation, scheduling, and file selection continue to belong to their existing layers.
+
+## Migration and verification
+
+Consumers can keep selecting `lefthook.common.yaml` and additive profiles. Add optional policy files explicitly when upgrading if their checks are desired. For a custom selection, load the base once and choose check files. Review existing overrides against the merged configuration.
+
+Verify that intended jobs appear after installation. Lefthook can tolerate a missing remote file, so `lefthook validate` alone does not establish that all requested checks loaded.
+
+Run the fixture suite with the selected toolchain:
 
 ```bash
-MISE_LOCKED_VERIFY_PROVENANCE=1 mise install --locked
+mise install python aqua:evilmartians/lefthook
+mise x -- python -m unittest discover -s tests -v
 ```
 
-Refer to the Mise lockfile documentation for lockfile and provenance semantics rather than duplicating that behavior here.
+Tests use real Lefthook in temporary Git repositories. They verify every module and preset, empty phases, remote script resolution, named overrides, order, failure propagation, partial staging, committed-file CI checks, and formatting failures without staging. A small Mise shim runs helpers, and layout tests substitute lock generation; these validate orchestration rather than Mise installation or resolution.
 
-## Repository policy boundaries
+Upstream references:
 
-Do not add custom hooks where an existing layer already owns the behavior.
-
-| Requirement                                      | Owner                       |
-| ------------------------------------------------ | --------------------------- |
-| Git line-ending and text attributes              | `.gitattributes`            |
-| Ignore rules                                     | `.gitignore`                |
-| Staged whitespace/conflict-marker validation     | `git diff --cached --check` |
-| Editor behavior                                  | `.editorconfig`             |
-| Tool installation/version resolution             | Mise                        |
-| Hook lifecycle and file selection                | Lefthook                    |
-| Language formatting/linting                      | Existing formatter/linter   |
-| Repository invariants requiring structured logic | Python hook helper          |
-
-New shared hooks should prevent a distinct class of failure and should not duplicate an existing tool.
+- [Lefthook configuration](https://lefthook.dev/configuration/)
+- [Remote configurations](https://lefthook.dev/configuration/remotes/)
+- [Extending configuration](https://lefthook.dev/configuration/extends/)
+- [Mise configuration](https://mise.jdx.dev/configuration.html)
+- [Mise lockfiles](https://mise.jdx.dev/dev-tools/mise-lock.html)

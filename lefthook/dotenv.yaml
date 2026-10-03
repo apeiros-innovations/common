@@ -1,0 +1,17 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: dotenv
+            glob:
+              - "**/.env"
+              - "**/.env.*"
+            run: mise x -- dotenv-linter check {staged_files}
+            tags:
+              - lint
+              - environment
+              - dotenv
+              - ci

@@ -1,0 +1,19 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format css
+            glob:
+              - "**/*.{css,scss,less,pcss,postcss}"
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - css
+              - oxfmt
+              - ci

@@ -1,0 +1,15 @@
+---
+pre-push:
+  jobs:
+    - name: repository validation
+      group:
+        parallel: true
+        jobs:
+          - name: cspell repository
+            script: cspell
+            runner: bash
+            args: --repository
+            tags:
+              - lint
+              - spelling
+              - cspell

@@ -1,0 +1,19 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: golangci config
+            only:
+              - run: test -f .golangci.yml || test -f .golangci.yaml || test -f .golangci.toml || test -f .golangci.json
+            glob:
+              - .golangci.{yml,yaml,toml,json}
+            run: mise x -- golangci-lint config verify
+            tags:
+              - validation
+              - lint
+              - go
+              - golangci-lint
+              - ci
