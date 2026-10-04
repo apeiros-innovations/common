@@ -3,7 +3,7 @@
 Shared development-tooling policy for Apeiros repositories.
 
 > [!warning]
-> This project is experimental. Consumers should upgrade the shared configuration intentionally.
+> This project is experimental. Consumers track the shared configuration on `main`.
 
 Common provides reusable [Lefthook](https://lefthook.dev/) checks, presets, tool definitions, and shared formatter and linter configuration.
 
@@ -23,20 +23,21 @@ Use one composition path for each check. In local `extends` trees, Lefthook reje
 
 ## Remote use
 
-A consuming repository can use `.config/lefthook.yaml`:
+A consuming repository can use `.lefthook.yaml`:
 
 ```yaml
 ---
 remotes:
   - git_url: https://github.com/apeiros-innovations/common.git
-    ref: vX.Y.Z
+    ref: main
+    refetch_frequency: 24h
     configs:
       - lefthook.common.yaml
       - lefthook.go.yaml
       - lefthook.github.yaml
 ```
 
-Replace `vX.Y.Z` with an existing release tag and protect release tags against mutation. Lefthook 2.1.15 uses `git clone --branch` for an initial remote fetch, so a raw commit SHA does not work as a cold-cache remote `ref`. A failed fetch can produce a warning while installation succeeds; inspect the merged configuration after installation.
+Keep `.lefthook.yaml` at the repository root. The remote follows the common `main` branch. `refetch_frequency: 24h` lets Lefthook refresh its cached remote during installation once the cache is at least 24 hours old. Run `mise x -- lefthook install` to install or refresh hooks, and inspect the selected checks with `mise x -- lefthook dump`.
 
 For a smaller custom selection:
 
@@ -44,7 +45,8 @@ For a smaller custom selection:
 ---
 remotes:
   - git_url: https://github.com/apeiros-innovations/common.git
-    ref: vX.Y.Z
+    ref: main
+    refetch_frequency: 24h
     configs:
       - lefthook.base.yaml
       - lefthook/yamlfmt.yaml
@@ -107,7 +109,8 @@ The consuming repository's primary configuration can override a shared job by na
 ---
 remotes:
   - git_url: https://github.com/apeiros-innovations/common.git
-    ref: vX.Y.Z
+    ref: main
+    refetch_frequency: 24h
     configs:
       - lefthook.common.yaml
       - lefthook.github.yaml
@@ -186,7 +189,7 @@ experimental = true
 "aqua:evilmartians/lefthook" = "2.1.15"
 ```
 
-Keep the [pinned Lefthook remote configuration](#remote-use) in `.config/lefthook.yaml`. Add the desired blocks below inside the existing `[tools]` table. Declare each tool only once when combining blocks, and choose runtime versions compatible with the project. For an individual check, copy only its tool and dependencies from the matching block. Python is also needed for the structured Git checks, including the optional signed-commit check.
+Keep the [Lefthook remote configuration](#remote-use) in `.lefthook.yaml`. Add the desired blocks below inside the existing `[tools]` table. Declare each tool only once when combining blocks, and choose runtime versions compatible with the project. For an individual check, copy only its tool and dependencies from the matching block. Python is also needed for the structured Git checks, including the optional signed-commit check.
 
 Mise installs the declared tools. Lefthook's globs and prerequisites decide when their checks run. A workflow-only project can select `lefthook.base.yaml` and `lefthook.github.yaml` and copy just the GitHub block; it needs no language runtimes or other linters.
 
