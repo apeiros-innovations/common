@@ -169,9 +169,18 @@ The tag covers file-based formatting/linting, strict JSON, path portability, sym
 
 ## Mise and helpers
 
-Use `.config/mise.toml` for a consuming repository's tool manifest. Mise owns tool versions, installation, and lockfiles. Current common tool definitions live under `.mise/config.toml` and `.mise/conf.d/`; tool-manifest redesign is a separate change.
+Common declares tool versions and backend options once in `.config/mise.toml`, grouped by purpose within the same file. Mise owns installation and `.config/mise.lock`; native dependency graphs live under `.config/mise/locks/`. Commit lockfiles and graphs together. Consumers migrating from `.mise/conf.d/` should select the tools they need in their own `.config/mise.toml`.
 
-Mise formatting and locking recognize `.config/mise.toml`, the existing `.mise/` and `.config/mise/` layouts, and root Mise files. Lock generation preserves unstaged lockfile edits and stages generated lockfiles at those locations. General TOML formatting excludes Mise configuration.
+Read literal pins directly, including from workflow steps:
+
+```bash
+mise config get --file .config/mise.toml tools.aqua:rhysd/actionlint
+mise config get --file .config/mise.toml tools.aqua:zizmorcore/zizmor
+```
+
+The [workflow lint job](.github/workflows/workflow-lint.yaml) passes those values to the pinned shared action. Queries do not install tools. For entries with backend options, query their `version` field, such as `tools.npm:renovate.version`. Renovate recognizes `.config/mise.toml` natively.
+
+Mise formatting and locking also recognize the legacy `.mise/` and `.config/mise/` layouts and root Mise files. Lock generation preserves unstaged edits and stages lockfiles and dependency graphs. Generated graphs are excluded from general formatting, YAML linting, and spelling so their recorded digests remain valid. Local tool installation installs Git hooks when Lefthook is available; CI skips that step. Poetry creates its project environment when invoked.
 
 | Layer            | Responsibility                                          |
 | ---------------- | ------------------------------------------------------- |

@@ -162,20 +162,6 @@ checksum = "sha256:771214659b86d2de5c8c5214e6d59484ceb0de8a87037d488ce37d6ca6f6c
 url = "https://github.com/dotenv-linter/dotenv-linter/releases/download/v4.0.0/dotenv-linter-win-x64.zip"
 url_api = "https://api.github.com/repos/dotenv-linter/dotenv-linter/releases/assets/305835598"
 
-[[tools."aqua:editorconfig-checker/editorconfig-checker"]]
-version = "4.0.2"
-backend = "aqua:editorconfig-checker/editorconfig-checker"
-
-[tools."aqua:editorconfig-checker/editorconfig-checker"."platforms.linux-x64"]
-checksum = "sha256:44efaef3ed14c6ab52eb87481d78e5e5c204796dccf26e2f4598a61ba17f8003"
-url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-linux-amd64.tar.gz"
-url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675771"
-
-[tools."aqua:editorconfig-checker/editorconfig-checker"."platforms.macos-arm64"]
-checksum = "sha256:ff59f57717d95fc62b8e372c8051dbbb766f7d660942409a85d027b0feb2422c"
-url = "https://github.com/editorconfig-checker/editorconfig-checker/releases/download/v4.0.2/editorconfig-checker-darwin-all.tar.gz"
-url_api = "https://api.github.com/repos/editorconfig-checker/editorconfig-checker/releases/assets/574675773"
-
 [[tools."aqua:evilmartians/lefthook"]]
 version = "2.1.15"
 backend = "aqua:evilmartians/lefthook"
@@ -618,37 +604,37 @@ url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-darwin-arm64.tar.gz"
 
 [[tools."npm:@commitlint/cli"]]
 version = "21.2.3"
-aube = { path = "locks/npm-commitlint-cli/21.2.3", digest = "sha256:8c7adee094a8c509826c562f8bc9904e358c16c06a22c4709c70e21224c763e4" }
+aube = { path = "mise/locks/npm-commitlint-cli/21.2.3", digest = "sha256:e41205a4c4f5667525fc2511318752574e6a13c56bc25bc25e2b498ab42debc5" }
 backend = "npm:@commitlint/cli"
 
 [[tools."npm:@commitlint/config-conventional"]]
 version = "21.2.3"
-aube = { path = "locks/npm-commitlint-config-conventional/21.2.3", digest = "sha256:6f5899410c567b4385659edfcad3e888a9778830116a4c2a34e981478084c9f8" }
+aube = { path = "mise/locks/npm-commitlint-config-conventional/21.2.3", digest = "sha256:06b5415ad6b4cd4013d539d3d6cc2a79b328396aadeb0745b752a249efa02f9b" }
 backend = "npm:@commitlint/config-conventional"
 
 [[tools."npm:cspell"]]
 version = "10.3.6"
-aube = { path = "locks/npm-cspell/10.3.6", digest = "sha256:09b642413864399214682af32779fbbb06d197c006c01cb4952edfb894f9c842" }
+aube = { path = "mise/locks/npm-cspell/10.3.6", digest = "sha256:2c5f85083476557591533544981da5e781d1a6bdbd85e99310dc448368128c4d" }
 backend = "npm:cspell"
 
 [[tools."npm:markdownlint-cli2"]]
 version = "0.23.3"
-aube = { path = "locks/npm-markdownlint-cli2/0.23.3", digest = "sha256:112fd193cf43212c8e89561b254d2ad490e80fdc89b9d20795b11e0e1f960fb2" }
+aube = { path = "mise/locks/npm-markdownlint-cli2/0.23.3", digest = "sha256:1d36a5d88e0cdf7c00ed6a93a8a63f05656f331dce7190544a6a779aa1612715" }
 backend = "npm:markdownlint-cli2"
 
 [[tools."npm:oxfmt"]]
 version = "0.71.0"
-aube = { path = "locks/npm-oxfmt/0.71.0", digest = "sha256:2b7bfb8c20b448ab9b5549e2e0a43049a897d50d995103408bbba2b0add2bcf0" }
+aube = { path = "mise/locks/npm-oxfmt/0.71.0", digest = "sha256:c4cbae155df98b00b10384f7ef95287abcfc3d923825c2aea5562b70a59ba012" }
 backend = "npm:oxfmt"
 
 [[tools."npm:oxlint"]]
 version = "1.86.0"
-aube = { path = "locks/npm-oxlint/1.86.0", digest = "sha256:c8a39b595a1f17b68da832ab0c7f8556a4f7d46d4089b69fffe8b08559625f1e" }
+aube = { path = "mise/locks/npm-oxlint/1.86.0", digest = "sha256:302fc480f7d93cace033f467a215bb3fabed9470a6bbe27bbb0b44048f3123c0" }
 backend = "npm:oxlint"
 
 [[tools."npm:renovate"]]
 version = "44.126.0"
-aube = { path = "locks/npm-renovate/44.126.0~026f02c4", digest = "sha256:e984b823902d451db7a0b20d67755e8842afd7c407e64142a04fef5f30ee8a48" }
+aube = { path = "mise/locks/npm-renovate/44.126.0~026f02c4", digest = "sha256:1c7e6ca42e90682853d41cfb4bf0e7d697dd7a78022989ef6619c9ae4e06ef6c" }
 backend = "npm:renovate"
 
 [tools."npm:renovate".options]
@@ -670,10 +656,6 @@ backend = "pipx:djlint"
 [[tools."pipx:poetry"]]
 version = "2.5.1"
 backend = "pipx:poetry"
-
-[[tools."pipx:pylint"]]
-version = "4.0.7"
-backend = "pipx:pylint"
 
 [[tools."pipx:yamllint"]]
 version = "1.38.0"
