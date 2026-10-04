@@ -171,24 +171,165 @@ The tag covers file-based formatting/linting, strict JSON, path portability, sym
 
 Common declares tool versions and backend options once in `.config/mise.toml`, grouped by purpose within the same file. This is common's own full tool selection. Mise owns installation and `.config/mise.lock`; native dependency graphs live under `.config/mise/locks/`. Commit lockfiles and graphs together.
 
-Consumers keep their own `.config/mise.toml` and select only the tools they need. The first shared selection, [`mise/github.toml`](mise/github.toml), contains Lefthook, Actionlint, and Zizmor. It is generated from the authoritative manifest and can be included at a full commit SHA:
+Consumers keep their own `.config/mise.toml` and copy only the tools needed by their selected checks. Start with Lefthook:
 
 ```toml
-include = [
-  "git::https://github.com/apeiros-innovations/common.git//mise/github.toml?ref=<40-character-commit-sha>",
-]
+#:schema https://mise.jdx.dev/schema/mise.json
+min_version = { hard = "2026.8.12" }
 
 [settings]
 lockfile = true
+experimental = true
+
+[tools]
+"aqua:evilmartians/lefthook" = "2.1.15"
 ```
 
-Replace the placeholder with the SHA of an existing common commit containing the fragment. Mise 2026.10.0 or newer is required and the fragment enforces that minimum. Each include must point directly at a fragment; Mise does not support nested config includes. Settings remain in the consuming file, and the consuming repository owns its lockfile. Local tool declarations override included declarations. Use a protected release tag separately for Lefthook's remote configuration as described above.
+Keep the [pinned Lefthook remote configuration](#remote-use) in `.config/lefthook.yaml`. Add the desired blocks below inside the existing `[tools]` table. Declare each tool only once when combining blocks, and choose runtime versions compatible with the project. For an individual check, copy only its tool and dependencies from the matching block. Python is also needed for the structured Git checks, including the optional signed-commit check.
 
-Lefthook installs during a normal `mise install`. Actionlint and Zizmor use native `lazy = true` with explicit `lazy_bins`: installation waits until a command invokes the tool. Existing hook globs and prerequisites run before the helper's `mise x -- ...` command, so skipped checks do not install their linters. Tools already installed are reused. Edit a lazy declaration directly, then run `mise reshim` to prepare shell commands; `mise x` and tasks prepare the shims themselves.
+Mise installs the declared tools. Lefthook's globs and prerequisites decide when their checks run. A workflow-only project can select `lefthook.base.yaml` and `lefthook.github.yaml` and copy just the GitHub block; it needs no language runtimes or other linters.
 
-Lazy tools remain configured and can appear in lockfiles. The small remote fragment limits both the tool inventory and downloads; it does not import common's runtimes or other linters. Select additional project tools explicitly in the consuming manifest. Dependencies of a lazy tool must also have the intended versions configured. This pilot covers the two standalone workflow linters; npm tools and packages without executables retain their existing installation behavior.
+These examples are maintained manually alongside [common's manifest](.config/mise.toml). After copying, the consuming repository owns its versions, lockfile, and dependency graphs; Renovate can update its Mise declarations independently. Upgrading the Lefthook remote does not change those tool versions.
 
-For a repository that selects `lefthook.base.yaml` and `lefthook.github.yaml`, prepare and inspect the hooks:
+### Tools by preset
+
+**Common — `lefthook.common.yaml`**
+
+```toml
+python = "3.14.7"
+node = "26.10.0"
+"npm:oxfmt" = "0.71.0"
+"npm:markdownlint-cli2" = "0.23.3"
+"aqua:astral-sh/uv" = "0.12.21"
+"aqua:mvdan/sh" = "3.14.1"
+"aqua:casey/just" = "1.58.0"
+"aqua:betterleaks/betterleaks" = "1.9.0"
+"aqua:koalaman/shellcheck" = "0.11.0"
+"aqua:google/yamlfmt" = "0.21.0"
+"aqua:dotenv-linter/dotenv-linter" = "4.0.0"
+"pipx:yamllint" = { version = "1.38.0", depends = ["python", "aqua:astral-sh/uv"] }
+```
+
+**GitHub — `lefthook.github.yaml`**
+
+```toml
+"aqua:rhysd/actionlint" = "1.7.12"
+"aqua:zizmorcore/zizmor" = "1.30.1"
+```
+
+**Go — `lefthook.go.yaml`**
+
+```toml
+go = "1.27.1"
+"aqua:golangci/golangci-lint" = "2.14.0"
+"go:golang.org/x/tools/cmd/goimports" = "0.50.0"
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.8.0"
+```
+
+**Python — `lefthook.python.yaml`**
+
+```toml
+python = "3.14.7"
+"aqua:astral-sh/ruff" = "0.16.9"
+```
+
+**JavaScript — `lefthook.javascript.yaml`**
+
+```toml
+node = "26.10.0"
+"npm:oxfmt" = "0.71.0"
+"npm:oxlint" = "1.86.0"
+```
+
+**Astro — `lefthook.astro.yaml`**
+
+```toml
+node = "26.10.0"
+pnpm = "12.8.1"
+```
+
+Install Astro, Prettier, its Astro plugin, and any check dependencies in the project's package manifest; the hooks use `pnpm exec`.
+
+**Django — `lefthook.django.yaml`**
+
+```toml
+python = "3.14.7"
+"aqua:astral-sh/ruff" = "0.16.9"
+"pipx:djlint" = { version = "1.46.3", depends = ["python", "aqua:astral-sh/ruff"] }
+```
+
+**Poetry — `lefthook.poetry.yaml`**
+
+```toml
+python = "3.14.7"
+"aqua:astral-sh/uv" = "0.12.21"
+"pipx:poetry" = { version = "2.5.1", depends = ["python", "aqua:astral-sh/uv"] }
+```
+
+Keep Pylint in the project's Poetry development dependencies when selecting its check, and install those dependencies before running hooks.
+
+**Containers — `lefthook.container.yaml`**
+
+```toml
+"aqua:hadolint/hadolint" = "2.15.1"
+"aqua:aquasecurity/trivy" = "0.74.0"
+```
+
+**Helm — `lefthook.helm.yaml`**
+
+```toml
+"aqua:helm/helm" = "4.3.0"
+"aqua:norwoodj/helm-docs" = "1.14.2"
+```
+
+**OpenTofu — `lefthook.opentofu.yaml`**
+
+```toml
+"aqua:opentofu/opentofu" = "1.13.0"
+"aqua:terraform-docs/terraform-docs" = "0.24.0"
+"aqua:terraform-linters/tflint" = "0.64.0"
+"aqua:aquasecurity/trivy" = "0.74.0"
+```
+
+**Terragrunt — `lefthook.terragrunt.yaml`**
+
+```toml
+"aqua:opentofu/opentofu" = "1.13.0"
+"aqua:gruntwork-io/terragrunt" = "1.1.6"
+```
+
+**Renovate — `lefthook.renovate.yaml`**
+
+```toml
+node = "26.10.0"
+"npm:renovate" = { version = "44.126.0", allow_builds = ["re2"], trust_policy_excludes = ["@yarnpkg/libzip@3.2.2"] }
+```
+
+**DevSkim — `lefthook.devskim.yaml`**
+
+```toml
+dotnet = "10.0.401"
+"dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.100" }
+```
+
+**Optional spelling — `lefthook/cspell.yaml` and `lefthook/cspell-repository.yaml`**
+
+```toml
+node = "26.10.0"
+"npm:cspell" = "10.3.6"
+```
+
+**Optional commit messages — `lefthook/commitlint.yaml`**
+
+```toml
+node = "26.10.0"
+"npm:@commitlint/cli" = "21.2.3"
+"npm:@commitlint/config-conventional" = "21.2.3"
+```
+
+### Installation and workflow versions
+
+Prepare and inspect the selected hooks:
 
 ```bash
 mise trust
@@ -198,28 +339,14 @@ mise x -- lefthook install
 mise x -- lefthook dump
 ```
 
-CI can install its lazy tools before running checks, using the selected versions rather than repeating their pins:
+CI can use `mise install --locked` for the project's selection. When a workflow action installs its own tools, read their versions directly from `.config/mise.toml`:
 
 ```bash
-mise install --locked aqua:rhysd/actionlint aqua:zizmorcore/zizmor
+echo "actionlint=$(mise config get --file .config/mise.toml tools.aqua:rhysd/actionlint)" >> "$GITHUB_OUTPUT"
+echo "zizmor=$(mise config get --file .config/mise.toml tools.aqua:zizmorcore/zizmor)" >> "$GITHUB_OUTPUT"
 ```
 
-Read resolved versions through Mise, including when the declarations come from remote includes:
-
-```bash
-mise ls aqua:rhysd/actionlint --current --json | jq -er '.[0].version'
-mise ls aqua:zizmorcore/zizmor --current --json | jq -er '.[0].version'
-```
-
-The [workflow lint job](.github/workflows/workflow-lint.yaml) passes those values to the pinned shared action. Queries do not install tools. `mise config get` remains useful for a stored value in one file; for the lazy entries, read `tools.aqua:rhysd/actionlint.version`. Renovate updates the source manifest; generated selections are excluded from independent version updates.
-
-After updating a selected tool or its options, regenerate the fragment with Mise's native TOML serialization:
-
-```bash
-mise run --skip-tools export:github
-```
-
-`--skip-tools` keeps this maintenance task from installing common's other tools. Common's local Lefthook configuration regenerates and stages the fragment when its source changes, protecting unstaged edits. The workflow lint job regenerates it and rejects drift. No plugin or additional configuration language is required.
+The [workflow lint job](.github/workflows/workflow-lint.yaml) passes those outputs to the pinned shared action. These queries do not install tools or repeat version pins in workflow YAML. For a tool declared as an options table, query its `.version` field instead.
 
 Mise formatting and locking also recognize the legacy `.mise/` and `.config/mise/` layouts and root Mise files. Lock generation preserves unstaged edits and stages lockfiles and dependency graphs. Generated graphs are excluded from general formatting, YAML linting, and spelling so their recorded digests remain valid. Common's own local tool installation installs Git hooks when Lefthook is available; CI skips that step. Poetry creates its project environment when invoked.
 
@@ -253,6 +380,4 @@ Upstream references:
 - [Job prerequisites](https://lefthook.dev/configuration/only/)
 - [Mise configuration](https://mise.jdx.dev/configuration.html)
 - [Mise lockfiles](https://mise.jdx.dev/dev-tools/mise-lock.html)
-- [Mise lazy tools](https://mise.jdx.dev/dev-tools/shims.html#lazy-tools)
-- [Mise remote config includes](https://mise.jdx.dev/configuration.html#include-share-config-from-a-remote-file)
 - [Mise config values](https://mise.jdx.dev/cli/config/get.html)
