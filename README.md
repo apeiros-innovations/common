@@ -169,18 +169,59 @@ The tag covers file-based formatting/linting, strict JSON, path portability, sym
 
 ## Mise and helpers
 
-Common declares tool versions and backend options once in `.config/mise.toml`, grouped by purpose within the same file. Mise owns installation and `.config/mise.lock`; native dependency graphs live under `.config/mise/locks/`. Commit lockfiles and graphs together. Consumers migrating from `.mise/conf.d/` should select the tools they need in their own `.config/mise.toml`.
+Common declares tool versions and backend options once in `.config/mise.toml`, grouped by purpose within the same file. This is common's own full tool selection. Mise owns installation and `.config/mise.lock`; native dependency graphs live under `.config/mise/locks/`. Commit lockfiles and graphs together.
 
-Read literal pins directly, including from workflow steps:
+Consumers keep their own `.config/mise.toml` and select only the tools they need. The first shared selection, [`mise/github.toml`](mise/github.toml), contains Lefthook, Actionlint, and Zizmor. It is generated from the authoritative manifest and can be included at a full commit SHA:
 
-```bash
-mise config get --file .config/mise.toml tools.aqua:rhysd/actionlint
-mise config get --file .config/mise.toml tools.aqua:zizmorcore/zizmor
+```toml
+include = [
+  "git::https://github.com/apeiros-innovations/common.git//mise/github.toml?ref=<40-character-commit-sha>",
+]
+
+[settings]
+lockfile = true
 ```
 
-The [workflow lint job](.github/workflows/workflow-lint.yaml) passes those values to the pinned shared action. Queries do not install tools. For entries with backend options, query their `version` field, such as `tools.npm:renovate.version`. Renovate recognizes `.config/mise.toml` natively.
+Replace the placeholder with the SHA of an existing common commit containing the fragment. Mise 2026.10.0 or newer is required and the fragment enforces that minimum. Each include must point directly at a fragment; Mise does not support nested config includes. Settings remain in the consuming file, and the consuming repository owns its lockfile. Local tool declarations override included declarations. Use a protected release tag separately for Lefthook's remote configuration as described above.
 
-Mise formatting and locking also recognize the legacy `.mise/` and `.config/mise/` layouts and root Mise files. Lock generation preserves unstaged edits and stages lockfiles and dependency graphs. Generated graphs are excluded from general formatting, YAML linting, and spelling so their recorded digests remain valid. Local tool installation installs Git hooks when Lefthook is available; CI skips that step. Poetry creates its project environment when invoked.
+Lefthook installs during a normal `mise install`. Actionlint and Zizmor use native `lazy = true` with explicit `lazy_bins`: installation waits until a command invokes the tool. Existing hook globs and prerequisites run before the helper's `mise x -- ...` command, so skipped checks do not install their linters. Tools already installed are reused. Edit a lazy declaration directly, then run `mise reshim` to prepare shell commands; `mise x` and tasks prepare the shims themselves.
+
+Lazy tools remain configured and can appear in lockfiles. The small remote fragment limits both the tool inventory and downloads; it does not import common's runtimes or other linters. Select additional project tools explicitly in the consuming manifest. Dependencies of a lazy tool must also have the intended versions configured. This pilot covers the two standalone workflow linters; npm tools and packages without executables retain their existing installation behavior.
+
+For a repository that selects `lefthook.base.yaml` and `lefthook.github.yaml`, prepare and inspect the hooks:
+
+```bash
+mise trust
+mise install
+mise lock
+mise x -- lefthook install
+mise x -- lefthook dump
+```
+
+CI can install its lazy tools before running checks, using the selected versions rather than repeating their pins:
+
+```bash
+mise install --locked aqua:rhysd/actionlint aqua:zizmorcore/zizmor
+```
+
+Read resolved versions through Mise, including when the declarations come from remote includes:
+
+```bash
+mise ls aqua:rhysd/actionlint --current --json | jq -er '.[0].version'
+mise ls aqua:zizmorcore/zizmor --current --json | jq -er '.[0].version'
+```
+
+The [workflow lint job](.github/workflows/workflow-lint.yaml) passes those values to the pinned shared action. Queries do not install tools. `mise config get` remains useful for a stored value in one file; for the lazy entries, read `tools.aqua:rhysd/actionlint.version`. Renovate updates the source manifest; generated selections are excluded from independent version updates.
+
+After updating a selected tool or its options, regenerate the fragment with Mise's native TOML serialization:
+
+```bash
+mise run --skip-tools export:github
+```
+
+`--skip-tools` keeps this maintenance task from installing common's other tools. Common's local Lefthook configuration regenerates and stages the fragment when its source changes, protecting unstaged edits. The workflow lint job regenerates it and rejects drift. No plugin or additional configuration language is required.
+
+Mise formatting and locking also recognize the legacy `.mise/` and `.config/mise/` layouts and root Mise files. Lock generation preserves unstaged edits and stages lockfiles and dependency graphs. Generated graphs are excluded from general formatting, YAML linting, and spelling so their recorded digests remain valid. Common's own local tool installation installs Git hooks when Lefthook is available; CI skips that step. Poetry creates its project environment when invoked.
 
 | Layer            | Responsibility                                          |
 | ---------------- | ------------------------------------------------------- |
@@ -212,3 +253,6 @@ Upstream references:
 - [Job prerequisites](https://lefthook.dev/configuration/only/)
 - [Mise configuration](https://mise.jdx.dev/configuration.html)
 - [Mise lockfiles](https://mise.jdx.dev/dev-tools/mise-lock.html)
+- [Mise lazy tools](https://mise.jdx.dev/dev-tools/shims.html#lazy-tools)
+- [Mise remote config includes](https://mise.jdx.dev/configuration.html#include-share-config-from-a-remote-file)
+- [Mise config values](https://mise.jdx.dev/cli/config/get.html)

@@ -6,6 +6,7 @@ on:
       - ".github/**"
       - .config/mise.toml
       - .config/mise.lock
+      - mise/github.toml
   push:
     branches:
       - main
@@ -13,6 +14,7 @@ on:
       - ".github/**"
       - .config/mise.toml
       - .config/mise.lock
+      - mise/github.toml
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -32,11 +34,15 @@ jobs:
           cache: false
           env: false
           export_path: false
+      - name: Check generated tool selection
+        run: |
+          mise run --skip-tools export:github
+          git diff --exit-code -- mise/github.toml
       - name: Resolve linter versions
         id: tools
         run: |
-          echo "actionlint=$(mise config get --file .config/mise.toml tools.aqua:rhysd/actionlint)" >> "$GITHUB_OUTPUT"
-          echo "zizmor=$(mise config get --file .config/mise.toml tools.aqua:zizmorcore/zizmor)" >> "$GITHUB_OUTPUT"
+          echo "actionlint=$(mise ls aqua:rhysd/actionlint --current --json | jq -er '.[0].version')" >> "$GITHUB_OUTPUT"
+          echo "zizmor=$(mise ls aqua:zizmorcore/zizmor --current --json | jq -er '.[0].version')" >> "$GITHUB_OUTPUT"
       - name: Lint workflows
         uses: home-operations/.github/actions/workflow-lint@1d6eebfd2066f2aa84939e573e56f60d8d2ed85f  # workflow-lint-v1.0.4
         with:
