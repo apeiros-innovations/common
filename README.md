@@ -167,8 +167,6 @@ The tag covers file-based formatting/linting, strict JSON, path portability, sym
 
 `--no-stage-fixed` does not disable a helper's explicit `git add`. Keep generation jobs outside this generic CI command. Tags select existing jobs; they do not create a separate hook or relocate scripts. An unknown tag can select no jobs, so a CI integration should assert that its intended job names appear in `lefthook dump --format json`.
 
-The repository's `Lefthook composition` workflow runs the native fixture suite on pull requests and main. Consumers should additionally run their selected `ci` checks.
-
 ## Mise and helpers
 
 Use `.config/mise.toml` for a consuming repository's tool manifest. Mise owns tool versions, installation, and lockfiles. Current common tool definitions live under `.mise/config.toml` and `.mise/conf.d/`; tool-manifest redesign is a separate change.
@@ -194,15 +192,6 @@ A future Go helper can replace structured checks and repeated discovery logic wh
 Consumers can keep selecting `lefthook.common.yaml` and additive profiles. Add optional policy files explicitly when upgrading if their checks are desired. For a custom selection, load the base once and choose check files. Review existing overrides against the merged configuration.
 
 Verify that intended jobs appear after installation. Lefthook can tolerate a missing remote file, so `lefthook validate` alone does not establish that all requested checks loaded.
-
-Run the fixture suite with the selected toolchain:
-
-```bash
-mise install python aqua:evilmartians/lefthook
-mise x -- python -m unittest discover -s tests -v
-```
-
-Tests use real Lefthook in temporary Git repositories. They verify every module and preset, empty phases, remote script resolution, named overrides, order, failure propagation, partial staging, committed-file CI checks, and formatting failures without staging. Filtering tests verify config gates, root and nested globs, filenames with spaces, symlink exclusion, invalid JSON, tracked repository spelling, push eligibility, and native IaC formatting. A small Mise shim runs helpers, and recording tools verify dispatch; these validate orchestration rather than upstream tool behavior or Mise installation and resolution.
 
 Upstream references:
 
