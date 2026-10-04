@@ -1,0 +1,19 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: scan dependency locks
+            glob:
+              - "**/{package-lock.json,npm-shrinkwrap.json,yarn.lock,pnpm-lock.yaml,go.mod,go.sum,poetry.lock,uv.lock,Cargo.lock,composer.lock,Gemfile.lock}"
+            script: osv-scanner
+            runner: mise x -- bash
+            args: "{staged_files}"
+            tags:
+              - security
+              - dependencies
+              - osv-scanner
+            file_types:
+              - not symlink
