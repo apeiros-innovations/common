@@ -47,7 +47,6 @@ ignorePaths:
   - .config/mise.toml
   - .config/mise.lock
   - .config/mise/**
-  - mise/github.toml
   - .vscode/**
   - go.mod
   - go.sum

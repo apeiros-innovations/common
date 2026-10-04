@@ -1,5 +1,5 @@
 #:schema https://mise.jdx.dev/schema/mise.json
-min_version = { hard = "2026.10.0" }
+min_version = { hard = "2026.8.12" }
 
 [settings]
 lockfile = true
@@ -27,7 +27,7 @@ pnpm = "12.8.1"
 "aqua:mvdan/sh" = "3.14.1"
 "aqua:casey/just" = "1.58.0"
 "aqua:betterleaks/betterleaks" = "1.9.0"
-"aqua:evilmartians/lefthook" = { version = "2.1.15" }
+"aqua:evilmartians/lefthook" = "2.1.15"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:google/yamlfmt" = "0.21.0"
 "aqua:dotenv-linter/dotenv-linter" = "4.0.0"
@@ -37,14 +37,8 @@ pnpm = "12.8.1"
 ] }
 
 # GitHub
-# Explicit backends need command names for first-use installation.
-# https://mise.jdx.dev/dev-tools/shims.html#lazy-tools
-"aqua:rhysd/actionlint" = { version = "1.7.12", lazy = true, lazy_bins = [
-  "actionlint",
-] }
-"aqua:zizmorcore/zizmor" = { version = "1.30.1", lazy = true, lazy_bins = [
-  "zizmor",
-] }
+"aqua:rhysd/actionlint" = "1.7.12"
+"aqua:zizmorcore/zizmor" = "1.30.1"
 
 # JavaScript and Python
 "npm:oxlint" = "1.86.0"
@@ -93,31 +87,3 @@ POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
 auto = false
 run = "poetry sync --no-interaction --no-ansi"
 timeout = "10m"
-
-[tasks."export:github"]
-description = "Export the GitHub tool selection from the authoritative manifest"
-# Native serialization preserves tool options without a separate TOML parser.
-# https://mise.jdx.dev/cli/config/get.html
-run = '''
-set -eu
-mkdir -p mise
-temporary=$(mktemp mise/.github.XXXXXX)
-trap 'rm -f "$temporary"' EXIT
-
-{
-  printf '%s\n' '#:schema https://mise.jdx.dev/schema/mise.json'
-  printf '%s\n' '# Generated from .config/mise.toml; edit that file, then run:'
-  printf '%s\n' '# mise run --skip-tools export:github'
-  printf '\n[min_version]\n'
-  mise config get --file .config/mise.toml min_version
-
-  for tool in aqua:evilmartians/lefthook aqua:rhysd/actionlint aqua:zizmorcore/zizmor; do
-    printf '[tools."%s"]\n' "$tool"
-    mise config get --file .config/mise.toml "tools.$tool"
-  done
-} > "$temporary"
-
-formatted=$(mise fmt --stdin < "$temporary")
-printf '%s\n' "$formatted" > "$temporary"
-mv -- "$temporary" mise/github.toml
-'''
