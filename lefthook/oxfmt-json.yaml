@@ -1,0 +1,21 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format json
+            glob:
+              - "**/*.{json,json5,jsonc}"
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - json
+              - oxfmt
+              - ci
+            file_types:
+              - not symlink

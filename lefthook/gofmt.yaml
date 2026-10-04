@@ -1,0 +1,21 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format go
+            group:
+              jobs:
+                - name: gofmt simplify
+                  glob:
+                    - "**/*.go"
+                  run: mise x -- gofmt -s -w {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - go
+                    - gofmt
+                  file_types:
+                    - not symlink

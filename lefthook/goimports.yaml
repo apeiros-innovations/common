@@ -1,0 +1,21 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format go
+            group:
+              jobs:
+                - name: goimports
+                  glob:
+                    - "**/*.go"
+                  run: mise x -- goimports -w {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - go
+                    - goimports
+                  file_types:
+                    - not symlink

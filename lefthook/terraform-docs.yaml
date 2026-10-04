@@ -1,0 +1,24 @@
+---
+pre-commit:
+  jobs:
+    - name: generate
+      skip: false
+      group:
+        jobs:
+          - name: opentofu docs
+            glob:
+              - "**/*.{tf,tofu}"
+              - "**/*.{tf,tofu}.json"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: docs {staged_files}
+            tags:
+              - documentation
+              - generation
+              - opentofu
+              - terraform-docs
+            file_types:
+              - not symlink

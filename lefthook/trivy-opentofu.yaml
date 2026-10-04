@@ -1,0 +1,24 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: opentofu trivy
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tf,tofu,tfvars}.json"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            script: opentofu
+            runner: mise x -- bash
+            args: trivy {staged_files}
+            tags:
+              - security
+              - validation
+              - opentofu
+              - trivy
+            file_types:
+              - not symlink

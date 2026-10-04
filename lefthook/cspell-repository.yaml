@@ -1,0 +1,34 @@
+---
+pre-push:
+  jobs:
+    - name: repository validation
+      group:
+        parallel: true
+        jobs:
+          - name: cspell repository
+            script: cspell
+            runner: bash
+            args: "{all_files}"
+            tags:
+              - lint
+              - spelling
+              - cspell
+            only:
+              - run: |
+                  test -n "${CSPELL_CONFIG:-}" && exit 0
+
+                  git -c core.quotePath=false ls-files --cached --others --exclude-standard |
+                    while IFS= read -r config; do
+                      [ -f "$config" ] && printf '%s\n' "$config"
+                    done |
+                    grep -Eq '(^|/)(\.?cspell(\.config)?\.(yaml|yml|json|jsonc|mjs|cjs|js|mts|ts|cts|toml)|\.?cSpell\.json|\.vscode/(cspell|cSpell|\.cspell)\.json)$' &&
+                    exit 0
+
+                  test -f package.json && grep -Eq '"cspell"[[:space:]]*:' package.json
+            glob:
+              - "**/*"
+            file_types:
+              - text
+              - not symlink
+            exclude:
+              - "**/*.svg"

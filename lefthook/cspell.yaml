@@ -1,0 +1,35 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: cspell
+            exclude:
+              - "**/*.svg"
+            file_types:
+              - text
+              - not symlink
+            script: cspell
+            runner: bash
+            args: "{staged_files}"
+            tags:
+              - lint
+              - spelling
+              - cspell
+              - ci
+            only:
+              - run: |
+                  test -n "${CSPELL_CONFIG:-}" && exit 0
+
+                  git -c core.quotePath=false ls-files --cached --others --exclude-standard |
+                    while IFS= read -r config; do
+                      [ -f "$config" ] && printf '%s\n' "$config"
+                    done |
+                    grep -Eq '(^|/)(\.?cspell(\.config)?\.(yaml|yml|json|jsonc|mjs|cjs|js|mts|ts|cts|toml)|\.?cSpell\.json|\.vscode/(cspell|cSpell|\.cspell)\.json)$' &&
+                    exit 0
+
+                  test -f package.json && grep -Eq '"cspell"[[:space:]]*:' package.json
+            glob:
+              - "**/*"

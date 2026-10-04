@@ -1,0 +1,31 @@
+---
+pre-push:
+  jobs:
+    - name: astro validation
+      group:
+        parallel: true
+        jobs:
+          - name: astro build
+            run: mise x -- pnpm exec astro build
+            tags:
+              - validation
+              - astro
+            only:
+              - run: test -f package.json || test -f package.yaml
+            glob:
+              - src/**
+              - public/**
+              - "**/*.astro"
+              - astro.config.*
+              - vite.config.*
+              - tailwind.config.*
+              - postcss.config.*
+              - ".env*"
+              - .npmrc
+              - tsconfig*.json
+              - package.json
+              - package.yaml
+              - pnpm-lock.yaml
+              - pnpm-workspace.yaml
+            file_types:
+              - not symlink

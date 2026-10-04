@@ -1,0 +1,20 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: check json
+            glob:
+              - "**/*.json"
+            script: check-json.py
+            runner: mise x -- python3
+            args: "{staged_files}"
+            tags:
+              - validation
+              - json
+              - repository
+              - ci
+            file_types:
+              - not symlink

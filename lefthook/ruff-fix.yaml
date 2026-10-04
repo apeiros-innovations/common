@@ -1,0 +1,24 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format python
+            group:
+              parallel: false
+              jobs:
+                - name: ruff fix
+                  glob:
+                    - "**/*.{py,pyi,pyw}"
+                  run: mise x -- ruff check --fix-only --force-exclude {staged_files}
+                  stage_fixed: true
+                  tags:
+                    - format
+                    - lint
+                    - python
+                    - ruff
+                    - ci
+                  file_types:
+                    - not symlink

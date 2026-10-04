@@ -1,0 +1,23 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format html
+            glob:
+              - "**/*.{html,htm,xhtml}"
+            exclude:
+              - "**/templates/**"
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - html
+              - oxfmt
+              - ci
+            file_types:
+              - not symlink

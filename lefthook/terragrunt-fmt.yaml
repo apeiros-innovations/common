@@ -1,0 +1,32 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: terragrunt fmt
+            glob:
+              - "**/*.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+              - "**/.terraform.lock.hcl"
+              - "**/.tflint.hcl"
+              - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+            stage_fixed: true
+            tags:
+              - format
+              - terragrunt
+            file_types:
+              - text
+              - not symlink
+            run: |-
+              mise x -- \
+                bash -c '
+                  failed=0
+                  for file do
+                    terragrunt hcl fmt --file="$file" || failed=1
+                  done
+                  exit "$failed"
+                ' -- {staged_files}

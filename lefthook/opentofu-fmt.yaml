@@ -1,0 +1,30 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: opentofu fmt
+            glob:
+              - "**/*.{tf,tofu,tfvars}"
+              - "**/*.{tftest,tofutest,tfmock,tfquery}.hcl"
+            exclude:
+              - "**/.terraform/**"
+              - "**/.terragrunt-cache/**"
+            stage_fixed: true
+            tags:
+              - format
+              - opentofu
+            file_types:
+              - text
+              - not symlink
+            run: |-
+              mise x -- \
+                bash -c '
+                  failed=0
+                  for file do
+                    tofu fmt "$file" || failed=1
+                  done
+                  exit "$failed"
+                ' -- {staged_files}

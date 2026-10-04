@@ -1,0 +1,19 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format shell
+            glob:
+              - "**/*.{sh,bash,ksh}"
+            run: mise x -- shfmt -w -s {staged_files}
+            stage_fixed: true
+            tags:
+              - format
+              - shell
+              - shfmt
+              - ci
+            file_types:
+              - not symlink
