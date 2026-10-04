@@ -1,0 +1,50 @@
+---
+name: Workflow lint
+on:
+  pull_request:
+    paths:
+      - ".github/**"
+      - .config/mise.toml
+      - .config/mise.lock
+      - mise/github.toml
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/**"
+      - .config/mise.toml
+      - .config/mise.lock
+      - mise/github.toml
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Setup Mise
+        uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c  # v4.3.0
+        with:
+          install: false
+          cache: false
+          env: false
+          export_path: false
+      - name: Check generated tool selection
+        run: |
+          mise run --skip-tools export:github
+          git diff --exit-code -- mise/github.toml
+      - name: Resolve linter versions
+        id: tools
+        run: |
+          echo "actionlint=$(mise ls aqua:rhysd/actionlint --current --json | jq -er '.[0].version')" >> "$GITHUB_OUTPUT"
+          echo "zizmor=$(mise ls aqua:zizmorcore/zizmor --current --json | jq -er '.[0].version')" >> "$GITHUB_OUTPUT"
+      - name: Lint workflows
+        uses: home-operations/.github/actions/workflow-lint@1d6eebfd2066f2aa84939e573e56f60d8d2ed85f  # workflow-lint-v1.0.4
+        with:
+          actionlint-version: ${{ steps.tools.outputs.actionlint }}
+          zizmor-version: ${{ steps.tools.outputs.zizmor }}

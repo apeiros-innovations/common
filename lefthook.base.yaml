@@ -18,6 +18,8 @@ pre-commit:
       skip: true
       exclude:
         - "**/schemas/**"
+        - .mise/locks/**
+        - .config/mise/locks/**
       group:
         parallel: false
         jobs: []

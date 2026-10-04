@@ -1,0 +1,123 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+min_version = { hard = "2026.10.0" }
+
+[settings]
+lockfile = true
+lockfile_platforms = ["macos-arm64", "linux-x64"]
+experimental = true
+
+[hooks]
+postinstall = 'if [ -z "${CI:-}" ] && command -v lefthook >/dev/null 2>&1; then lefthook install; fi'
+
+[tools]
+# Runtimes
+python = "3.14.7"
+node = "26.10.0"
+go = "1.27.1"
+dotnet = "10.0.401"
+pnpm = "12.8.1"
+
+# Common
+"npm:oxfmt" = "0.71.0"
+"npm:cspell" = "10.3.6"
+"npm:@commitlint/cli" = "21.2.3"
+"npm:@commitlint/config-conventional" = "21.2.3"
+"npm:markdownlint-cli2" = "0.23.3"
+"aqua:astral-sh/uv" = "0.12.21"
+"aqua:mvdan/sh" = "3.14.1"
+"aqua:casey/just" = "1.58.0"
+"aqua:betterleaks/betterleaks" = "1.9.0"
+"aqua:evilmartians/lefthook" = { version = "2.1.15" }
+"aqua:koalaman/shellcheck" = "0.11.0"
+"aqua:google/yamlfmt" = "0.21.0"
+"aqua:dotenv-linter/dotenv-linter" = "4.0.0"
+"pipx:yamllint" = { version = "1.38.0", depends = [
+  "python",
+  "aqua:astral-sh/uv",
+] }
+
+# GitHub
+# Explicit backends need command names for first-use installation.
+# https://mise.jdx.dev/dev-tools/shims.html#lazy-tools
+"aqua:rhysd/actionlint" = { version = "1.7.12", lazy = true, lazy_bins = [
+  "actionlint",
+] }
+"aqua:zizmorcore/zizmor" = { version = "1.30.1", lazy = true, lazy_bins = [
+  "zizmor",
+] }
+
+# JavaScript and Python
+"npm:oxlint" = "1.86.0"
+"aqua:astral-sh/ruff" = "0.16.9"
+"pipx:djlint" = { version = "1.46.3", depends = [
+  "python",
+  "aqua:astral-sh/ruff",
+] }
+"pipx:django-upgrade" = { version = "1.32.0", depends = [
+  "python",
+  "aqua:astral-sh/uv",
+] }
+"pipx:poetry" = { version = "2.5.1", depends = ["python", "aqua:astral-sh/uv"] }
+
+# Go
+"aqua:golangci/golangci-lint" = "2.14.0"
+"go:golang.org/x/tools/cmd/goimports" = "0.50.0"
+"go:golang.org/x/vuln/cmd/govulncheck" = "1.8.0"
+
+# Containers and infrastructure
+"aqua:hadolint/hadolint" = "2.15.1"
+"aqua:aquasecurity/trivy" = "0.74.0"
+"aqua:helm/helm" = "4.3.0"
+"aqua:norwoodj/helm-docs" = "1.14.2"
+"aqua:opentofu/opentofu" = "1.13.0"
+"aqua:terraform-docs/terraform-docs" = "0.24.0"
+"aqua:terraform-linters/tflint" = "0.64.0"
+"aqua:gruntwork-io/terragrunt" = "1.1.6"
+
+# Security and dependency management
+"aqua:google/osv-scanner" = "2.6.0"
+"dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.100" }
+"npm:renovate" = { version = "44.126.0", allow_builds = [
+  "re2",
+], trust_policy_excludes = [
+  "@yarnpkg/libzip@3.2.2",
+] }
+
+[env]
+DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+POETRY_VIRTUALENVS_CREATE = "true"
+POETRY_VIRTUALENVS_IN_PROJECT = "true"
+POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
+
+[deps.poetry]
+auto = false
+run = "poetry sync --no-interaction --no-ansi"
+timeout = "10m"
+
+[tasks."export:github"]
+description = "Export the GitHub tool selection from the authoritative manifest"
+# Native serialization preserves tool options without a separate TOML parser.
+# https://mise.jdx.dev/cli/config/get.html
+run = '''
+set -eu
+mkdir -p mise
+temporary=$(mktemp mise/.github.XXXXXX)
+trap 'rm -f "$temporary"' EXIT
+
+{
+  printf '%s\n' '#:schema https://mise.jdx.dev/schema/mise.json'
+  printf '%s\n' '# Generated from .config/mise.toml; edit that file, then run:'
+  printf '%s\n' '# mise run --skip-tools export:github'
+  printf '\n[min_version]\n'
+  mise config get --file .config/mise.toml min_version
+
+  for tool in aqua:evilmartians/lefthook aqua:rhysd/actionlint aqua:zizmorcore/zizmor; do
+    printf '[tools."%s"]\n' "$tool"
+    mise config get --file .config/mise.toml "tools.$tool"
+  done
+} > "$temporary"
+
+formatted=$(mise fmt --stdin < "$temporary")
+printf '%s\n' "$formatted" > "$temporary"
+mv -- "$temporary" mise/github.toml
+'''

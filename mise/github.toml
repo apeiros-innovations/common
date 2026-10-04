@@ -1,0 +1,19 @@
+#:schema https://mise.jdx.dev/schema/mise.json
+# Generated from .config/mise.toml; edit that file, then run:
+# mise run --skip-tools export:github
+
+[min_version]
+hard = "2026.10.0"
+
+[tools."aqua:evilmartians/lefthook"]
+version = "2.1.15"
+
+[tools."aqua:rhysd/actionlint"]
+version = "1.7.12"
+lazy = true
+lazy_bins = ["actionlint"]
+
+[tools."aqua:zizmorcore/zizmor"]
+version = "1.30.1"
+lazy = true
+lazy_bins = ["zizmor"]

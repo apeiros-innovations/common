@@ -10,6 +10,8 @@ pre-commit:
               - "**/*.{yaml,yml}"
             exclude:
               - "**/templates/**"
+              - .mise/locks/**
+              - .config/mise/locks/**
             script: yamllint
             runner: bash
             args: "{staged_files}"
