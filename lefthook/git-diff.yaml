@@ -1,0 +1,15 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: git diff check
+            exclude:
+              - schemas/**
+            run: git --no-pager diff --cached --check --no-ext-diff --no-textconv -- {staged_files}
+            tags:
+              - validation
+              - git
+              - repository

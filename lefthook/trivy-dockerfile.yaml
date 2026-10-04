@@ -1,0 +1,39 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: trivy dockerfile
+            glob:
+              - "**/{Dockerfile,Containerfile}"
+              - "**/{Dockerfile,Containerfile}.*"
+              - "**/*.{Dockerfile,Containerfile}"
+            run: |
+              mise x -- \
+                bash -e -o pipefail -c '
+                  failed=0
+
+                  for file do
+                    [ -f "$file" ] || continue
+
+                    trivy config \
+                      --quiet \
+                      --misconfig-scanners dockerfile \
+                      --severity HIGH,CRITICAL \
+                      --exit-code 1 \
+                      "$file" ||
+                      failed=1
+                  done
+
+                  exit "$failed"
+                ' -- {staged_files}
+            tags:
+              - security
+              - container
+              - dockerfile
+              - trivy
+              - ci
+            file_types:
+              - not symlink

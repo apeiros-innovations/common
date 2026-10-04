@@ -1,0 +1,23 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: oxlint
+            only:
+              - run: test -f .oxlintrc.json || test -f .oxlintrc.jsonc || test -f oxlint.config.ts || test -f oxlint.config.mts
+            glob:
+              - "**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"
+              - "**/*.{astro,vue,svelte}"
+            run: mise x -- oxlint --deny-warnings -- {staged_files}
+            tags:
+              - lint
+              - javascript
+              - typescript
+              - framework
+              - oxlint
+              - ci
+            file_types:
+              - not symlink

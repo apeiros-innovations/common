@@ -1,0 +1,14 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: betterleaks
+            script: betterleaks
+            runner: bash
+            tags:
+              - security
+              - secrets
+              - betterleaks

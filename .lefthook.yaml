@@ -4,3 +4,7 @@ extends:
   - lefthook.python.yaml
   - lefthook.github.yaml
   - lefthook.renovate.yaml
+  - lefthook/cspell.yaml
+  - lefthook/cspell-repository.yaml
+  - lefthook/commitlint.yaml
+  - lefthook/signed-commits.yaml

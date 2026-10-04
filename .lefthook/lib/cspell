@@ -119,38 +119,14 @@ run_cspell() {
     "$@"
 }
 
-run_staged() {
+main() {
   local config
 
+  cd -- "$REPOSITORY_ROOT"
+  # Lefthook owns eligibility and supplies staged or tracked text files.
+  # https://lefthook.dev/configuration/run/#all_files
   config="$(resolve_config)"
   run_cspell "$config" -- "$@"
-}
-
-run_repository() {
-  local config
-
-  config="$(resolve_config)"
-  run_cspell "$config" --dot .
-}
-
-main() {
-  cd -- "$REPOSITORY_ROOT"
-
-  if [[ -z ${CSPELL_CONFIG:-} ]] && ! has_cspell_config; then
-    printf 'cspell: no compatible configuration found; skipping\n'
-    return 0
-  fi
-
-  if [[ ${1:-} == "--repository" ]]; then
-    shift
-
-    (($# == 0)) ||
-      die "--repository does not accept file arguments"
-
-    run_repository
-  fi
-
-  run_staged "$@"
 }
 
 main "$@"

@@ -1,0 +1,22 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format markdown
+            glob:
+              - "**/*.{md,markdown,mdx}"
+            script: oxfmt
+            runner: bash
+            args: "{staged_files}"
+            stage_fixed: true
+            tags:
+              - format
+              - markdown
+              - mdx
+              - oxfmt
+              - ci
+            file_types:
+              - not symlink

@@ -1,0 +1,25 @@
+---
+pre-commit:
+  jobs:
+    - name: format
+      skip: false
+      group:
+        jobs:
+          - name: format just
+            glob:
+              - "**/*.just"
+              - "**/{.justfile,justfile,Justfile}"
+            run: |
+              mise x -- \
+                bash -eu -c '
+                  for file do
+                    just --justfile "$file" --fmt
+                  done
+                ' -- {staged_files}
+            stage_fixed: true
+            tags:
+              - format
+              - just
+              - ci
+            file_types:
+              - not symlink

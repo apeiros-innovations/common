@@ -1,0 +1,21 @@
+---
+pre-commit:
+  jobs:
+    - name: validate
+      skip: false
+      group:
+        jobs:
+          - name: hadolint
+            glob:
+              - "**/{Dockerfile,Containerfile}"
+              - "**/{Dockerfile,Containerfile}.*"
+              - "**/*.{Dockerfile,Containerfile}"
+            run: mise x -- hadolint -- {staged_files}
+            tags:
+              - lint
+              - container
+              - dockerfile
+              - hadolint
+              - ci
+            file_types:
+              - not symlink

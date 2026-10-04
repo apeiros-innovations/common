@@ -56,11 +56,9 @@ main() {
 
   cd -- "$REPOSITORY_ROOT"
 
-  options_json="$(resolve_options_json)" || true
+  options_json="$(resolve_options_json)"
 
   for file in "$@"; do
-    [[ -f $file ]] || continue
-
     command=(
       mise x --
       devskim analyze
