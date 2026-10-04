@@ -83,12 +83,13 @@ mise x -- lefthook dump
 
 CSpell, Commitlint, and signed-commit checks are opt-in. Select the desired files explicitly alongside a preset or custom base:
 
-| Check file                        | Hook         | Purpose                                |
-| --------------------------------- | ------------ | -------------------------------------- |
-| `lefthook/cspell.yaml`            | `pre-commit` | Spelling for selected text files       |
-| `lefthook/cspell-repository.yaml` | `pre-push`   | Spelling for the tracked repository    |
-| `lefthook/commitlint.yaml`        | `commit-msg` | Conventional commit messages           |
-| `lefthook/signed-commits.yaml`    | `pre-push`   | Signature presence on outgoing commits |
+| Check file                        | Hook         | Purpose                                      |
+| --------------------------------- | ------------ | -------------------------------------------- |
+| `lefthook/cspell.yaml`            | `pre-commit` | Spelling for selected text files             |
+| `lefthook/cspell-repository.yaml` | `pre-push`   | Spelling for the tracked repository          |
+| `lefthook/commitlint.yaml`        | `commit-msg` | Conventional commit messages                 |
+| `lefthook/signed-commits.yaml`    | `pre-push`   | Signature presence on outgoing commits       |
+| `lefthook/osv-scanner.yaml`       | `pre-commit` | Vulnerabilities in selected dependency locks |
 
 EditorConfig remains an editor convention. There is no EditorConfig enforcement hook. Server-side rules remain authoritative for commit-signature policy.
 
@@ -326,6 +327,14 @@ node = "26.10.0"
 "npm:@commitlint/cli" = "21.2.3"
 "npm:@commitlint/config-conventional" = "21.2.3"
 ```
+
+**Optional dependency scanning — `lefthook/osv-scanner.yaml`**
+
+```toml
+"aqua:google/osv-scanner" = "2.6.0"
+```
+
+The former `lefthook.dependencies.yaml` entrypoint is replaced by this explicitly selected check.
 
 ### Installation and workflow versions
 
