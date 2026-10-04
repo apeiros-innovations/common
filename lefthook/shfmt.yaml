@@ -15,3 +15,5 @@ pre-commit:
               - shell
               - shfmt
               - ci
+            file_types:
+              - not symlink

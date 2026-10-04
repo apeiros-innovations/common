@@ -14,3 +14,11 @@ pre-commit:
               - poetry
               - dependencies
               - supply-chain
+            only:
+              - run: test -f pyproject.toml
+            glob:
+              - pyproject.toml
+              - poetry.lock
+              - "**/*.{py,pyi,pyw}"
+            file_types:
+              - not symlink

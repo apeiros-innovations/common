@@ -20,3 +20,5 @@ pre-commit:
               - github-actions
               - zizmor
               - ci
+            file_types:
+              - not symlink

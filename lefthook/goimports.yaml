@@ -17,3 +17,5 @@ pre-commit:
                     - format
                     - go
                     - goimports
+                  file_types:
+                    - not symlink

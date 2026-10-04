@@ -21,3 +21,5 @@ pre-commit:
               - validation
               - opentofu
               - tflint
+            file_types:
+              - not symlink

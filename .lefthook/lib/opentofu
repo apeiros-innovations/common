@@ -84,31 +84,6 @@ collect_module_directories() {
 	MODULE_DIRECTORIES=()
 
 	for path in "$@"; do
-		case "$path" in
-		*.tf | \
-			*.tofu | \
-			*.tf.json | \
-			*.tofu.json | \
-			*.tfvars | \
-			*.tfvars.json | \
-			*.tftest.hcl | \
-			*.tofutest.hcl | \
-			*.tfmock.hcl | \
-			*.tfquery.hcl | \
-			*/.terraform.lock.hcl | \
-			.terraform.lock.hcl)
-			;;
-		*)
-			continue
-			;;
-		esac
-
-		case "/${path}/" in
-		*/.terraform/* | */.terragrunt-cache/*)
-			continue
-			;;
-		esac
-
 		directory="$(dirname -- "$path")"
 
 		[[ -d $directory ]] ||
@@ -220,43 +195,6 @@ resolve_trivy_config() {
 	)" || return 1
 
 	absolute_file "$config"
-}
-
-format_files() {
-	local file
-	local failed=0
-
-	for file in "$@"; do
-		[[ -f $file ]] ||
-			continue
-
-		case "$file" in
-		*.tf | \
-			*.tofu | \
-			*.tfvars | \
-			*.tftest.hcl | \
-			*.tofutest.hcl | \
-			*.tfmock.hcl | \
-			*.tfquery.hcl)
-			;;
-		*)
-			continue
-			;;
-		esac
-
-		case "/${file}/" in
-		*/.terraform/* | */.terragrunt-cache/*)
-			continue
-			;;
-		esac
-
-		printf 'formatting OpenTofu: %s\n' "$file"
-
-		tofu fmt "$file" ||
-			failed=1
-	done
-
-	return "$failed"
 }
 
 generate_docs() {
@@ -542,7 +480,6 @@ usage() {
 usage: opentofu <command> [files...]
 
 commands:
-  fmt
   docs
   providers-lock
   tflint
@@ -562,9 +499,6 @@ main() {
 	shift
 
 	case "$command" in
-	fmt)
-		format_files "$@"
-		;;
 	docs)
 		generate_docs "$@"
 		;;

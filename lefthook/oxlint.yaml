@@ -19,3 +19,5 @@ pre-commit:
               - framework
               - oxlint
               - ci
+            file_types:
+              - not symlink

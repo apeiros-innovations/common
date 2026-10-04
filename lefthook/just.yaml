@@ -21,3 +21,5 @@ pre-commit:
               - format
               - just
               - ci
+            file_types:
+              - not symlink

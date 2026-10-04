@@ -18,3 +18,5 @@ pre-commit:
               - yaml
               - yamllint
               - ci
+            file_types:
+              - not symlink

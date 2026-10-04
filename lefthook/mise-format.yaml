@@ -23,3 +23,5 @@ pre-commit:
             tags:
               - format
               - mise
+            file_types:
+              - not symlink

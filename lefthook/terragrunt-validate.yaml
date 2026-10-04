@@ -23,3 +23,5 @@ pre-commit:
                   tags:
                     - validation
                     - terragrunt
+                  file_types:
+                    - not symlink

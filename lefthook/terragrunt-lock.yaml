@@ -20,3 +20,5 @@ pre-commit:
               - supply-chain
               - terragrunt
               - providers
+            file_types:
+              - not symlink

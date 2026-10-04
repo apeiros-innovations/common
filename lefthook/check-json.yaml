@@ -16,3 +16,5 @@ pre-commit:
               - json
               - repository
               - ci
+            file_types:
+              - not symlink

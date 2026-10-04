@@ -79,7 +79,7 @@ mise x -- lefthook dump
 | `lefthook.terragrunt.yaml` | Formatting, provider locks, configuration and input validation                                                                   |
 | `lefthook.poetry.yaml`     | Poetry configuration/lock validation and Pylint                                                                                  |
 | `lefthook.renovate.yaml`   | Renovate configuration validation                                                                                                |
-| `lefthook.devskim.yaml`    | DevSkim when `.devskim.json` exists                                                                                              |
+| `lefthook.devskim.yaml`    | DevSkim when `.devskim.json` exists or `DEVSKIM_OPTIONS_JSON` selects a configuration                                            |
 
 CSpell, Commitlint, and signed-commit checks are opt-in. Select the desired files explicitly alongside a preset or custom base:
 
@@ -121,7 +121,28 @@ pre-commit:
 
 Change properties such as `exclude`, `env`, or `run` through the same named path. Match the full group nesting shown by `lefthook dump`. Use `.config/lefthook-local.yaml` for personal overrides; keep team policy in the tracked primary configuration.
 
-Existing configuration-existence gates remain in language checks. Install their tools and project dependencies and inspect the merged configuration when customizing checks.
+Install the selected checks' tools and project dependencies and inspect the merged configuration when customizing checks.
+
+## File selection and eligibility
+
+Each file-based check owns its native Lefthook filters:
+
+- `glob` selects extensions or filenames. No matching files means the job is skipped.
+- `exclude` removes generated output, caches, or other unsuitable paths.
+- `file_types` excludes symlinks from language tools. Text-only checks additionally select `text`; validators still receive malformed files rather than relying on MIME detection.
+- `only` declares project prerequisites, such as a linter configuration or project manifest. Both the prerequisite and the file filters must pass.
+
+`run:` jobs can use native globs even without file arguments. Script jobs pass a file template through `args:` so Lefthook applies their filters before launching the helper. Commit checks use `{staged_files}`; repository spelling uses `{all_files}`. Repository spelling scans existing tracked text files, including dotfiles, and excludes SVGs, binaries, symlinks, and untracked files.
+
+CSpell's `only` gate recognizes existing configuration filenames in tracked or nonignored untracked paths, a `cspell` entry in root `package.json`, or inherited `CSPELL_CONFIG`. DevSkim recognizes `.devskim.json` or inherited `DEVSKIM_OPTIONS_JSON`. The helper validates explicit configuration paths, so a missing override fails once the job is eligible. Checks that support shared defaults do not universally require a local configuration file.
+
+In Lefthook 2.1.15, `only.run` probes inherit the shell or CI environment before per-job `env` is applied. Export configuration overrides in that environment. If a named-job override instead sets a custom configuration through `env`, also set `only: true` on that job; file filters still apply and the helper validates the selected configuration.
+
+Poetry requires `pyproject.toml` and a matching Python or dependency-file change. Astro push checks require a project manifest and use build-input globs, including `src/` and `public/`, so unrelated documentation changes skip checks and builds. Extend those globs for additional project-specific inputs. Repository-wide Go checks retain their tracked `go.mod` prerequisite and run across modules; assets and test fixtures can affect Go tests without changing a `.go` file.
+
+OpenTofu and Terragrunt formatting run directly from their check YAML. Lefthook selects files and excludes caches; small inline loops invoke each tool once per file. Their helpers retain module discovery, validation, provider locking, and protection for unstaged edits.
+
+Git policy checks retain index-aware selection. Checkout content filters would be inappropriate for checks of staged file modes, symlinks, Gitlinks, deleted paths, or newly added blobs.
 
 ## GitHub CI
 
@@ -181,12 +202,15 @@ mise install python aqua:evilmartians/lefthook
 mise x -- python -m unittest discover -s tests -v
 ```
 
-Tests use real Lefthook in temporary Git repositories. They verify every module and preset, empty phases, remote script resolution, named overrides, order, failure propagation, partial staging, committed-file CI checks, and formatting failures without staging. A small Mise shim runs helpers, and layout tests substitute lock generation; these validate orchestration rather than Mise installation or resolution.
+Tests use real Lefthook in temporary Git repositories. They verify every module and preset, empty phases, remote script resolution, named overrides, order, failure propagation, partial staging, committed-file CI checks, and formatting failures without staging. Filtering tests verify config gates, root and nested globs, filenames with spaces, symlink exclusion, invalid JSON, tracked repository spelling, push eligibility, and native IaC formatting. A small Mise shim runs helpers, and recording tools verify dispatch; these validate orchestration rather than upstream tool behavior or Mise installation and resolution.
 
 Upstream references:
 
 - [Lefthook configuration](https://lefthook.dev/configuration/)
 - [Remote configurations](https://lefthook.dev/configuration/remotes/)
 - [Extending configuration](https://lefthook.dev/configuration/extends/)
+- [File globs](https://lefthook.dev/configuration/glob/)
+- [File types](https://lefthook.dev/configuration/file_types/)
+- [Job prerequisites](https://lefthook.dev/configuration/only/)
 - [Mise configuration](https://mise.jdx.dev/configuration.html)
 - [Mise lockfiles](https://mise.jdx.dev/dev-tools/mise-lock.html)

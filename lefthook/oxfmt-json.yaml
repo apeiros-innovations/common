@@ -17,3 +17,5 @@ pre-commit:
               - json
               - oxfmt
               - ci
+            file_types:
+              - not symlink

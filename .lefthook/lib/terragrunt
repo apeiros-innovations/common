@@ -31,35 +31,6 @@ add_unique_directory() {
 	DIRECTORIES+=("$candidate")
 }
 
-is_terragrunt_hcl_file() {
-	local path=$1
-
-	[[ $path == *.hcl ]] ||
-		return 1
-
-	# These HCL files belong to OpenTofu/TFLint rather than Terragrunt.
-	case "$path" in
-	*.tftest.hcl | \
-		*.tofutest.hcl | \
-		*.tfmock.hcl | \
-		*.tfquery.hcl | \
-		*/.terraform.lock.hcl | \
-		.terraform.lock.hcl | \
-		*/.tflint.hcl | \
-		.tflint.hcl)
-		return 1
-		;;
-	esac
-
-	case "/${path}/" in
-	*/.terraform/* | */.terragrunt-cache/*)
-		return 1
-		;;
-	esac
-
-	return 0
-}
-
 collect_hcl_directories() {
 	local path
 	local directory
@@ -67,9 +38,6 @@ collect_hcl_directories() {
 	DIRECTORIES=()
 
 	for path in "$@"; do
-		is_terragrunt_hcl_file "$path" ||
-			continue
-
 		directory="$(dirname -- "$path")"
 
 		[[ -d $directory ]] ||
@@ -135,27 +103,6 @@ guard_lockfile() {
 		! git diff --quiet -- "$path"; then
 		die "${path}: refusing to overwrite unstaged changes"
 	fi
-}
-
-format_files() {
-	local file
-	local failed=0
-
-	for file in "$@"; do
-		[[ -f $file ]] ||
-			continue
-
-		is_terragrunt_hcl_file "$file" ||
-			continue
-
-		printf 'formatting Terragrunt HCL: %s\n' "$file"
-
-		terragrunt hcl fmt \
-			--file="$file" ||
-			failed=1
-	done
-
-	return "$failed"
 }
 
 validate_hcl() {
@@ -251,7 +198,6 @@ usage() {
 usage: terragrunt <command> [files...]
 
 commands:
-  fmt
   validate
   validate-inputs
   providers-lock
@@ -269,9 +215,6 @@ main() {
 	shift
 
 	case "$command" in
-	fmt)
-		format_files "$@"
-		;;
 	validate)
 		validate_hcl "$@"
 		;;

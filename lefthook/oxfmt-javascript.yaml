@@ -18,3 +18,5 @@ pre-commit:
               - typescript
               - oxfmt
               - ci
+            file_types:
+              - not symlink

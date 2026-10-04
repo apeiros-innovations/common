@@ -29,3 +29,5 @@ pre-commit:
               - templates
               - djlint
               - ci
+            file_types:
+              - not symlink

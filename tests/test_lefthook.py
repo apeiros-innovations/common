@@ -109,6 +109,305 @@ class CompositionTests(unittest.TestCase):
     def dump(self):
         return json.loads(self.hook("dump", "--format", "json").stdout)
 
+    def record_tool(self, name):
+        self.executable(
+            name,
+            f"#!{sys.executable}\n"
+            "import json, os, sys\n"
+            "from pathlib import Path\n"
+            f"with Path({str(self.root / 'calls.jsonl')!r}).open('a') as log:\n"
+            f"    log.write(json.dumps({{'tool': {name!r}, 'args': sys.argv[1:], "
+            "'cwd': os.getcwd()}) + '\\n')\n",
+        )
+
+    def calls(self):
+        log = self.root / "calls.jsonl"
+        return (
+            [json.loads(line) for line in log.read_text().splitlines()]
+            if log.exists()
+            else []
+        )
+
+    def test_script_globs_filter_before_starting_the_helper(self):
+        self.select("lefthook.base.yaml", "lefthook/check-json.yaml")
+        self.record_tool("python3")
+        self.write("README.md", "Documentation\n")
+        self.command("git", "add", "README.md")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(self.calls(), [])
+
+        self.write("root file.json", "{}\n")
+        self.write("nested/another.json", "{}\n")
+        (self.repo / "linked.json").symlink_to("root file.json")
+        self.command(
+            "git", "add", "root file.json", "nested/another.json", "linked.json"
+        )
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(len(self.calls()), 1)
+        self.assertEqual(
+            set(self.calls()[0]["args"][1:]), {"root file.json", "nested/another.json"}
+        )
+
+    def test_json_filters_still_pass_invalid_content_to_validation(self):
+        self.select("lefthook.base.yaml", "lefthook/check-json.yaml")
+        for content in (b'{"broken":', b"\xff"):
+            with self.subTest(content=content):
+                (self.repo / "invalid.json").write_bytes(content)
+                self.command("git", "add", "invalid.json")
+                self.hook(
+                    "run", "pre-commit", "--no-auto-install", "--no-tty", expected=1
+                )
+
+    def test_config_gate_and_file_glob_both_apply(self):
+        self.select("lefthook.base.yaml", "lefthook/oxlint.yaml")
+        self.record_tool("oxlint")
+        self.write("source.js", "const value = 1;\n")
+        self.command("git", "add", "source.js")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(self.calls(), [])
+        self.write(".oxlintrc.json", "{}\n")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(
+            self.calls()[0]["args"], ["--deny-warnings", "--", "source.js"]
+        )
+        self.command("git", "reset", "--quiet")
+        self.write("README.md", "Documentation\n")
+        self.command("git", "add", "README.md")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_cspell_config_gate_supports_untracked_and_nested_configs(self):
+        # Remote consumers do not track common's check catalog. Avoid treating
+        # this fixture's copied cspell.yaml check as a consumer spelling config.
+        self.command(
+            "git", "mv", "lefthook/cspell.yaml", "lefthook/spelling-check.yaml"
+        )
+        self.command("git", "rm", "lefthook/cspell-repository.yaml")
+        self.select("lefthook.base.yaml", "lefthook/spelling-check.yaml")
+        self.commit()
+        self.record_tool("cspell")
+        # Probe the native gate independently of shared configuration discovery.
+        self.write(".lefthook/pre-commit/cspell", '#!/bin/sh\nexec cspell "$@"\n')
+        self.write("source.txt", "Text\n")
+        self.command("git", "add", "source.txt")
+        self.write(".cspell.txt", "Not a config\n")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(self.calls(), [])
+        for config in (
+            ".cspell.yaml",
+            ".config/cspell.json",
+            ".vscode/cSpell.json",
+            "nested/cspell.config.ts",
+        ):
+            with self.subTest(config=config):
+                path = self.write(config, "{}\n")
+                count = len(self.calls())
+                self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+                self.assertEqual(len(self.calls()), count + 1)
+                self.assertEqual(self.calls()[-1]["args"], ["source.txt"])
+                path.unlink()
+        self.write("package.json", '{"cspell": {}}\n')
+        count = len(self.calls())
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(len(self.calls()), count + 1)
+
+    def test_cspell_repository_uses_tracked_text_files(self):
+        self.select("lefthook.base.yaml", "lefthook/cspell-repository.yaml")
+        self.record_tool("cspell")
+        self.write(".cspell.yaml", "version: '0.2'\n")
+        self.write("nested/text file.txt", "Text\n")
+        self.write(".hidden.txt", "Text\n")
+        self.write("image.svg", "<svg/>\n")
+        (self.repo / "binary.bin").write_bytes(b"\x00\xff")
+        (self.repo / "linked.txt").symlink_to(".hidden.txt")
+        self.commit()
+        self.write("untracked.txt", "Text\n")
+        self.hook("run", "pre-push", "--no-auto-install", "--no-tty")
+        args = self.calls()[0]["args"]
+        files = set(args[args.index("--") + 1 :])
+        self.assertTrue(
+            {"nested/text file.txt", ".hidden.txt", ".cspell.yaml"} <= files
+        )
+        self.assertTrue(
+            {"image.svg", "binary.bin", "linked.txt", "untracked.txt"}.isdisjoint(files)
+        )
+
+    def test_explicit_missing_configs_fail_instead_of_skipping(self):
+        for check, variable in (
+            ("cspell", "CSPELL_CONFIG"),
+            ("devskim", "DEVSKIM_OPTIONS_JSON"),
+        ):
+            with self.subTest(check=check):
+                self.select("lefthook.base.yaml", f"lefthook/{check}.yaml")
+                self.record_tool(check)
+                self.env[variable] = "missing.json"
+                self.write("source.py", "value = 1\n")
+                self.command("git", "add", "source.py")
+                result = self.hook(
+                    "run", "pre-commit", "--no-auto-install", "--no-tty", expected=1
+                )
+                self.assertIn("not found", result.stdout + result.stderr)
+                self.assertEqual(self.calls(), [])
+                del self.env[variable]
+                # only.run probes cannot see per-job env in Lefthook 2.1.15.
+                # Explicit eligibility lets the helper validate a custom path.
+                self.write(
+                    ".config/lefthook-local.json",
+                    json.dumps(
+                        {
+                            "pre-commit": {
+                                "jobs": [
+                                    {
+                                        "name": "validate",
+                                        "group": {
+                                            "jobs": [
+                                                {
+                                                    "name": check,
+                                                    "only": True,
+                                                    "env": {variable: "missing.json"},
+                                                }
+                                            ]
+                                        },
+                                    }
+                                ]
+                            }
+                        }
+                    ),
+                )
+                result = self.hook(
+                    "run", "pre-commit", "--no-auto-install", "--no-tty", expected=1
+                )
+                self.assertIn("not found", result.stdout + result.stderr)
+                self.assertEqual(self.calls(), [])
+                (self.repo / ".config/lefthook-local.json").unlink()
+
+    def test_run_without_file_arguments_still_uses_glob_and_config_gates(self):
+        self.select("lefthook.base.yaml", "lefthook/poetry-check.yaml")
+        self.record_tool("poetry")
+        self.write("source.py", "value = 1\n")
+        self.command("git", "add", "source.py")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(self.calls(), [])
+        self.write("pyproject.toml", "[project]\n")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(self.calls()[0]["args"], ["check", "--lock", "--strict"])
+        self.command("git", "reset", "--quiet")
+        self.write("README.md", "Documentation\n")
+        self.command("git", "add", "README.md")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(len(self.calls()), 1)
+
+    def test_astro_push_checks_skip_unrelated_files(self):
+        self.record_tool("pnpm")
+        self.write("public/asset.txt", "Asset\n")
+        self.write("README.md", "Documentation\n")
+        self.commit()
+        self.select("lefthook.base.yaml", "lefthook/astro-check.yaml")
+        self.hook(
+            "run",
+            "pre-push",
+            "--file",
+            "public/asset.txt",
+            "--no-auto-install",
+            "--no-tty",
+        )
+        self.assertEqual(self.calls(), [])
+        self.write("package.json", "{}\n")
+        for module in ("astro-check", "astro-build"):
+            with self.subTest(module=module):
+                self.select("lefthook.base.yaml", f"lefthook/{module}.yaml")
+                count = len(self.calls())
+                self.hook(
+                    "run",
+                    "pre-push",
+                    "--file",
+                    "README.md",
+                    "--no-auto-install",
+                    "--no-tty",
+                )
+                self.assertEqual(len(self.calls()), count)
+                self.hook(
+                    "run",
+                    "pre-push",
+                    "--file",
+                    "public/asset.txt",
+                    "--no-auto-install",
+                    "--no-tty",
+                )
+                self.assertEqual(len(self.calls()), count + 1)
+                self.assertEqual(self.calls()[-1]["tool"], "pnpm")
+
+    def test_go_module_gate_preserves_tests_for_asset_changes(self):
+        self.select("lefthook.base.yaml", "lefthook/go-test.yaml")
+        self.record_tool("go")
+        self.write("testdata/asset.txt", "Asset\n")
+        self.commit()
+        self.hook(
+            "run",
+            "pre-push",
+            "--file",
+            "testdata/asset.txt",
+            "--no-auto-install",
+            "--no-tty",
+        )
+        self.assertEqual(self.calls(), [])
+        self.write("go.mod", "module example.invalid/fixture\n")
+        self.commit()
+        self.hook(
+            "run",
+            "pre-push",
+            "--file",
+            "testdata/asset.txt",
+            "--no-auto-install",
+            "--no-tty",
+        )
+        self.assertEqual(self.calls()[0]["args"], ["test", "./..."])
+
+    def test_native_iac_formatting_filters_extensions_caches_and_symlinks(self):
+        self.select(
+            "lefthook.base.yaml",
+            "lefthook/opentofu-fmt.yaml",
+            "lefthook/terragrunt-fmt.yaml",
+        )
+        self.record_tool("tofu")
+        self.record_tool("terragrunt")
+        for path in (
+            "root.tf",
+            "nested/space name.tofu",
+            "root.tftest.hcl",
+            "terragrunt.hcl",
+            "nested/unit.hcl",
+            "README.md",
+            ".terraform/cache.tf",
+            ".terragrunt-cache/cache.hcl",
+            ".terraform.lock.hcl",
+            ".tflint.hcl",
+        ):
+            self.write(path, "# Text\n")
+        (self.repo / "binary.tf").write_bytes(b"\x00\xff")
+        (self.repo / "linked.tf").symlink_to("root.tf")
+        self.command("git", "add", ".")
+        self.hook("run", "pre-commit", "--no-auto-install", "--no-tty")
+        self.assertEqual(
+            {tuple(call["args"]) for call in self.calls() if call["tool"] == "tofu"},
+            {
+                ("fmt", "root.tf"),
+                ("fmt", "nested/space name.tofu"),
+                ("fmt", "root.tftest.hcl"),
+            },
+        )
+        self.assertEqual(
+            {
+                tuple(call["args"])
+                for call in self.calls()
+                if call["tool"] == "terragrunt"
+            },
+            {
+                ("hcl", "fmt", "--file=terragrunt.hcl"),
+                ("hcl", "fmt", "--file=nested/unit.hcl"),
+            },
+        )
+
     def test_every_module_and_preset_has_executable_jobs(self):
         paths = sorted(SOURCE.glob("lefthook.*.yaml")) + sorted(
             (SOURCE / "lefthook").glob("*.yaml")

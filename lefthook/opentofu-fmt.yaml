@@ -12,10 +12,19 @@ pre-commit:
             exclude:
               - "**/.terraform/**"
               - "**/.terragrunt-cache/**"
-            script: opentofu
-            runner: mise x -- bash
-            args: fmt {staged_files}
             stage_fixed: true
             tags:
               - format
               - opentofu
+            file_types:
+              - text
+              - not symlink
+            run: |-
+              mise x -- \
+                bash -c '
+                  failed=0
+                  for file do
+                    tofu fmt "$file" || failed=1
+                  done
+                  exit "$failed"
+                ' -- {staged_files}

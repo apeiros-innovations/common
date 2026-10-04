@@ -17,3 +17,5 @@ pre-commit:
               - css
               - oxfmt
               - ci
+            file_types:
+              - not symlink

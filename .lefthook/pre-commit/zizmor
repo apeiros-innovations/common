@@ -8,15 +8,11 @@ source "$(dirname -- "$0")/../lib/common.sh"
 common_root="$(common_remote_root)"
 config="$common_root/.github/zizmor.yaml"
 
-if [[ ! -f "$config" ]]; then
+if [[ ! -f $config ]]; then
   printf >&2 \
     'zizmor: common configuration not found: %s\n' \
     "$config"
   exit 1
-fi
-
-if [[ "$#" -eq 0 ]]; then
-  exit 0
 fi
 
 exec mise x -- \

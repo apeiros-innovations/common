@@ -17,3 +17,5 @@ pre-commit:
               - go
               - golangci-lint
               - ci
+            file_types:
+              - not symlink

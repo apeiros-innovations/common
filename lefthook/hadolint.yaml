@@ -17,3 +17,5 @@ pre-commit:
               - dockerfile
               - hadolint
               - ci
+            file_types:
+              - not symlink

@@ -17,3 +17,5 @@ pre-commit:
                     - format
                     - go
                     - gofmt
+                  file_types:
+                    - not symlink

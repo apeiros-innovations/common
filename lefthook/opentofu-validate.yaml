@@ -19,3 +19,5 @@ pre-commit:
             tags:
               - validation
               - opentofu
+            file_types:
+              - not symlink

@@ -77,3 +77,5 @@ pre-commit:
               - documentation
               - helm-docs
               - oxfmt
+            file_types:
+              - not symlink

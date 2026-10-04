@@ -16,3 +16,5 @@ pre-commit:
               - shell
               - shellcheck
               - ci
+            file_types:
+              - not symlink

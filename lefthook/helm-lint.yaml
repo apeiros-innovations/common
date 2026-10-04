@@ -67,3 +67,5 @@ pre-commit:
             tags:
               - lint
               - helm
+            file_types:
+              - not symlink

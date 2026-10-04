@@ -20,3 +20,5 @@ pre-commit:
               - validation
               - opentofu
               - trivy
+            file_types:
+              - not symlink

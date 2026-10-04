@@ -18,3 +18,5 @@ pre-commit:
               - mdx
               - oxfmt
               - ci
+            file_types:
+              - not symlink

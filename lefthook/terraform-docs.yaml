@@ -20,3 +20,5 @@ pre-commit:
               - generation
               - opentofu
               - terraform-docs
+            file_types:
+              - not symlink

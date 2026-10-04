@@ -17,3 +17,5 @@ pre-commit:
               - github-actions
               - actionlint
               - ci
+            file_types:
+              - not symlink

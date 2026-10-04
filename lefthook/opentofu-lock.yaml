@@ -22,3 +22,5 @@ pre-commit:
               - supply-chain
               - opentofu
               - providers
+            file_types:
+              - not symlink

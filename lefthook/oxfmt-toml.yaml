@@ -25,3 +25,5 @@ pre-commit:
               - toml
               - oxfmt
               - ci
+            file_types:
+              - not symlink

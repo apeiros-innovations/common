@@ -19,3 +19,5 @@ pre-commit:
                     - python
                     - ruff
                     - ci
+                  file_types:
+                    - not symlink

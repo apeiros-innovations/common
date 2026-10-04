@@ -47,3 +47,5 @@ pre-commit:
               - mise
               - dependencies
               - supply-chain
+            file_types:
+              - not symlink

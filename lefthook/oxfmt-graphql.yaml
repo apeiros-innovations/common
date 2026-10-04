@@ -17,3 +17,5 @@ pre-commit:
               - graphql
               - oxfmt
               - ci
+            file_types:
+              - not symlink

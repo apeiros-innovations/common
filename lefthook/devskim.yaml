@@ -7,7 +7,7 @@ pre-commit:
         jobs:
           - name: devskim
             only:
-              - run: test -f .devskim.json
+              - run: test -n "${DEVSKIM_OPTIONS_JSON:-}" || test -f .devskim.json
             glob:
               - "**/*.{c,h,cc,cpp,cxx,hpp,hxx,m,mm}"
               - "**/*.{cs,csx}"
@@ -30,3 +30,5 @@ pre-commit:
               - security
               - sast
               - devskim
+            file_types:
+              - not symlink

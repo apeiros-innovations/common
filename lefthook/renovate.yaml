@@ -18,3 +18,5 @@ pre-commit:
               - dependency-management
               - renovate
               - ci
+            file_types:
+              - not symlink
