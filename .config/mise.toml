@@ -42,7 +42,7 @@ pnpm = "12.8.1"
 
 # JavaScript and Python
 "npm:oxlint" = "1.86.0"
-"aqua:astral-sh/ruff" = "0.16.9"
+"aqua:astral-sh/ruff" = "0.16.10"
 "pipx:djlint" = { version = "1.46.3", depends = [
   "python",
   "aqua:astral-sh/ruff",
