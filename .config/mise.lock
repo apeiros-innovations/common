@@ -646,7 +646,7 @@ version = "0.54.0"
 backend = "npm:oxfmt"
 
 [[tools."pipx:django-upgrade"]]
-version = "1.32.0"
+version = "1.33.0"
 backend = "pipx:django-upgrade"
 
 [[tools."pipx:djlint"]]

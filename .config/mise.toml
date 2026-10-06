@@ -47,7 +47,7 @@ pnpm = "12.8.1"
   "python",
   "aqua:astral-sh/ruff",
 ] }
-"pipx:django-upgrade" = { version = "1.32.0", depends = [
+"pipx:django-upgrade" = { version = "1.33.0", depends = [
   "python",
   "aqua:astral-sh/uv",
 ] }
