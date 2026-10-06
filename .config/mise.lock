@@ -650,7 +650,7 @@ version = "1.32.0"
 backend = "pipx:django-upgrade"
 
 [[tools."pipx:djlint"]]
-version = "1.46.3"
+version = "1.46.4"
 backend = "pipx:djlint"
 
 [[tools."pipx:poetry"]]
