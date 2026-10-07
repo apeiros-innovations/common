@@ -18,7 +18,7 @@ dotnet = "10.0.401"
 pnpm = "12.9.1"
 
 # Common
-"npm:oxfmt" = "0.71.0"
+"npm:oxfmt" = "0.72.0"
 "npm:cspell" = "10.3.6"
 "npm:@commitlint/cli" = "21.2.3"
 "npm:@commitlint/config-conventional" = "21.2.3"
