@@ -29,11 +29,15 @@ on:
       - synchronize
       - ready_for_review
 
+  merge_group:
+    types:
+      - checks_requested
+
 permissions:
   pull-requests: read
 
 concurrency:
-  group: pr-title-${{ github.event.pull_request.number }}
+  group: pr-title-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -53,6 +57,8 @@ resulting required check is **PR title / Validate**. Keep these job names stable
 
 The caller handles `edited` so fixing a PR title reruns this check without
 restarting build workflows. Do not apply path filters or ignore bot PRs. This
+also emits a skipped (successful) check for `merge_group`: the PR title is
+validated before queue entry and the merge-group event has no PR title. This
 checks the title; local Commitlint continues to check individual commit messages.
 For repositories using squash merges, configure the default squash commit title
 to use the PR title.
