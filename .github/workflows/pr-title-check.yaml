@@ -1,0 +1,21 @@
+---
+name: PR title check
+
+on:
+  workflow_call:
+
+permissions:
+  pull-requests: read
+
+jobs:
+  validate:
+    name: Validate
+    # Public repositories use hosted runners, including pull requests from forks.
+    # Private callers use their access to the organization's Shared runner group.
+    runs-on: ${{ fromJSON(github.event.repository.private && '{"group":"gha-shared","labels":"gha-linux-k8s"}' || '"ubuntu-latest"') }}
+    timeout-minutes: 5
+    steps:
+      - name: Check Conventional Commit title
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50  # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
