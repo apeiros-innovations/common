@@ -7,6 +7,76 @@ Shared development-tooling policy for Apeiros repositories.
 
 Common provides reusable [Lefthook](https://lefthook.dev/) checks, presets, tool definitions, and shared formatter and linter configuration.
 
+## Shared pull request title check
+
+The reusable workflow `.github/workflows/pr-title-check.yaml` checks PR titles
+against Conventional Commits using the same pinned semantic-PR action as Kumitate
+and Infrastructure Live. It reads PR metadata without checking out repository code,
+installing project tools, or receiving repository secrets.
+
+Add this caller as `.github/workflows/pr-title.yaml`:
+
+```yaml
+---
+name: PR title
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - reopened
+      - synchronize
+      - ready_for_review
+
+  merge_group:
+    types:
+      - checks_requested
+
+permissions:
+  pull-requests: read
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  title:
+    name: PR title
+    uses: apeiros-innovations/common/.github/workflows/pr-title-check.yaml@main  # zizmor: ignore[unpinned-uses] -- Follow reviewed organization workflow updates.
+```
+
+Callers follow `common@main`, so a reviewed change here updates the organization
+without copying the implementation. Protect changes to the reusable workflow
+through Common's code ownership and PR review. Third-party actions remain pinned
+to full commit SHAs.
+
+The shared job uses `gha-shared / gha-linux-k8s` for private repositories and
+`ubuntu-latest` for public repositories, including fork pull requests. The
+resulting required check is **PR title / Validate**. Keep these job names stable.
+
+The caller handles `edited` so fixing a PR title reruns this check without
+restarting build workflows. Do not apply path filters or ignore bot PRs. It
+also emits a skipped (successful) check for `merge_group`: the PR title is
+validated before queue entry and the merge-group event has no PR title. This
+checks the title; local Commitlint continues to check individual commit messages.
+For repositories using squash merges, configure the default squash commit title
+to use the PR title.
+
+Merge the Common workflow before caller PRs. Then merge the callers and verify the
+check name before enabling the organization ruleset managed in Foundry. Required
+status checks enforce completion; templates and reusable workflows alone do not.
+GitHub Team or Enterprise is required for organization rulesets.
+
+For a new repository, use the PR title workflow template in the organization's
+`.github` repository or include this caller during provisioning. Do not include
+the check in expensive build workflows merely to rerun it on title edits.
+
+Sources: [GitHub reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows),
+[runner access and caller context](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations),
+[semantic PR action](https://github.com/amannn/action-semantic-pull-request),
+and [organization rulesets](https://docs.github.com/en/organizations/managing-organization-settings/creating-rulesets-for-repositories-in-your-organization).
+
 ## Composition
 
 | Layer  | Owns                                                          | Example                                                 |
