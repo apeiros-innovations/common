@@ -20,4 +20,4 @@ concurrency:
 jobs:
   title:
     name: PR title
-    uses: ./.github/workflows/pr-title-check.yaml
+    uses: $/.github/workflows/pr-title-check.yaml
