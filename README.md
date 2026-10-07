@@ -43,7 +43,7 @@ concurrency:
 jobs:
   title:
     name: PR title
-    uses: apeiros-innovations/common/.github/workflows/pr-title-check.yaml@main
+    uses: apeiros-innovations/common/.github/workflows/pr-title-check.yaml@main  # zizmor: ignore[unpinned-uses] -- Follow reviewed organization workflow updates.
 ```
 
 Callers follow `common@main`, so a reviewed change here updates the organization
@@ -56,7 +56,7 @@ The shared job uses `gha-shared / gha-linux-k8s` for private repositories and
 resulting required check is **PR title / Validate**. Keep these job names stable.
 
 The caller handles `edited` so fixing a PR title reruns this check without
-restarting build workflows. Do not apply path filters or ignore bot PRs. This
+restarting build workflows. Do not apply path filters or ignore bot PRs. It
 also emits a skipped (successful) check for `merge_group`: the PR title is
 validated before queue entry and the merge-group event has no PR title. This
 checks the title; local Commitlint continues to check individual commit messages.
