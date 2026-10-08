@@ -623,8 +623,7 @@ aube = { path = "mise/locks/npm-markdownlint-cli2/0.23.3", digest = "sha256:1d36
 backend = "npm:markdownlint-cli2"
 
 [[tools."npm:oxfmt"]]
-version = "0.71.0"
-aube = { path = "mise/locks/npm-oxfmt/0.71.0", digest = "sha256:c4cbae155df98b00b10384f7ef95287abcfc3d923825c2aea5562b70a59ba012" }
+version = "0.72.0"
 backend = "npm:oxfmt"
 
 [[tools."npm:oxlint"]]
