@@ -71,7 +71,7 @@ pnpm = "12.9.1"
 # Security and dependency management
 "aqua:google/osv-scanner" = "2.6.0"
 "dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.100" }
-"npm:renovate" = { version = "44.126.0", allow_builds = [
+"npm:renovate" = { version = "44.149.0", allow_builds = [
   "re2",
 ], trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",

@@ -633,8 +633,7 @@ aube = { path = "mise/locks/npm-oxlint/1.86.0", digest = "sha256:302fc480f7d93ca
 backend = "npm:oxlint"
 
 [[tools."npm:renovate"]]
-version = "44.126.0"
-aube = { path = "mise/locks/npm-renovate/44.126.0~026f02c4", digest = "sha256:1c7e6ca42e90682853d41cfb4bf0e7d697dd7a78022989ef6619c9ae4e06ef6c" }
+version = "44.149.0"
 backend = "npm:renovate"
 
 [tools."npm:renovate".options]
