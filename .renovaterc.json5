@@ -1,12 +1,18 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>apeiros-innovations/renovate-presets#main", ":timezone(America/New_York)"],
-  "packageRules": [
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "github>apeiros-innovations/renovate-presets#main",
+    "github>apeiros-innovations/renovate-config//toolingGroups.json5#main",
+    "github>apeiros-innovations/renovate-config//pythonRuntime.json5#main",
+    "github>apeiros-innovations/renovate-config//weeklyTools.json5#main",
+    ":timezone(America/New_York)",
+  ],
+  packageRules: [
     {
-      "description": "Use published Helm Docs releases instead of historical date tags",
-      "matchManagers": ["mise"],
-      "matchPackageNames": ["norwoodj/helm-docs"],
-      "overrideDatasource": "github-releases",
+      description: "Use published Helm Docs releases instead of historical date tags",
+      matchManagers: ["mise"],
+      matchPackageNames: ["norwoodj/helm-docs"],
+      overrideDatasource: "github-releases",
     },
   ],
 }
