@@ -4,6 +4,7 @@
     "github>apeiros-innovations/renovate-presets#main",
     "github>apeiros-innovations/renovate-config//toolingGroups.json5#main",
     "github>apeiros-innovations/renovate-config//pythonRuntime.json5#main",
+    "github>apeiros-innovations/renovate-config//mise.json5#main",
     "github>apeiros-innovations/renovate-config//weeklyTools.json5#main",
     ":timezone(America/New_York)",
   ],
