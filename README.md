@@ -180,9 +180,9 @@ The tag covers file-based formatting/linting, strict JSON, path portability, sym
 
 ## Mise and helpers
 
-Common declares tool versions and backend options once in `.config/mise.toml`, grouped by purpose within the same file. This is common's own full tool selection. Mise owns installation and `.config/mise.lock`; native dependency graphs live under `.config/mise/locks/`. Commit lockfiles and graphs together.
+Common declares tool versions and backend options once in `.mise/config.toml`, grouped by purpose within the same file. This is common's own full tool selection. Mise owns installation and `.mise/mise.lock`; native dependency graphs live under `.mise/locks/`. Commit lockfiles and graphs together.
 
-Consumers keep their own `.config/mise.toml` and copy only the tools needed by their selected checks. Start with Lefthook:
+Consumers keep their own `.mise/config.toml` and copy only the tools needed by their selected checks. Start with Lefthook:
 
 ```toml
 #:schema https://mise.jdx.dev/schema/mise.json
@@ -200,7 +200,7 @@ Keep the [pinned Lefthook remote configuration](#remote-use) in `.config/lefthoo
 
 Mise installs the declared tools. Lefthook's globs and prerequisites decide when their checks run. A workflow-only project can select `lefthook.base.yaml` and `lefthook.github.yaml` and copy just the GitHub block; it needs no language runtimes or other linters.
 
-These examples are maintained manually alongside [common's manifest](.config/mise.toml). After copying, the consuming repository owns its versions, lockfile, and dependency graphs; Renovate can update its Mise declarations independently. Upgrading the Lefthook remote does not change those tool versions.
+These examples are maintained manually alongside [common's manifest](.mise/config.toml). After copying, the consuming repository owns its versions, lockfile, and dependency graphs; Renovate can update its Mise declarations independently. Upgrading the Lefthook remote does not change those tool versions.
 
 ### Tools by preset
 
@@ -224,7 +224,7 @@ node = "26.10.0"
 **GitHub — `lefthook.github.yaml`**
 
 ```toml
-"aqua:rhysd/actionlint" = "1.7.12"
+"aqua:kjanat/actionlint" = "1.7.12"
 "aqua:zizmorcore/zizmor" = "1.30.1"
 ```
 
@@ -313,7 +313,11 @@ Keep Pylint in the project's Poetry development dependencies when selecting its 
 
 ```toml
 node = "26.10.0"
-"npm:renovate" = { version = "44.126.0", allow_builds = ["re2"], trust_policy_excludes = ["@yarnpkg/libzip@3.2.2"] }
+"npm:renovate" = { version = "44.126.0", allow_builds = [
+  "re2",
+], trust_policy_excludes = [
+  "@yarnpkg/libzip@3.2.2",
+] }
 ```
 
 **DevSkim — `lefthook.devskim.yaml`**
@@ -358,16 +362,18 @@ mise x -- lefthook install
 mise x -- lefthook dump
 ```
 
-CI can use `mise install --locked` for the project's selection. When a workflow action installs its own tools, read their versions directly from `.config/mise.toml`:
+CI installs only the tools a job needs with `mise install --locked <tools>`. When an established action installs a tool itself, export the resolved versions once with mise's native JSON output:
 
 ```bash
-echo "actionlint=$(mise config get --file .config/mise.toml tools.aqua:rhysd/actionlint)" >> "$GITHUB_OUTPUT"
-echo "zizmor=$(mise config get --file .config/mise.toml tools.aqua:zizmorcore/zizmor)" >> "$GITHUB_OUTPUT"
+versions=$(env -u MISE_ENABLE_TOOLS mise ls --current --json | jq -c 'map_values(.[0].version)')
+echo "versions=$versions" >> "$GITHUB_OUTPUT"
 ```
 
-The [workflow lint job](.github/workflows/workflow-lint.yaml) passes those outputs to the pinned shared action. These queries do not install tools or repeat version pins in workflow YAML. For a tool declared as an options table, query its `.version` field instead.
+Pass the map through job outputs and reusable workflow inputs. Workflow-level environment variables do not propagate into reusable workflows. Actions read their version inputs from that map, so workflow YAML does not repeat the pins. The pinned mise action bootstraps a mature stable release and the manifest declares the required mise version once. Setup actions for Go, Node, and Python retain their platform and authentication support; reviewdog provides actionlint and ShellCheck annotations, and the official Zizmor action audits workflow security. Local actionlint uses the same parser bundled by reviewdog.
 
-Mise formatting and locking also recognize the legacy `.mise/` and `.config/mise/` layouts and root Mise files. Lock generation preserves unstaged edits and stages lockfiles and dependency graphs. Generated graphs are excluded from general formatting, YAML linting, and spelling so their recorded digests remain valid. Common's own local tool installation installs Git hooks when Lefthook is available; CI skips that step. Poetry creates its project environment when invoked.
+Use `.mise/config.toml` for tool declarations, `.mise/mise.lock` and `.mise/locks/` for generated locks, and `.mise/config.dev.toml` for developer-only Git hook installation. `.miserc.toml` selects the development environment locally; workflows set `MISE_ENV: ci`. A package manager declared in `package.json` stays there: enable mise's idiomatic pnpm or Yarn support rather than duplicating that version in the tool table. Language compatibility ranges in module and package manifests remain separate from development toolchain pins.
+
+Mise formatting and locking recognize the standard root Mise filenames as well as the canonical directory layout. Lock generation preserves unstaged edits and stages lockfiles and dependency graphs. Generated graphs are excluded from general formatting, YAML linting, and spelling so their recorded digests remain valid. Poetry creates its project environment when invoked.
 
 | Layer            | Responsibility                                          |
 | ---------------- | ------------------------------------------------------- |

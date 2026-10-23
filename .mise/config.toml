@@ -1,13 +1,12 @@
 #:schema https://mise.jdx.dev/schema/mise.json
-min_version = { hard = "2026.8.12" }
+
+[min_version]
+hard = "2026.10.17"
 
 [settings]
 lockfile = true
 lockfile_platforms = ["macos-arm64", "linux-x64"]
 experimental = true
-
-[hooks]
-postinstall = 'if [ -z "${CI:-}" ] && command -v lefthook >/dev/null 2>&1; then lefthook install; fi'
 
 [tools]
 # Runtimes
@@ -37,7 +36,6 @@ pnpm = "12.9.1"
 ] }
 
 # GitHub
-"aqua:rhysd/actionlint" = "1.7.12"
 "aqua:zizmorcore/zizmor" = "1.30.1"
 
 # JavaScript and Python
@@ -76,6 +74,7 @@ pnpm = "12.9.1"
 ], trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",
 ] }
+"aqua:kjanat/actionlint" = "1.17.0"
 
 [env]
 DOTNET_CLI_TELEMETRY_OPTOUT = "1"

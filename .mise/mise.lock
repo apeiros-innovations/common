@@ -325,6 +325,22 @@ url = "https://get.helm.sh/helm-v4.3.0-linux-amd64.tar.gz"
 checksum = "sha256:d3870437e1e95b67f8edbde964156c84a26503f560821d40c542441658934fba"
 url = "https://get.helm.sh/helm-v4.3.0-darwin-arm64.tar.gz"
 
+[[tools."aqua:kjanat/actionlint"]]
+version = "1.17.0"
+backend = "aqua:kjanat/actionlint"
+
+[tools."aqua:kjanat/actionlint"."platforms.linux-x64"]
+checksum = "sha256:620abd485a12b6ab1125b844a876414e1d5bd2af8a3125b27f82b01d0d9d6e5a"
+url = "https://github.com/kjanat/actionlint/releases/download/v1.17.0/actionlint_1.17.0_linux_amd64.tar.gz"
+url_api = "https://api.github.com/repos/kjanat/actionlint/releases/assets/561506357"
+provenance = "github-attestations"
+
+[tools."aqua:kjanat/actionlint"."platforms.macos-arm64"]
+checksum = "sha256:f123b7ad57a0fe376dcc85e81b7e04e85eb39219184803fc25f989b255f569b4"
+url = "https://github.com/kjanat/actionlint/releases/download/v1.17.0/actionlint_1.17.0_darwin_arm64.tar.gz"
+url_api = "https://api.github.com/repos/kjanat/actionlint/releases/assets/561506341"
+provenance = "github-attestations"
+
 [[tools."aqua:koalaman/shellcheck"]]
 version = "0.11.0"
 backend = "aqua:koalaman/shellcheck"
@@ -430,52 +446,6 @@ url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708
 checksum = "sha256:be78f659f04ef06a9dbd9b3934d46af95d787a3aa38396d459dea395261816a9"
 url = "https://github.com/opentofu/opentofu/releases/download/v1.13.1/tofu_1.13.1_darwin_arm64.tar.gz"
 url_api = "https://api.github.com/repos/opentofu/opentofu/releases/assets/603708059"
-
-[[tools."aqua:rhysd/actionlint"]]
-version = "1.7.12"
-backend = "aqua:rhysd/actionlint"
-
-[tools."aqua:rhysd/actionlint"."platforms.linux-arm64"]
-checksum = "sha256:325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6"
-url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924897"
-provenance = "github-attestations"
-
-[tools."aqua:rhysd/actionlint"."platforms.linux-arm64-musl"]
-checksum = "sha256:325e971b6ba9bfa504672e29be93c24981eeb1c07576d730e9f7c8805afff0c6"
-url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_arm64.tar.gz"
-url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924897"
-provenance = "github-attestations"
-
-[tools."aqua:rhysd/actionlint"."platforms.linux-x64"]
-checksum = "sha256:8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
-url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924896"
-provenance = "github-attestations"
-
-[tools."aqua:rhysd/actionlint"."platforms.linux-x64-musl"]
-checksum = "sha256:8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
-url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz"
-url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924896"
-provenance = "github-attestations"
-
-[tools."aqua:rhysd/actionlint"."platforms.macos-arm64"]
-checksum = "sha256:aba9ced2dee8d27fecca3dc7feb1a7f9a52caefa1eb46f3271ea66b6e0e6953f"
-url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_darwin_arm64.tar.gz"
-url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924893"
-provenance = "github-attestations"
-
-[tools."aqua:rhysd/actionlint"."platforms.macos-x64"]
-checksum = "sha256:5b44c3bc2255115c9b69e30efc0fecdf498fdb63c5d58e17084fd5f16324c644"
-url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_darwin_amd64.tar.gz"
-url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924880"
-provenance = "github-attestations"
-
-[tools."aqua:rhysd/actionlint"."platforms.windows-x64"]
-checksum = "sha256:6e7241b51e6817ea6a047693d8e6fed13b31819c9a0dd6c5a726e1592d22f6e9"
-url = "https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_windows_amd64.zip"
-url_api = "https://api.github.com/repos/rhysd/actionlint/releases/assets/384924919"
-provenance = "github-attestations"
 
 [[tools."aqua:terraform-docs/terraform-docs"]]
 version = "0.24.0"
@@ -604,37 +574,37 @@ url = "https://nodejs.org/dist/v26.10.0/node-v26.10.0-darwin-arm64.tar.gz"
 
 [[tools."npm:@commitlint/cli"]]
 version = "21.2.3"
-aube = { path = "mise/locks/npm-commitlint-cli/21.2.3", digest = "sha256:e41205a4c4f5667525fc2511318752574e6a13c56bc25bc25e2b498ab42debc5" }
+aube = { path = "locks/npm-commitlint-cli/21.2.3", digest = "sha256:e41205a4c4f5667525fc2511318752574e6a13c56bc25bc25e2b498ab42debc5" }
 backend = "npm:@commitlint/cli"
 
 [[tools."npm:@commitlint/config-conventional"]]
 version = "21.2.3"
-aube = { path = "mise/locks/npm-commitlint-config-conventional/21.2.3", digest = "sha256:06b5415ad6b4cd4013d539d3d6cc2a79b328396aadeb0745b752a249efa02f9b" }
+aube = { path = "locks/npm-commitlint-config-conventional/21.2.3", digest = "sha256:06b5415ad6b4cd4013d539d3d6cc2a79b328396aadeb0745b752a249efa02f9b" }
 backend = "npm:@commitlint/config-conventional"
 
 [[tools."npm:cspell"]]
 version = "10.3.6"
-aube = { path = "mise/locks/npm-cspell/10.3.6", digest = "sha256:2c5f85083476557591533544981da5e781d1a6bdbd85e99310dc448368128c4d" }
+aube = { path = "locks/npm-cspell/10.3.6", digest = "sha256:2c5f85083476557591533544981da5e781d1a6bdbd85e99310dc448368128c4d" }
 backend = "npm:cspell"
 
 [[tools."npm:markdownlint-cli2"]]
 version = "0.23.3"
-aube = { path = "mise/locks/npm-markdownlint-cli2/0.23.3", digest = "sha256:1d36a5d88e0cdf7c00ed6a93a8a63f05656f331dce7190544a6a779aa1612715" }
+aube = { path = "locks/npm-markdownlint-cli2/0.23.3", digest = "sha256:1d36a5d88e0cdf7c00ed6a93a8a63f05656f331dce7190544a6a779aa1612715" }
 backend = "npm:markdownlint-cli2"
 
 [[tools."npm:oxfmt"]]
 version = "0.71.0"
-aube = { path = "mise/locks/npm-oxfmt/0.71.0", digest = "sha256:c4cbae155df98b00b10384f7ef95287abcfc3d923825c2aea5562b70a59ba012" }
+aube = { path = "locks/npm-oxfmt/0.71.0", digest = "sha256:c4cbae155df98b00b10384f7ef95287abcfc3d923825c2aea5562b70a59ba012" }
 backend = "npm:oxfmt"
 
 [[tools."npm:oxlint"]]
 version = "1.86.0"
-aube = { path = "mise/locks/npm-oxlint/1.86.0", digest = "sha256:302fc480f7d93cace033f467a215bb3fabed9470a6bbe27bbb0b44048f3123c0" }
+aube = { path = "locks/npm-oxlint/1.86.0", digest = "sha256:302fc480f7d93cace033f467a215bb3fabed9470a6bbe27bbb0b44048f3123c0" }
 backend = "npm:oxlint"
 
 [[tools."npm:renovate"]]
 version = "44.126.0"
-aube = { path = "mise/locks/npm-renovate/44.126.0~026f02c4", digest = "sha256:1c7e6ca42e90682853d41cfb4bf0e7d697dd7a78022989ef6619c9ae4e06ef6c" }
+aube = { path = "locks/npm-renovate/44.126.0~026f02c4", digest = "sha256:1c7e6ca42e90682853d41cfb4bf0e7d697dd7a78022989ef6619c9ae4e06ef6c" }
 backend = "npm:renovate"
 
 [tools."npm:renovate".options]

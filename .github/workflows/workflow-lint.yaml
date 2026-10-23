@@ -1,21 +1,31 @@
----
 name: Workflow lint
 on:
   pull_request:
     paths:
-      - ".github/**"
-      - .config/mise.toml
-      - .config/mise.lock
+      - .github/**
+      - .mise/**
+      - .miserc.toml
+      - .lefthook/**
+      - "**/*.sh"
+      - "**/*.bash"
+      - "**/*.bats"
   push:
     branches:
       - main
     paths:
-      - ".github/**"
-      - .config/mise.toml
-      - .config/mise.lock
+      - .github/**
+      - .mise/**
+      - .miserc.toml
+      - .lefthook/**
+      - "**/*.sh"
+      - "**/*.bash"
+      - "**/*.bats"
   workflow_dispatch: {}
 permissions:
   contents: read
+env:
+  MISE_ENV: ci
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -25,20 +35,63 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - name: Setup Mise
-        uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca  # v5.1.1
+      - name: Install ShellCheck archive support
+        shell: bash
+        run: |
+          if ! command -v xz >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install --yes --no-install-recommends xz-utils
+          fi
+      - uses: jdx/mise-action@8418fedb1110381a0d3ba51a7a415d7c1b884550  # v5.2.2
         with:
           install: false
           cache: false
+          add_shims_to_path: false
           env: false
           export_path: false
-      - name: Resolve linter versions
-        id: tools
+      - name: Read tool versions from mise
+        id: tool-versions
+        shell: bash
         run: |
-          echo "actionlint=$(mise config get --file .config/mise.toml tools.aqua:rhysd/actionlint)" >> "$GITHUB_OUTPUT"
-          echo "zizmor=$(mise config get --file .config/mise.toml tools.aqua:zizmorcore/zizmor)" >> "$GITHUB_OUTPUT"
-      - name: Lint workflows
-        uses: home-operations/.github/actions/workflow-lint@1d6eebfd2066f2aa84939e573e56f60d8d2ed85f  # workflow-lint-v1.0.4
+          versions=$(env -u MISE_ENABLE_TOOLS mise ls --current --json | jq -c 'map_values(.[0].version)')
+          echo "versions=$versions" >> "$GITHUB_OUTPUT"
+      - name: Set up Python for workflow checks
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
-          actionlint-version: ${{ steps.tools.outputs.actionlint }}
-          zizmor-version: ${{ steps.tools.outputs.zizmor }}
+          python-version: ${{ fromJSON(steps.tool-versions.outputs.versions)['python'] }}
+      - name: Lint workflows with reviewdog
+        uses: reviewdog/action-actionlint/dockerless@48e36f54d8da326b83ab061aee2cc5e01b5ca46f  # v1.80.6
+        with:
+          reporter: github-check
+          filter_mode: nofilter
+          fail_level: any
+      - name: Check shell scripts with reviewdog
+        uses: reviewdog/action-shellcheck@d0b8d5fd7fad6afdb6e1b6ce1778892be4d1f427  # v1.34.1
+        with:
+          reporter: github-check
+          filter_mode: nofilter
+          fail_level: any
+          check_all_files_with_shebangs: true
+          pattern: |
+            *.sh
+            *.bash
+            *.bats
+          exclude: |
+            */.git/*
+            */node_modules/*
+            */vendor/*
+            */.venv/*
+            */.mise/locks/*
+            */_output/*
+            */dist/*
+      - name: Audit workflow security
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e  # v0.7.1
+        with:
+          version: ${{ fromJSON(steps.tool-versions.outputs.versions)['aqua:zizmorcore/zizmor'] }}
+          inputs: .github
+          advanced-security: false
+          annotations: true
+    permissions:
+      contents: read
+      checks: write
+      pull-requests: write

@@ -7,24 +7,18 @@ pre-commit:
         jobs:
           - name: mise lock
             glob:
-              - .config/mise.toml
-              - .config/mise/config.toml
-              - .config/mise/conf.d/*.toml
               - .mise/config.toml
               - .mise/conf.d/*.toml
               - mise.toml
               - .mise.toml
-              - .config/mise.lock
-              - .config/mise/mise.lock
               - .mise/mise.lock
               - mise.lock
               - .mise/locks/**
-              - .config/mise/locks/**
             run: |
               set -eu
 
               # Preserve developer edits to lockfiles and native dependency graphs.
-              for path in mise.lock .mise/mise.lock .config/mise.lock .config/mise/mise.lock .mise/locks .config/mise/locks; do
+              for path in mise.lock .mise/mise.lock .mise/locks; do
                 if ! git diff --quiet -- "$path"; then
                   printf >&2 '%s: refusing to overwrite unstaged changes\n' "$path"
                   exit 1
@@ -34,7 +28,7 @@ pre-commit:
               mise lock
 
               found=false
-              for lockfile in mise.lock .mise/mise.lock .config/mise.lock .config/mise/mise.lock; do
+              for lockfile in mise.lock .mise/mise.lock; do
                 [ -f "$lockfile" ] || continue
                 git add -- "$lockfile"
                 found=true
@@ -45,7 +39,7 @@ pre-commit:
                 exit 1
               fi
 
-              for directory in .mise/locks .config/mise/locks; do
+              for directory in .mise/locks; do
                 if [ -d "$directory" ] || git ls-files --error-unmatch -- "$directory" >/dev/null 2>&1; then
                   git add -A -- "$directory"
                 fi

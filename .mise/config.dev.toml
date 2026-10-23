@@ -1,0 +1,2 @@
+[hooks]
+postinstall = 'if [ -z "${CI:-}" ] && command -v lefthook >/dev/null 2>&1; then lefthook install; fi'
