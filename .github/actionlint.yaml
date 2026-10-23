@@ -3,3 +3,5 @@ self-hosted-runner:
   labels:
     - dind
     - gha-linux-k8s
+    - gha-linux-build
+    - gha-linux-dind

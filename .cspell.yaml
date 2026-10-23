@@ -44,9 +44,8 @@ ignorePaths:
   - CHANGELOG.md
   - LICENSE
   - .mise/**
-  - .config/mise.toml
-  - .config/mise.lock
-  - .config/mise/**
+  - .mise/config.toml
+  - .mise/mise.lock
   - .vscode/**
   - go.mod
   - go.sum
