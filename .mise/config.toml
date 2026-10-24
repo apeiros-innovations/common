@@ -10,7 +10,7 @@ experimental = true
 
 [tools]
 # Runtimes
-python = "3.14.8"
+python = "3.14.9"
 node = "26.12.1"
 go = "1.27.3"
 dotnet = "10.0.401"
