@@ -3,6 +3,7 @@ on:
   pull_request:
     paths:
       - .github/**
+      - .renovaterc.json5
       - .mise/**
       - .miserc.toml
       - .lefthook/**
@@ -14,6 +15,7 @@ on:
       - main
     paths:
       - .github/**
+      - .renovaterc.json5
       - .mise/**
       - .miserc.toml
       - .lefthook/**
