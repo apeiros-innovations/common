@@ -67,7 +67,7 @@ pnpm = "12.9.1"
 "aqua:gruntwork-io/terragrunt" = "1.1.6"
 
 # Security and dependency management
-"aqua:google/osv-scanner" = "2.6.0"
+"aqua:google/osv-scanner" = { version = "2.6.0", slsa_signer_identity = "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v2.1.0", slsa_signer_issuer = "https://token.actions.githubusercontent.com" }
 "dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.100" }
 "npm:renovate" = { version = "44.126.0", allow_builds = [
   "re2",
