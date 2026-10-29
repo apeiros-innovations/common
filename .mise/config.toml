@@ -1,15 +1,17 @@
 #:schema https://mise.jdx.dev/schema/mise.json
 
-[min_version]
-hard = "2026.10.17"
-
 [settings]
 lockfile = true
 lockfile_platforms = ["macos-arm64", "linux-x64"]
 experimental = true
 
+[env]
+DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+POETRY_VIRTUALENVS_CREATE = "true"
+POETRY_VIRTUALENVS_IN_PROJECT = "true"
+POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
+
 [tools]
-# Runtimes
 python = "3.14.10"
 node = "26.12.1"
 go = "1.27.3"
@@ -24,32 +26,16 @@ pnpm = "12.15.0"
 "npm:markdownlint-cli2" = "0.23.3"
 "aqua:astral-sh/uv" = "0.13.5"
 "aqua:mvdan/sh" = "3.14.1"
-"aqua:casey/just" = "1.59.0"
 "aqua:betterleaks/betterleaks" = "1.9.0"
 "aqua:evilmartians/lefthook" = "2.2.2"
 "aqua:koalaman/shellcheck" = "0.11.0"
 "aqua:google/yamlfmt" = "0.21.0"
 "aqua:dotenv-linter/dotenv-linter" = "4.0.0"
-"pipx:yamllint" = { version = "1.38.0", depends = [
-  "python",
-  "aqua:astral-sh/uv",
-] }
-
-# GitHub
 "aqua:zizmorcore/zizmor" = "1.31.1"
 
-# JavaScript and Python
 "npm:oxlint" = "1.89.0"
 "aqua:astral-sh/ruff" = "0.17.2"
-"pipx:djlint" = { version = "1.47.0", depends = [
-  "python",
-  "aqua:astral-sh/ruff",
-] }
-"pipx:django-upgrade" = { version = "1.33.0", depends = [
-  "python",
-  "aqua:astral-sh/uv",
-] }
-"pipx:poetry" = { version = "2.5.1", depends = ["python", "aqua:astral-sh/uv"] }
+
 
 # Go
 "aqua:golangci/golangci-lint" = "2.15.0"
@@ -65,22 +51,31 @@ pnpm = "12.15.0"
 "aqua:terraform-docs/terraform-docs" = "0.24.0"
 "aqua:terraform-linters/tflint" = "0.64.0"
 "aqua:gruntwork-io/terragrunt" = "1.2.1"
-
-# Security and dependency management
 "aqua:google/osv-scanner" = { version = "2.7.0", slsa_signer_identity = "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v2.1.0", slsa_signer_issuer = "https://token.actions.githubusercontent.com" }
 "dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.100" }
+"aqua:kjanat/actionlint" = "1.17.0"
+
+"pipx:poetry" = { version = "2.5.1", depends = ["python", "aqua:astral-sh/uv"] }
+
+"pipx:yamllint" = { version = "1.38.0", depends = [
+  "python",
+  "aqua:astral-sh/uv",
+] }
+
+"pipx:djlint" = { version = "1.47.0", depends = [
+  "python",
+  "aqua:astral-sh/ruff",
+] }
+"pipx:django-upgrade" = { version = "1.33.0", depends = [
+  "python",
+  "aqua:astral-sh/uv",
+] }
+
 "npm:renovate" = { version = "44.181.6", allow_builds = [
   "re2",
 ], trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",
 ] }
-"aqua:kjanat/actionlint" = "1.17.0"
-
-[env]
-DOTNET_CLI_TELEMETRY_OPTOUT = "1"
-POETRY_VIRTUALENVS_CREATE = "true"
-POETRY_VIRTUALENVS_IN_PROJECT = "true"
-POETRY_VIRTUALENVS_USE_POETRY_PYTHON = "false"
 
 [deps.poetry]
 auto = false
