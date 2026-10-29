@@ -120,9 +120,8 @@ test("unrelated events, publishers and old PR heads do not write", async () => {
   }
 });
 
-test("failed or missing artifacts and pending release-age holds remain blocking", async () => {
+test("reported artifact failures and pending release-age holds remain blocking", async () => {
   for (const statuses of [
-    [],
     [{ ...green[0], state: "failure" }],
     [...green, { context: "renovate/stability-days", state: "pending", creator: { login } }],
   ]) {
@@ -180,10 +179,11 @@ test("completion closes the status race once and cannot retry a newer run", asyn
     );
     assert.deepEqual(f.writes, []);
   }
-  const blocked = fixture({ statuses: [] });
+  const absent = fixture({ statuses: [] });
   assert.deepEqual(
-    await retryCompleted({ event: { workflow_run: run }, client: blocked.client, repository }),
-    [],
+    await retryCompleted({ event: { workflow_run: run }, client: absent.client, repository }),
+    [101],
   );
-  assert.deepEqual(blocked.writes, []);
+  // Recovery retries only the aggregate, never the successful builds.
+  assert.deepEqual(absent.writes, ["/actions/jobs/101/rerun"]);
 });

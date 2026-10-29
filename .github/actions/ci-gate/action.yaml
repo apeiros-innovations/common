@@ -1,6 +1,6 @@
 ---
 name: CI gate
-description: Require every selected CI job and Renovate artifact update to succeed.
+description: Require selected CI jobs and reported Renovate checks to succeed.
 inputs:
   needs:
     description: The complete toJSON(needs) object from the final job.
@@ -12,7 +12,7 @@ inputs:
     description: Read-only token for Renovate commit statuses.
     default: ${{ github.token }}
   renovate-readiness:
-    description: Check Renovate statuses on same-repository Renovate pull requests.
+    description: Check any reported Renovate statuses on same-repository Renovate pull requests.
     default: 'true'
 runs:
   using: node24

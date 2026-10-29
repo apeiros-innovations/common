@@ -78,7 +78,8 @@ export async function renovateReadiness(client, sha, login) {
     if (readinessContexts.has(status.context) && !latest.has(status.context))
       latest.set(status.context, status);
   const errors = [];
-  if (!latest.has(artifactContext)) errors.push("Renovate artifact status has not been reported");
+  // Renovate reports artifacts when it updates a branch. A later GitHub base
+  // merge can have no status; missing metadata is not a failed build.
   for (const [context, status] of latest) {
     if (status.creator?.login !== login) errors.push(`${context}: unexpected status publisher`);
     else if (status.state !== "success") errors.push(`${context}: not successful`);
