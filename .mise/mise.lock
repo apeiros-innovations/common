@@ -586,10 +586,10 @@ backend = "npm:markdownlint-cli2"
 specifiers = ["0.24.0"]
 
 [[tools."npm:oxfmt"]]
-version = "0.71.0"
-aube = { path = "locks/npm-oxfmt/0.71.0", digest = "sha256:c4cbae155df98b00b10384f7ef95287abcfc3d923825c2aea5562b70a59ba012" }
+version = "0.74.0"
+aube = { path = "locks/npm-oxfmt/0.74.0", digest = "sha256:b7977a181c0e11736ab44f83b24a4b862754204c253477e29d1758b0f898aad7" }
 backend = "npm:oxfmt"
-specifiers = ["0.71.0"]
+specifiers = ["0.74.0"]
 
 [[tools."npm:oxlint"]]
 version = "1.89.0"
