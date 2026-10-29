@@ -1,28 +1,6 @@
 name: Workflow lint
 on:
-  pull_request:
-    paths:
-      - .github/**
-      - .renovaterc.json5
-      - .mise/**
-      - .miserc.toml
-      - .lefthook/**
-      - "**/*.sh"
-      - "**/*.bash"
-      - "**/*.bats"
-  push:
-    branches:
-      - main
-    paths:
-      - .github/**
-      - .renovaterc.json5
-      - .mise/**
-      - .miserc.toml
-      - .lefthook/**
-      - "**/*.sh"
-      - "**/*.bash"
-      - "**/*.bats"
-  workflow_dispatch: {}
+  workflow_call:
 permissions:
   contents: read
 env:
