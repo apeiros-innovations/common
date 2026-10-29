@@ -580,10 +580,10 @@ backend = "npm:cspell"
 specifiers = ["10.4.0"]
 
 [[tools."npm:markdownlint-cli2"]]
-version = "0.23.3"
-aube = { path = "locks/npm-markdownlint-cli2/0.23.3", digest = "sha256:1d36a5d88e0cdf7c00ed6a93a8a63f05656f331dce7190544a6a779aa1612715" }
+version = "0.24.0"
+aube = { path = "locks/npm-markdownlint-cli2/0.24.0", digest = "sha256:d76beb6e3aac6ad55a254433b35509683547147e7a20f0217eda5a784f0c2e34" }
 backend = "npm:markdownlint-cli2"
-specifiers = ["0.23.3"]
+specifiers = ["0.24.0"]
 
 [[tools."npm:oxfmt"]]
 version = "0.71.0"
