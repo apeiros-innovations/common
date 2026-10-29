@@ -1,0 +1,13 @@
+---
+name: Retry Renovate CI check
+description: Retry only the required CI check after Renovate reports readiness.
+inputs:
+  github-token:
+    description: Token with actions write, contents read, statuses read and pull requests read.
+    default: ${{ github.token }}
+  workflow:
+    description: Repository workflow filename whose final gate may be retried.
+    default: ci.yaml
+runs:
+  using: node24
+  main: index.mjs
