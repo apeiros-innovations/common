@@ -1,0 +1,27 @@
+---
+name: Retry Renovate CI check
+on:
+  status:
+  workflow_run: # zizmor: ignore[dangerous-triggers] -- Trusted default-branch code; no PR checkout or artifact execution.
+    workflows: ["CI"]
+    types: [completed]
+permissions:
+  contents: read
+  statuses: read
+  pull-requests: read
+  actions: write
+concurrency:
+  group: renovate-gate-${{ github.event.sha || github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+jobs:
+  retry:
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure' && github.event.workflow_run.run_attempt == 1) ||
+      (github.event.state == 'success' &&
+      contains(fromJSON('["renovate/artifacts", "renovate/stability-days", "renovate/merge-confidence", "renovate/config-validation"]'), github.event.context) &&
+      contains(fromJSON('["autoforgex[bot]", "renovate[bot]"]'), github.event.sender.login))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Retry the required CI check
+        uses: apeiros-innovations/common/.github/actions/retry-renovate-check@cb121e644708aa003e4411492ed6ff33dbbbb68d # main
