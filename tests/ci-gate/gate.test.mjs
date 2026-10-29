@@ -77,10 +77,19 @@ test("Renovate recognition excludes release PRs, humans, forks and other bots", 
     assert.equal(isRenovatePr(changed, repository), false);
 });
 
-test("artifact status is required; latest failures and pending holds block readiness", async () => {
+test("missing metadata is allowed; reported failures and pending holds block readiness", async () => {
   const client = (statuses) => ({ pages: async () => statuses });
   assert.deepEqual(await renovateReadiness(client([status()]), sha, login), []);
-  assert.ok((await renovateReadiness(client([]), sha, login)).length);
+  assert.deepEqual(await renovateReadiness(client([]), sha, login), []);
+  for (const context of [
+    "renovate/artifacts",
+    "renovate/stability-days",
+    "renovate/merge-confidence",
+    "renovate/config-validation",
+  ]) {
+    assert.ok((await renovateReadiness(client([status(context, "pending")]), sha, login)).length);
+    assert.ok((await renovateReadiness(client([status(context, "failure")]), sha, login)).length);
+  }
   assert.ok(
     (
       await renovateReadiness(
