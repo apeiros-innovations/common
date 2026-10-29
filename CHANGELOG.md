@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.1](https://github.com/apeiros-innovations/common/compare/v1.0.0...v1.0.1) (2026-10-29)
+
+
+### Bug Fixes
+
+* **ci:** allow successful builds without Renovate metadata ([#81](https://github.com/apeiros-innovations/common/issues/81)) ([47f1916](https://github.com/apeiros-innovations/common/commit/47f1916db6613226c3212ce8c3ea04f9ee7ff438))
+
 ## 1.0.0 (2026-10-29)
 
 
