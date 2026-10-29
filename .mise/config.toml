@@ -49,7 +49,7 @@ pnpm = "12.15.0"
 "aqua:norwoodj/helm-docs" = "1.14.2"
 "aqua:opentofu/opentofu" = "1.13.2"
 "aqua:terraform-docs/terraform-docs" = "0.24.0"
-"aqua:terraform-linters/tflint" = "0.64.0"
+"aqua:terraform-linters/tflint" = "0.65.0"
 "aqua:gruntwork-io/terragrunt" = "1.2.1"
 "aqua:google/osv-scanner" = { version = "2.7.0", slsa_signer_identity = "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v2.1.0", slsa_signer_issuer = "https://token.actions.githubusercontent.com" }
 "dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.100" }
