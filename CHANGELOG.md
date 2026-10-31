@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0](https://github.com/apeiros-innovations/common/compare/v1.0.1...v2.0.0) (2026-10-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* **mise:** update oxfmt to 0.75.0 ([#84](https://github.com/apeiros-innovations/common/issues/84))
+
+### Features
+
+* **mise:** update oxfmt to 0.75.0 ([#84](https://github.com/apeiros-innovations/common/issues/84)) ([006afc4](https://github.com/apeiros-innovations/common/commit/006afc4f669fb06cae69b216875aedeadb09317d))
+
 ## [1.0.1](https://github.com/apeiros-innovations/common/compare/v1.0.0...v1.0.1) (2026-10-29)
 
 
