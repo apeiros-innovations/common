@@ -1,0 +1,5 @@
+---
+extends:
+  - lefthook.base.yaml
+  - lefthook.github.yaml
+  - lefthook/shellcheck.yaml

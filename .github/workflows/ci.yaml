@@ -18,18 +18,24 @@ jobs:
     timeout-minutes: 10
     env:
       MISE_ENV: ci
-      MISE_ENABLE_TOOLS: node
+      MISE_ENABLE_TOOLS: node,aqua:evilmartians/lefthook
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
         with:
-          install_args: --locked node
+          install_args: --locked node aqua:evilmartians/lefthook
           add_shims_to_path: false
           cache: false
       - name: Check aggregation, readiness, and retry safety
-        run: node --test tests/ci-gate/*.test.mjs
+        run: node --test tests/ci-gate/*.test.mjs tests/lint/*.test.mjs
+  shared-lint:
+    uses: $/.github/workflows/lint.yaml
+    with:
+      tools: aqua:kjanat/actionlint aqua:koalaman/shellcheck aqua:zizmorcore/zizmor
+      expected-checks: '["actionlint", "shellcheck", "zizmor"]'
+      config: .github/lint.lefthook.yaml
   workflow-lint:
     uses: $/.github/workflows/workflow-lint.yaml
     permissions:
@@ -39,7 +45,7 @@ jobs:
   status:
     name: Build Success
     if: ${{ always() }}
-    needs: [test, workflow-lint]
+    needs: [test, workflow-lint, shared-lint]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -53,4 +59,4 @@ jobs:
         uses: $/.github/actions/ci-gate
         with:
           needs: ${{ toJSON(needs) }}
-          expected: '{"test":true,"workflow-lint":true}'
+          expected: '{"test":true,"workflow-lint":true,"shared-lint":true}'

@@ -1,0 +1,25 @@
+---
+name: Shared lint
+description: Install locked tools and run the repository's Lefthook CI checks.
+inputs:
+  tools:
+    description: Space-separated Mise tool names; versions come from the checked-out repository.
+    required: true
+  expected-checks:
+    description: JSON array of required ci-tagged leaf job names.
+    required: true
+  config:
+    description: Optional Lefthook configuration path.
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Install tools and lint
+      shell: bash
+      env:
+        LINT_ACTION_PATH: ${{ github.action_path }}
+        LINT_TOOLS: ${{ inputs.tools }}
+        LINT_EXPECTED_CHECKS: ${{ inputs.expected-checks }}
+        LEFTHOOK_CONFIG: ${{ inputs.config }}
+        MISE_ENV: ci
+      run: bash "$LINT_ACTION_PATH/run.sh"

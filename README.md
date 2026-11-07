@@ -7,6 +7,10 @@ Shared development-tooling policy for Apeiros repositories.
 
 Common provides reusable [Lefthook](https://lefthook.dev/) checks, presets, tool definitions, and shared formatter and linter configuration.
 
+The [shared lint workflow](docs/shared-lint.md) runs selected Lefthook checks in
+GitHub Actions using the consumer's locked Mise tools, with a required-check
+guard and a versioned interface for Renovate updates.
+
 ## Retiring the pull request title check
 
 Standalone PR-title callers and starter templates are being removed to reduce
