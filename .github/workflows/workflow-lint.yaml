@@ -21,12 +21,10 @@ jobs:
       - name: Detect workflow changes
         id: actionlint-changes
         if: >-
-          contains(fromJSON('["pull_request", "push", "merge_group"]'), github.event_name) &&
-          (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '' &&
-          (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '0000000000000000000000000000000000000000'
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+          contains(fromJSON('["pull_request", "push", "merge_group"]'), github.event_name) && (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '' && (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '0000000000000000000000000000000000000000'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
         with:
-          token: ''
+          token: ""
           base: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
           ref: ${{ github.sha }}
           filters: |
