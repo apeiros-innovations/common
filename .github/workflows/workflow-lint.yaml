@@ -15,6 +15,26 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+      # Compare event commits locally; manual/scheduled runs retain full validation.
+      # https://github.com/dorny/paths-filter#supported-workflows
+      - name: Detect workflow changes
+        id: actionlint-changes
+        if: >-
+          contains(fromJSON('["pull_request", "push", "merge_group"]'), github.event_name) && (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '' && (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '0000000000000000000000000000000000000000'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
+        with:
+          token: ""
+          base: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
+          ref: ${{ github.sha }}
+          filters: |
+            workflows:
+              - '.github/workflows/**'
+              - '**/action.{yaml,yml}'
+              - '.github/actionlint.{yaml,yml}'
+              - '.shellcheckrc'
+              - '.mise/**'
+              - '.miserc.toml'
       - name: Install ShellCheck archive support
         shell: bash
         run: |
@@ -36,10 +56,12 @@ jobs:
           versions=$(env -u MISE_ENABLE_TOOLS mise ls --current --json | jq -c 'map_values(.[0].version)')
           echo "versions=$versions" >> "$GITHUB_OUTPUT"
       - name: Set up Python for workflow checks
+        if: steps.actionlint-changes.outputs.workflows != 'false'
         uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: ${{ fromJSON(steps.tool-versions.outputs.versions)['python'] }}
       - name: Lint workflows with reviewdog
+        if: steps.actionlint-changes.outputs.workflows != 'false'
         uses: reviewdog/action-actionlint/dockerless@619a81ec64ff8c0211cd6146eb2b21e8f1d7f440  # v1.81.1
         with:
           reporter: github-check
