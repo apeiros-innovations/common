@@ -202,10 +202,10 @@ Common publicly does not grant outside repositories access to these runners.
 Foundry currently declares `allowsPublicRepositories: false` for `gha-shared`.
 Private Apeiros callers can use these workflows, but public callers, including
 Common's own CI while Common remains public, cannot use that runner group.
-This change does not broaden runner-group access. Resolve Common's own runner
-access before merging this migration: making Common private requires migrating
-its public consumers first; keeping it public requires a separately approved
-self-hosted runner arrangement for public-repository jobs.
+This configuration does not broaden runner-group access. Common's CI and release
+jobs need a self-hosted runner arrangement that permits its public repository.
+Making Common private requires migrating its public consumers first; keeping it
+public requires a separately approved runner arrangement for public-repository jobs.
 
 Public repositories cannot consume private shared actions or reusable
 workflows through cross-repository `uses` references. Public-repository jobs
@@ -228,10 +228,14 @@ The workflows require only `contents: read`. Checkout does not persist
 credentials. Zizmor receives the read-only token for online audits; other
 linters need no token or secrets. No workflow requests OIDC or write access.
 
-`workflow-lint.yaml` remains available for existing callers. New callers compose
-the individual workflows. Common's CI calls the five workflows directly, without
-running the old combined job a second time. Its initial YAML scope qualifies the
-new workflow interfaces; expansion to legacy YAML is a separate cleanup.
+`workflow-lint.yaml` remains as a compatibility wrapper for existing callers. It
+delegates to the individual Actionlint, ShellCheck, and Zizmor workflows, using
+Common's locked tools and defaults. Its final `lint` job preserves the aggregate
+check and fails if any delegated job fails or is cancelled. New callers compose
+the individual workflows to set independent scopes and configuration overrides.
+Common's CI calls the five workflows directly, without running the wrapper again.
+Its YAML scope includes the new interfaces and the compatibility wrapper;
+expansion to other legacy YAML is a separate cleanup.
 
 ## Releases and Renovate
 

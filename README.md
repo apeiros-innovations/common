@@ -225,8 +225,8 @@ node = "26.10.0"
 **GitHub — `lefthook.github.yaml`**
 
 ```toml
-"aqua:kjanat/actionlint" = "1.7.12"
-"aqua:zizmorcore/zizmor" = "1.30.1"
+"aqua:kjanat/actionlint" = "1.17.0"
+"aqua:zizmorcore/zizmor" = "1.31.1"
 ```
 
 **Go — `lefthook.go.yaml`**
@@ -363,14 +363,15 @@ mise x -- lefthook install
 mise x -- lefthook dump
 ```
 
-CI installs only the tools a job needs with `mise install --locked <tools>`. When an established action installs a tool itself, export the resolved versions once with mise's native JSON output:
+The individual [CI lint workflows](docs/shared-lint.md) install only their required
+tools from the selected Common revision with `mise install --locked <tools>`.
+They invoke the binaries directly and do not read consumer Mise versions or run
+Lefthook. Common's manifest and lockfiles are the authoritative tool versions;
+the local-hook examples above illustrate which tools each profile needs.
 
-```bash
-versions=$(env -u MISE_ENABLE_TOOLS mise ls --current --json | jq -c 'map_values(.[0].version)')
-echo "versions=$versions" >> "$GITHUB_OUTPUT"
-```
-
-Pass the map through job outputs and reusable workflow inputs. Workflow-level environment variables do not propagate into reusable workflows. Actions read their version inputs from that map, so workflow YAML does not repeat the pins. The pinned mise action bootstraps a mature stable release and the manifest declares the required mise version once. Setup actions for Go, Node, and Python retain their platform and authentication support; reviewdog provides actionlint and ShellCheck annotations, and the official Zizmor action audits workflow security. Local actionlint uses the same parser bundled by reviewdog.
+`workflow-lint.yaml` is a compatibility wrapper around Actionlint, ShellCheck,
+and Zizmor. New callers compose the individual workflows so they can select
+independent file scopes and configuration overrides.
 
 Use `.mise/config.toml` for tool declarations, `.mise/mise.lock` and `.mise/locks/` for generated locks, and `.mise/config.dev.toml` for developer-only Git hook installation. `.miserc.toml` selects the development environment locally; workflows set `MISE_ENV: ci`. A package manager declared in `package.json` stays there: enable mise's idiomatic pnpm or Yarn support rather than duplicating that version in the tool table. Language compatibility ranges in module and package manifests remain separate from development toolchain pins.
 

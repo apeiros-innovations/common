@@ -1,6 +1,2 @@
 ---
-rules:
-  dangerous-triggers:
-    ignore:
-      - labeler.yaml
-      - retry-release.yaml
+rules: {}
