@@ -18,7 +18,7 @@ Zizmor uses online audits by default; `offline: true` is an explicit opt-out.
 
 ## Compose the checks
 
-After `v0.1.0` is published, replace `<release-commit-sha>` below with its full
+After `v1.1.0` is published, replace `<release-commit-sha>` below with its full
 commit SHA. The version comment lets Renovate track releases:
 
 ```yaml
@@ -32,7 +32,7 @@ permissions:
   contents: read
 jobs:
   yaml:
-    uses: apeiros-innovations/common/.github/workflows/yamllint.yaml@<release-commit-sha> # v0.1.0
+    uses: apeiros-innovations/common/.github/workflows/yamllint.yaml@<release-commit-sha> # v1.1.0
     with:
       files: |
         :(glob)deploy/**/*.yaml
@@ -40,7 +40,7 @@ jobs:
         :(glob,exclude)deploy/**/templates/**
       config: .yamllint.yaml
   markdown:
-    uses: apeiros-innovations/common/.github/workflows/markdownlint.yaml@<release-commit-sha> # v0.1.0
+    uses: apeiros-innovations/common/.github/workflows/markdownlint.yaml@<release-commit-sha> # v1.1.0
     with:
       files: |
         README.md
@@ -143,13 +143,13 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - id: markdownlint
-        uses: apeiros-innovations/common/.github/actions/lint-files@<release-commit-sha> # v0.1.0
+        uses: apeiros-innovations/common/.github/actions/lint-files@<release-commit-sha> # v1.1.0
         with:
           linter: markdownlint
   markdownlint:
     needs: changes
     if: needs.changes.outputs.markdownlint == 'true'
-    uses: apeiros-innovations/common/.github/workflows/markdownlint.yaml@<release-commit-sha> # v0.1.0
+    uses: apeiros-innovations/common/.github/workflows/markdownlint.yaml@<release-commit-sha> # v1.1.0
     with:
       full-scan: true
 ```
@@ -235,20 +235,23 @@ new workflow interfaces; expansion to legacy YAML is a separate cleanup.
 
 ## Releases and Renovate
 
-Release Please owns the changelog, tags, and GitHub releases. The requested
-tooling line starts at `v0.1.0` through a one-time `Release-As: 0.1.0` commit
-footer. Existing `v1.0.0` and `v1.0.1` tags remain published. The release manifest
-continues to describe the last published version until the release PR updates
-it. During 0.x, features and fixes increment patch; breaking changes increment
-minor. No permanent `release-as` configuration is used.
+Release Please owns the changelog, tags, and GitHub releases. The composable
+lint workflows target `v1.1.0`, following the existing `v1.0.1` release. A
+one-time `Release-As: 1.1.0` commit footer selects this version and supersedes
+the earlier 0.x proposal. Existing release tags remain unchanged. The release
+manifest continues to describe the last published version until the release PR
+updates it. Subsequent releases use normal semantic versioning: fixes increment
+patch, features increment minor, and breaking changes increment major. No
+permanent `release-as` configuration is used.
 
 Use the [Common Renovate preset](https://github.com/apeiros-innovations/renovate-config/blob/main/docs/common-tooling.md)
 after generic tooling presets. It groups Common workflow updates and permits
-all update levels to automerge after required CI passes. For consumers on 0.x,
-it excludes the two historical 1.x releases while allowing future major
-releases. Existing `main` or historical 1.x consumers need an explicit initial
-migration. Local Lefthook remotes can be updated independently; they are not a
-prerequisite for adopting the CI workflows.
+all update levels to automerge after required CI passes. Existing version-pinned
+consumers can move forward from `v1.0.1` to `v1.1.0` through normal Renovate
+updates; no historical-version exclusions are needed. Consumers following
+`main` need an explicit migration to a release SHA with a version comment.
+Adopting the new individual workflow paths is also an explicit migration. Local
+Lefthook remotes can be updated independently of the CI workflows.
 
 Publishing a release does not itself schedule the self-hosted Renovate job.
 Release-triggered scheduling remains a separate integration.
