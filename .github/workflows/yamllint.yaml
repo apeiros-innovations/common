@@ -23,7 +23,9 @@ permissions:
 jobs:
   lint:
     name: YAML lint
-    runs-on: ubuntu-latest
+    runs-on:
+      group: gha-shared
+      labels: gha-linux-k8s
     timeout-minutes: 10
     env:
       MISE_ENV: ci

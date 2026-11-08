@@ -90,6 +90,37 @@ Avoid workflow-level `paths` filters on a required workflow: a skipped workflow
 can leave its required check pending. Repositories without change selection can
 call the individual workflows unconditionally; empty scopes skip installation.
 
+## Self-hosted runners
+
+All workflows in Common use the organization's self-hosted Linux runners:
+
+```yaml
+runs-on:
+  group: gha-shared
+  labels: gha-linux-k8s
+```
+
+There is no GitHub-hosted fallback. Reusable workflows use runner access from the
+calling repository; the caller must have access to `gha-shared`. Publishing
+Common publicly does not grant outside repositories access to these runners.
+
+Foundry currently declares `allowsPublicRepositories: false` for `gha-shared`.
+Private Apeiros callers can use these workflows, but public callers, including
+Common's own CI while Common remains public, cannot use that runner group.
+This change does not broaden runner-group access. Resolve Common's own runner
+access before merging this migration: making Common private requires migrating
+its public consumers first; keeping it public requires a separately approved
+self-hosted runner arrangement for public-repository jobs.
+
+Public repositories cannot consume private shared actions or reusable
+workflows through cross-repository `uses` references. Public-repository jobs
+that execute untrusted contributions need an isolated runner pool; do not open
+the shared internal runner group to public repositories to bypass this limit.
+Ephemeral runners alone do not isolate their network, credentials, or host.
+
+See GitHub's [runner access rules](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#how-reusable-workflows-use-runners)
+and [self-hosted runner security guidance](https://docs.github.com/en/actions/reference/security/secure-use#hardening-for-self-hosted-runners).
+
 ## Versions and permissions
 
 The selected Common release owns the linter versions, runtime versions, locks,
