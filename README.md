@@ -7,6 +7,11 @@ Shared development-tooling policy for Apeiros repositories.
 
 Common provides reusable [Lefthook](https://lefthook.dev/) checks, presets, tool definitions, and shared formatter and linter configuration.
 
+The [individual lint workflows](docs/shared-lint.md) provide composable YAML,
+Markdown, shell, workflow syntax, and workflow security checks. Each runs its
+linter directly with file scopes, locked tools, and defaults from Common.
+Lefthook remains an independent local Git-hook integration.
+
 ## Retiring the pull request title check
 
 Standalone PR-title callers and starter templates are being removed to reduce
@@ -157,32 +162,28 @@ Git policy checks retain index-aware selection. Checkout content filters would b
 
 ## GitHub CI
 
-Jobs tagged `ci` support tracked files in a clean checkout. Reuse them after installing the project's tools and fetching remote configuration:
+Compose the [individual reusable lint workflows](docs/shared-lint.md):
+`yamllint.yaml`, `markdownlint.yaml` (markdownlint-cli2), `shellcheck.yaml`,
+`actionlint.yaml`, and `zizmor.yaml`. Each runs its linter directly, accepts a
+file scope and optional configuration override, and installs its locked tools
+from the selected Common release. Consumers do not need Lefthook or a Mise
+manifest to use these workflows.
 
-```bash
-mise install --locked
-mise x -- lefthook install
-mise x -- lefthook dump
-mise x -- lefthook run pre-commit \
-  --tag ci \
-  --all-files \
-  --no-stage-fixed \
-  --fail-on-changes \
-  --no-auto-install \
-  --no-tty
-```
+Each workflow skips tool installation and linting when its files and dependencies
+are unchanged. For job-level skips, use Common's `lint-files` action in one shared
+preflight and pass its selections to the caller jobs and required aggregate gate.
+Config, tool, and workflow changes reselect the scope; extra dependency paths are
+configurable. Keep the gate running for every PR and merge queue. Full tests,
+builds, vulnerability scans, and deployments remain separate jobs.
 
-`--all-files` replaces staged-file templates with tracked files; globs, exclusions, and file types still apply. Formatters can change the checkout. `--fail-on-changes` makes those changes fail CI, and `--no-stage-fixed` keeps formatter changes out of the index.
-
-The tag covers file-based formatting/linting, strict JSON, path portability, symlink safety, and Gitlink metadata. It excludes staged-diff checks, newly added file checks, staged secret scanning, generators that explicitly stage output, and commit/push checks. GolangCI-Lint's staged-patch job also stays outside this tag. Run full tests, builds, repository-wide vulnerability/secret scans, and deployment checks through their appropriate CI commands.
-
-`--no-stage-fixed` does not disable a helper's explicit `git add`. Keep generation jobs outside this generic CI command. Tags select existing jobs; they do not create a separate hook or relocate scripts. An unknown tag can select no jobs, so a CI integration should assert that its intended job names appear in `lefthook dump --format json`.
+Lefthook presets and their existing tags remain available for local hooks and
+local whole-repository checks. They do not define the GitHub Actions job graph.
 
 ## Mise and helpers
 
 Common declares tool versions and backend options once in `.mise/config.toml`, grouped by purpose within the same file. This is common's own full tool selection. Mise owns installation and `.mise/mise.lock`; native dependency graphs live under `.mise/locks/`. Commit lockfiles and graphs together.
 
-Consumers keep their own `.mise/config.toml` and copy only the tools needed by their selected checks. Start with Lefthook:
+For local hooks, consumers keep their own `.mise/config.toml` and copy only the tools needed by their selected checks. The reusable CI workflows use Common's own locked manifest. Start local hook setup with Lefthook:
 
 ```toml
 #:schema https://mise.jdx.dev/schema/mise.json
