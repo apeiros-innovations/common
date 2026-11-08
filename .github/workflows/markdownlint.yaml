@@ -47,7 +47,7 @@ jobs:
           install_args: --locked node npm:markdownlint-cli2
           cache: false
           add_shims_to_path: false
-          env: false
+          env: true
       - name: Markdownlint
         if: steps.files.outputs.any == 'true'
         shell: bash

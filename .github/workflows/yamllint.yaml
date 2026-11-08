@@ -47,7 +47,7 @@ jobs:
           install_args: --locked python aqua:astral-sh/uv pipx:yamllint
           cache: false
           add_shims_to_path: false
-          env: false
+          env: true
       - name: YAML lint
         if: steps.files.outputs.any == 'true'
         shell: bash

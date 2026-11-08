@@ -46,7 +46,7 @@ jobs:
           install_args: --locked aqua:kjanat/actionlint aqua:koalaman/shellcheck
           cache: false
           add_shims_to_path: false
-          env: false
+          env: true
       - name: Actionlint
         if: steps.files.outputs.any == 'true'
         shell: bash
