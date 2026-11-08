@@ -1,8 +1,8 @@
 # Composable lint workflows
 
 Each linter is an independent reusable GitHub Actions workflow. Call only the
-workflows needed by a repository and give each its own file scope and optional
-configuration override. These workflows run the tools directly. Lefthook is a
+workflows needed by a repository and give each its own file scope, additional
+dependency paths, and optional configuration override. These workflows run the tools directly. Lefthook is a
 separate local Git-hook integration and is not installed, invoked, or read by CI.
 
 | Workflow            | Tool              | Default scope                                                        |
@@ -59,11 +59,14 @@ Git's recursive glob syntax, and `:(glob,exclude)` removes matching files. Git
 does not expand brace alternatives: use separate lines for `*.yaml` and `*.yml`.
 A custom `files` input replaces the entire default list, including exclusions.
 Only tracked, existing regular files are passed to a linter. Deleted files,
-symlinks, submodules, and untracked build output are omitted. An empty match is
-a successful no-op, and no tools are installed for that workflow.
+symlinks, submodules, and untracked build output are omitted from linter arguments.
+Deleted and renamed paths still participate in change detection. An empty or
+unaffected scope is a successful no-op; no linter tools are installed or run.
 
-The small `lint-files` action only enumerates files and locates the selected
-Common release. Each workflow owns its tool installation and direct linter
+The `lint-files` action checks whether a scope was affected, enumerates its
+files, and locates the selected Common release. Its bundled `profiles.json`
+defines default scopes and config dependencies once for both preflight and lint
+execution. Each workflow owns its tool installation and direct linter
 command. Filenames are passed through NUL-delimited lists with no shell
 evaluation. markdownlint-cli2 receives literal file paths and `--no-globs`, so
 configuration cannot widen the file scope through its `globs` option. Formatting
@@ -71,24 +74,116 @@ changes fail CI instead of being committed.
 
 ## Change detection and required checks
 
-The caller decides **when** to run a job. The reusable workflow's `files` input
-decides **what** it checks. When selected, it validates every tracked file in
-that scope, including on merge queues and manual runs.
+Change detection is built into each reusable workflow. It compares the event's
+commits before installing tools. If no selected file or dependency changed, it
+skips installation and lint execution. If the scope was affected, it checks
+**all existing files in that scope**. This catches effects on unchanged peers,
+such as scripts that source a changed shell file or shared Markdown rules.
 
-For change-based job gating, use the caller's existing `dorny/paths-filter`
-selection job and pass its output to the reusable job's `if`. Include the
-linter's configuration and the caller workflow in that change filter. A Common
-workflow SHA update must select its checks even if no source file changed.
-For markdownlint-cli2, include nested `.markdownlint*` configurations too.
-Prefer one selection job in the caller over separate change detection in every
-reusable workflow.
+| Event or change | Behavior |
+| --- | --- |
+| Pull request | Compare the PR merge base with the current PR head (the full PR diff). |
+| Existing-branch push | Compare the event's `before` and `after` commits, including every pushed commit. |
+| Merge queue | Compare `merge_group.base_sha` with `merge_group.head_sha`. |
+| Config, workflow, local action, or tool-lock change | Recheck the affected linter's complete file scope. |
+| Manual, scheduled, tag, or new-branch run | Check the complete scope. |
+| Missing commits, shallow history, or unavailable diff | Check the complete scope; never infer a successful skip. |
 
-Keep the required aggregate CI gate running on every PR and `merge_group`.
-For conditionally selected jobs, pass the same selection boolean to the gate's
-`expected` map so an intentional skip succeeds and an unexpected skip fails.
-Avoid workflow-level `paths` filters on a required workflow: a skipped workflow
-can leave its required check pending. Repositories without change selection can
-call the individual workflows unconditionally; empty scopes skip installation.
+The default dependency triggers cover `.github/workflows/**` (including Common
+SHA updates and `actions.lock`), `.github/actions/**`, `.mise/**`, and Common's
+selector tests. Each profile adds its linter's configuration paths, including
+nested Markdown configs. The explicit `config` path is also watched, including
+its deletion. Add repository-specific dependencies with `trigger-files`, using
+the same Git pathspec syntax as `files`, for example:
+
+```yaml
+with:
+  files: ":(glob)docs/**/*.md"
+  trigger-files: |
+    rules/markdown/**
+    tools/generate-docs.mjs
+  config: .markdownlint-cli2.yaml
+```
+
+`trigger-files` extends the built-in triggers. `full-scan: true` bypasses change
+detection and checks the complete selected scope. Automatic comparison needs
+Git history; the workflows use checkout with `fetch-depth: 0`. A preselected
+`full-scan` invocation needs only a single-commit checkout.
+
+The PR comparison deliberately includes earlier commits: adding an unrelated
+commit must not turn an earlier lint failure into a successful skip. This does
+not reuse a previous passing result or promise to skip a rerun of the same PR.
+Such reuse would require a separately validated result cache covering source,
+configuration, tool versions, and workflow behavior.
+
+### Skip entire jobs with one preflight
+
+An action runs after its job has acquired a runner. To avoid allocating a
+separate runner for each unaffected linter, run `lint-files` in one shared
+preflight job and use its `any` output in each caller job's `if`. Common performs
+this preflight in its existing shared-action test job. The required aggregate
+gate checks the same selection decisions, so intended skips pass and unexpected
+skips or preflight failures fail.
+
+For a consumer, the Markdown portion of this pattern is:
+
+```yaml
+jobs:
+  changes:
+    runs-on:
+      group: gha-shared
+      labels: gha-linux-k8s
+    permissions:
+      contents: read
+    outputs:
+      markdownlint: ${{ steps.markdownlint.outputs.any }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: markdownlint
+        uses: apeiros-innovations/common/.github/actions/lint-files@<release-commit-sha> # v0.1.0
+        with:
+          linter: markdownlint
+  markdownlint:
+    needs: changes
+    if: needs.changes.outputs.markdownlint == 'true'
+    uses: apeiros-innovations/common/.github/workflows/markdownlint.yaml@<release-commit-sha> # v0.1.0
+    with:
+      full-scan: true
+```
+
+Repeat the preflight step for the linters a repository uses. Pass identical
+`files`, `config`, and `trigger-files` overrides to preflight and execution, and
+pin both to the same Common release. Common uses a YAML anchor for its custom
+YAML scope to avoid duplicating that value. Keep the required aggregate gate
+running on every PR and `merge_group`, with the preflight job required to succeed
+and each linter's selection boolean included in the gate's `expected` map.
+
+Avoid workflow-level `paths` filters on a required workflow: GitHub can leave its
+required check pending when that workflow is skipped. Git diff comparison here
+uses the local repository rather than GitHub's path-filter file-list limit.
+
+## Security properties
+
+The selector uses JavaScript argument arrays and NUL-delimited file lists; it
+never constructs shell commands from filenames or event values. Commit inputs
+must be full hexadecimal SHAs. Diff commands disable external diff programs and
+text conversion. The selector needs no token, API requests, or write permissions.
+It rejects `pull_request_target` and `workflow_run` invocations; linting belongs
+in the unprivileged PR, push, and merge-queue workflows.
+
+Checkout keeps `persist-credentials: false`. Lint workflows retain only
+`contents: read`, pinned third-party action SHAs, and trusted Common tool locks.
+These controls do not make untrusted code safe on an internal self-hosted runner;
+the runner access and isolation requirements below still apply.
+
+GitHub's security reference now recommends native action dependency lockfiles
+where available. `.github/workflows/actions.lock` covers action dependencies,
+including transitive dependencies; reusable workflow calls still need full SHA
+pins. Lockfile adoption and its Renovate update path remain separate work. Any
+lockfile change already invalidates these lint selections.
 
 ## Self-hosted runners
 
@@ -158,7 +253,12 @@ prerequisite for adopting the CI workflows.
 Publishing a release does not itself schedule the self-hosted Renovate job.
 Release-triggered scheduling remains a separate integration.
 
-References: [Git pathspecs](https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec),
+References: [workflow syntax and diff comparisons](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#git-diff-comparisons),
+[secure use](https://docs.github.com/en/actions/reference/security/secure-use),
+[workflow dependency lockfiles](https://docs.github.com/en/actions/concepts/security/workflow-dependency-lockfiles),
+[Git diff](https://git-scm.com/docs/git-diff),
+[checkout history](https://github.com/actions/checkout#fetch-all-history-for-all-tags-and-branches),
+[Git pathspecs](https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec),
 [Mise locked tools](https://mise.jdx.dev/dev-tools/mise-lock.html),
 [markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2),
 and [reusing workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows).

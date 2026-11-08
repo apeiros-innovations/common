@@ -13,11 +13,17 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
   test:
-    name: Test shared actions
+    name: Test shared actions and select linters
     runs-on:
       group: gha-shared
       labels: gha-linux-k8s
     timeout-minutes: 10
+    outputs:
+      yamllint: ${{ steps.yamllint.outputs.any }}
+      markdownlint: ${{ steps.markdownlint.outputs.any }}
+      shellcheck: ${{ steps.shellcheck.outputs.any }}
+      actionlint: ${{ steps.actionlint.outputs.any }}
+      zizmor: ${{ steps.zizmor.outputs.any }}
     env:
       MISE_ENV: ci
       MISE_ENABLE_TOOLS: node
@@ -25,6 +31,41 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+          fetch-depth: 0
+      - name: Select YAML lint
+        id: yamllint
+        uses: $/.github/actions/lint-files
+        with:
+          linter: yamllint
+          # Qualify the new interfaces; expand legacy YAML coverage separately.
+          files: &yamllint-files |
+            .github/workflows/ci.yaml
+            .github/workflows/yamllint.yaml
+            .github/workflows/markdownlint.yaml
+            .github/workflows/shellcheck.yaml
+            .github/workflows/actionlint.yaml
+            .github/workflows/zizmor.yaml
+            .github/actions/lint-files/action.yaml
+      - name: Select Markdown lint
+        id: markdownlint
+        uses: $/.github/actions/lint-files
+        with:
+          linter: markdownlint
+      - name: Select ShellCheck
+        id: shellcheck
+        uses: $/.github/actions/lint-files
+        with:
+          linter: shellcheck
+      - name: Select Actionlint
+        id: actionlint
+        uses: $/.github/actions/lint-files
+        with:
+          linter: actionlint
+      - name: Select Zizmor
+        id: zizmor
+        uses: $/.github/actions/lint-files
+        with:
+          linter: zizmor
       - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c  # v5.2.6
         with:
           install_args: --locked node
@@ -33,25 +74,36 @@ jobs:
       - name: Check aggregation, readiness, and retry safety
         run: node --test tests/ci-gate/*.test.mjs tests/lint-files/*.test.mjs
   yamllint:
+    needs: test
+    if: needs.test.outputs.yamllint == 'true'
     uses: $/.github/workflows/yamllint.yaml
     with:
-      # Qualify the new interfaces; expand legacy YAML coverage separately.
-      files: |
-        .github/workflows/ci.yaml
-        .github/workflows/yamllint.yaml
-        .github/workflows/markdownlint.yaml
-        .github/workflows/shellcheck.yaml
-        .github/workflows/actionlint.yaml
-        .github/workflows/zizmor.yaml
-        .github/actions/lint-files/action.yaml
+      full-scan: true
+      files: *yamllint-files
   markdownlint:
+    needs: test
+    if: needs.test.outputs.markdownlint == 'true'
     uses: $/.github/workflows/markdownlint.yaml
+    with:
+      full-scan: true
   shellcheck:
+    needs: test
+    if: needs.test.outputs.shellcheck == 'true'
     uses: $/.github/workflows/shellcheck.yaml
+    with:
+      full-scan: true
   actionlint:
+    needs: test
+    if: needs.test.outputs.actionlint == 'true'
     uses: $/.github/workflows/actionlint.yaml
+    with:
+      full-scan: true
   zizmor:
+    needs: test
+    if: needs.test.outputs.zizmor == 'true'
     uses: $/.github/workflows/zizmor.yaml
+    with:
+      full-scan: true
   status:
     name: Build Success
     if: ${{ always() }}
@@ -72,4 +124,9 @@ jobs:
         with:
           needs: ${{ toJSON(needs) }}
           expected: >-
-            {"test":true,"yamllint":true,"markdownlint":true,"shellcheck":true,"actionlint":true,"zizmor":true}
+            {"test":true,
+            "yamllint":"${{ needs.test.outputs.yamllint }}",
+            "markdownlint":"${{ needs.test.outputs.markdownlint }}",
+            "shellcheck":"${{ needs.test.outputs.shellcheck }}",
+            "actionlint":"${{ needs.test.outputs.actionlint }}",
+            "zizmor":"${{ needs.test.outputs.zizmor }}"}

@@ -4,14 +4,17 @@ on:
   workflow_call:
     inputs:
       files:
-        description: Newline-separated Git pathspecs selecting tracked files; exclusion pathspecs are supported.
+        description: Newline-separated Git pathspecs; empty uses the selected Common release's linter scope.
         type: string
-        default: |
-          :(glob)**/*
-          :(glob,exclude)**/node_modules/**
-          :(glob,exclude)**/vendor/**
-          :(glob,exclude)**/.venv/**
-          :(exclude).mise/locks/**
+        default: ""
+      trigger-files:
+        description: Additional Git pathspecs whose changes require this linter, such as sourced scripts or custom rules.
+        type: string
+        default: ""
+      full-scan:
+        description: Check the entire file scope without change detection; use after a shared preflight selects this job.
+        type: boolean
+        default: false
       config:
         description: Repository-relative configuration override; empty uses the selected Common release's defaults.
         type: string
@@ -32,12 +35,16 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - name: Select applicable files
+          fetch-depth: ${{ inputs.full-scan && 1 || 0 }}
+      - name: Select affected lint scope
         id: files
         uses: $/.github/actions/lint-files
         with:
+          linter: shellcheck
           files: ${{ inputs.files }}
-          shell-only: "true"
+          config: ${{ inputs.config }}
+          trigger-files: ${{ inputs.trigger-files }}
+          full-scan: ${{ inputs.full-scan }}
       - name: Install locked tools from Common
         if: steps.files.outputs.any == 'true'
         uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c  # v5.2.6

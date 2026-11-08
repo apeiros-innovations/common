@@ -1,0 +1,82 @@
+{
+  "yamllint": {
+    "files": [
+      ":(glob)**/*.yaml",
+      ":(glob)**/*.yml",
+      ":(glob,exclude)**/templates/**",
+      ":(glob,exclude)**/node_modules/**",
+      ":(glob,exclude)**/vendor/**",
+      ":(glob,exclude)**/.venv/**",
+      ":(exclude).mise/locks/**"
+    ],
+    "triggers": [
+      ":(glob)**/.yamllint",
+      ":(glob)**/.yamllint.*"
+    ]
+  },
+  "markdownlint": {
+    "files": [
+      ":(glob)**/*.md",
+      ":(glob)**/*.markdown",
+      ":(exclude)CHANGELOG.md",
+      ":(glob,exclude)**/node_modules/**",
+      ":(glob,exclude)**/vendor/**",
+      ":(glob,exclude)**/.venv/**",
+      ":(exclude).mise/locks/**"
+    ],
+    "triggers": [
+      ":(glob)**/.markdownlint*",
+      ":(glob)**/package.json",
+      ":(glob)**/package-lock.json",
+      ":(glob)**/pnpm-lock.yaml",
+      ":(glob)**/yarn.lock"
+    ]
+  },
+  "shellcheck": {
+    "files": [
+      ":(glob)**/*",
+      ":(glob,exclude)**/node_modules/**",
+      ":(glob,exclude)**/vendor/**",
+      ":(glob,exclude)**/.venv/**",
+      ":(exclude).mise/locks/**"
+    ],
+    "triggers": [
+      ":(glob)**/.shellcheckrc"
+    ],
+    "shellOnly": true
+  },
+  "actionlint": {
+    "files": [
+      ".github/workflows/*.yaml",
+      ".github/workflows/*.yml",
+      ":(glob,exclude)**/node_modules/**",
+      ":(glob,exclude)**/vendor/**",
+      ":(glob,exclude)**/.venv/**",
+      ":(exclude).mise/locks/**"
+    ],
+    "triggers": [
+      ".github/actionlint.yaml",
+      ".github/actionlint.yml"
+    ]
+  },
+  "zizmor": {
+    "files": [
+      ".github/workflows/*.yaml",
+      ".github/workflows/*.yml",
+      ".github/actions/**/action.yaml",
+      ".github/actions/**/action.yml",
+      ".github/dependabot.yaml",
+      ".github/dependabot.yml",
+      ":(glob,exclude)**/node_modules/**",
+      ":(glob,exclude)**/vendor/**",
+      ":(glob,exclude)**/.venv/**",
+      ":(exclude).mise/locks/**"
+    ],
+    "triggers": [
+      ":(glob)**/zizmor.yaml",
+      ":(glob)**/zizmor.yml",
+      ":(glob)**/.zizmor.yaml",
+      ":(glob)**/.zizmor.yml"
+    ]
+  }
+}

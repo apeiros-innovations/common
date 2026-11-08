@@ -1,16 +1,30 @@
 ---
 name: Lint files
-description: Select tracked files with native Git pathspecs and locate the selected Common release.
+description: Select affected lint scopes using Git changes, tracked files, and Common release defaults.
 inputs:
+  linter:
+    description: Common profile (yamllint, markdownlint, shellcheck, actionlint, or zizmor); supplies default files and triggers.
+    default: ""
   files:
-    description: Newline-separated Git pathspecs, including optional exclusion pathspecs.
-    required: true
+    description: Newline-separated Git pathspecs; empty uses the linter profile's scope.
+    default: ""
+  config:
+    description: Repository-relative config override; changes including deletion select the entire scope.
+    default: ""
+  trigger-files:
+    description: Additional newline-separated Git pathspecs whose changes select the entire scope.
+    default: ""
+  full-scan:
+    description: Skip change detection and select every applicable file.
+    default: "false"
   shell-only:
     description: Keep only shell extensions or files with a shell shebang within the selected scope.
     default: "false"
 outputs:
   any:
-    description: Whether any existing regular files matched.
+    description: Whether this lint scope needs to run and has existing regular files to check.
+  reason:
+    description: Why the scope was selected or skipped.
   file-list:
     description: Path to a NUL-delimited list for xargs -0.
   common-directory:

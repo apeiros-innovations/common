@@ -169,9 +169,11 @@ file scope and optional configuration override, and installs its locked tools
 from the selected Common release. Consumers do not need Lefthook or a Mise
 manifest to use these workflows.
 
-Use the caller's change-selection job to decide when each workflow runs, and
-include the linter's configuration and workflow changes in that selection.
-Keep a required aggregate gate running for every PR and merge queue. Full tests,
+Each workflow skips tool installation and linting when its files and dependencies
+are unchanged. For job-level skips, use Common's `lint-files` action in one shared
+preflight and pass its selections to the caller jobs and required aggregate gate.
+Config, tool, and workflow changes reselect the scope; extra dependency paths are
+configurable. Keep the gate running for every PR and merge queue. Full tests,
 builds, vulnerability scans, and deployments remain separate jobs.
 
 Lefthook presets and their existing tags remain available for local hooks and
