@@ -1,99 +1,133 @@
-# Shared lint workflow
+# Composable lint workflows
 
-`.github/workflows/lint.yaml` runs the same Lefthook `ci` checks as a local
-`lefthook run pre-commit --tag ci --all-files`. Consumers select profiles in
-Lefthook and own tool versions in Mise. Common owns the execution contract.
+Each linter is an independent reusable GitHub Actions workflow. Call only the
+workflows needed by a repository and give each its own file scope and optional
+configuration override. These workflows run the tools directly. Lefthook is a
+separate local Git-hook integration and is not installed, invoked, or read by CI.
 
-After the first release of this interface, call it using that release's full
-commit SHA with a version comment for Renovate:
+| Workflow            | Tool              | Default scope                                                        |
+| ------------------- | ----------------- | -------------------------------------------------------------------- |
+| `yamllint.yaml`     | yamllint          | Tracked YAML; excludes templates and generated Mise environments     |
+| `markdownlint.yaml` | markdownlint-cli2 | Tracked `.md` and `.markdown`; excludes the generated changelog      |
+| `shellcheck.yaml`   | ShellCheck        | Shell extensions and shell shebangs, including extensionless scripts |
+| `actionlint.yaml`   | Actionlint        | `.github/workflows/*.yaml` and `.yml`                                |
+| `zizmor.yaml`       | Zizmor            | Workflows, local action manifests, and Dependabot configuration      |
+
+All default scopes exclude `node_modules`, `vendor`, `.venv`, and `.mise/locks`.
+Zizmor uses online audits by default; `offline: true` is an explicit opt-out.
+
+## Compose the checks
+
+After `v0.1.0` is published, replace `<release-commit-sha>` below with its full
+commit SHA. The version comment lets Renovate track releases:
 
 ```yaml
+name: Lint
+on:
+  pull_request: {}
+  merge_group: {}
+  push:
+    branches: [main]
+permissions:
+  contents: read
 jobs:
-  lint:
-    uses: apeiros-innovations/common/.github/workflows/lint.yaml@<release-commit-sha> # v0.1.0
-    permissions:
-      contents: read
+  yaml:
+    uses: apeiros-innovations/common/.github/workflows/yamllint.yaml@<release-commit-sha> # v0.1.0
     with:
-      tools: aqua:kjanat/actionlint aqua:koalaman/shellcheck aqua:zizmorcore/zizmor
-      expected-checks: '["actionlint", "shellcheck", "zizmor"]'
+      files: |
+        :(glob)deploy/**/*.yaml
+        :(glob)deploy/**/*.yml
+        :(glob,exclude)deploy/**/templates/**
+      config: .yamllint.yaml
+  markdown:
+    uses: apeiros-innovations/common/.github/workflows/markdownlint.yaml@<release-commit-sha> # v0.1.0
+    with:
+      files: |
+        README.md
+        :(glob)docs/**/*.md
+      config: .markdownlint-cli2.yaml
 ```
 
-Replace the placeholder only after `v0.1.0` is published. Node and
-`aqua:evilmartians/lefthook` are always installed. Declare those exact keys and
-every listed tool in the consumer's Mise configuration, commit their Linux x64
-locks, and include runtime dependencies such as Python when checks need them.
-The workflow rejects undeclared keys instead of resolving a short tool alias to
-an unintended backend. It installs only these tools with `--locked`.
+Both `files` and `config` are optional. Omitting `files` uses the workflow's
+default scope. Omitting `config` uses the policy bundled with the selected
+Common release. An explicit config must exist; a missing file fails the linter.
+Tool-native nested configuration behavior, such as markdownlint-cli2's
+per-directory overrides, still applies.
 
-The example expects a Lefthook configuration selecting the base, GitHub checks,
-and ShellCheck. For the normal project profile, list the tools needed by all its
-`ci` jobs, including formatters. `expected-checks` is a nonempty JSON array of
-required leaf job names. The guard rejects missing jobs, disabled jobs/groups,
-and jobs without the `ci` tag. This catches incomplete remote fetches; Lefthook
-still decides whether each loaded check has applicable files.
+`files` is a newline-separated list of native **Git pathspecs**. `:(glob)` enables
+Git's recursive glob syntax, and `:(glob,exclude)` removes matching files. Git
+does not expand brace alternatives: use separate lines for `*.yaml` and `*.yml`.
+A custom `files` input replaces the entire default list, including exclusions.
+Only tracked, existing regular files are passed to a linter. Deleted files,
+symlinks, submodules, and untracked build output are omitted. An empty match is
+a successful no-op, and no tools are installed for that workflow.
 
-An optional `config` input selects a repository-relative Lefthook file. Common
-uses `.github/lint.lefthook.yaml` to exercise the workflow with a focused profile.
-Extends paths in that file are relative to the repository root. The default is
-normal Lefthook config discovery.
+The small `lint-files` action only enumerates files and locates the selected
+Common release. Each workflow owns its tool installation and direct linter
+command. Filenames are passed through NUL-delimited lists with no shell
+evaluation. markdownlint-cli2 receives literal file paths and `--no-globs`, so
+configuration cannot widen the file scope through its `globs` option. Formatting
+changes fail CI instead of being committed.
 
-## Execution and permissions
+## Change detection and required checks
 
-The workflow checks all tracked files. Formatters may edit the checkout, but
-`--fail-on-changes` makes that a failure and `--no-stage-fixed` prevents automatic
-staging. Generators without the `ci` tag are not selected. Build and integration
-tests remain separate jobs. Callers should include this job in their required
-CI gate and run it on `pull_request` and `merge_group` where applicable.
+The caller decides **when** to run a job. The reusable workflow's `files` input
+decides **what** it checks. When selected, it validates every tracked file in
+that scope, including on merge queues and manual runs.
 
-Only `contents: read` is required. Credentials are not persisted by checkout,
-and the workflow does not request secrets, write tokens, or OIDC tokens. Private
-Lefthook remotes need a separately designed read-only authentication setup.
+For change-based job gating, use the caller's existing `dorny/paths-filter`
+selection job and pass its output to the reusable job's `if`. Include the
+linter's configuration and the caller workflow in that change filter. A Common
+workflow SHA update must select its checks even if no source file changed.
+For markdownlint-cli2, include nested `.markdownlint*` configurations too.
+Prefer one selection job in the caller over separate change detection in every
+reusable workflow.
 
-The existing `workflow-lint.yaml` remains compatible for current callers. Its
-reviewdog annotations, shebang discovery, and online Zizmor scan differ from the
-Lefthook profile. The new workflow inherits the local Zizmor helper's **offline**
-mode and file globs. Migrate callers after checking those coverage differences;
-do not run both copies of the same check indefinitely. Common exercises both
-during this initial rollout.
+Keep the required aggregate CI gate running on every PR and `merge_group`.
+For conditionally selected jobs, pass the same selection boolean to the gate's
+`expected` map so an intentional skip succeeds and an unexpected skip fails.
+Avoid workflow-level `paths` filters on a required workflow: a skipped workflow
+can leave its required check pending. Repositories without change selection can
+call the individual workflows unconditionally; empty scopes skip installation.
 
-## Releases and consumer updates
+## Versions and permissions
 
-Release Please manages the release PR, changelog, tag, and GitHub release. The
-new tooling line starts at `v0.1.0` using a one-time `Release-As: 0.1.0` commit
-footer. Existing `v1.0.0` and `v1.0.1` tags are preserved. The release manifest
+The selected Common release owns the linter versions, runtime versions, locks,
+and default configuration. Each workflow installs only its tools from Common's
+Mise manifest with `--locked`, then runs those installed binaries against the
+consumer checkout. The consumer does not need Mise configuration or Lefthook.
+Upgrading one Common workflow SHA upgrades that workflow's tools and defaults.
+
+The workflows require only `contents: read`. Checkout does not persist
+credentials. Zizmor receives the read-only token for online audits; other
+linters need no token or secrets. No workflow requests OIDC or write access.
+
+`workflow-lint.yaml` remains available for existing callers. New callers compose
+the individual workflows. Common's CI calls the five workflows directly, without
+running the old combined job a second time. Its initial YAML scope qualifies the
+new workflow interfaces; expansion to legacy YAML is a separate cleanup.
+
+## Releases and Renovate
+
+Release Please owns the changelog, tags, and GitHub releases. The requested
+tooling line starts at `v0.1.0` through a one-time `Release-As: 0.1.0` commit
+footer. Existing `v1.0.0` and `v1.0.1` tags remain published. The release manifest
 continues to describe the last published version until the release PR updates
-it. Do not leave a permanent `release-as` override in the configuration.
+it. During 0.x, features and fixes increment patch; breaking changes increment
+minor. No permanent `release-as` configuration is used.
 
-During 0.x, fixes and features increment the patch version; breaking changes
-increment the minor version. The historical 1.0.0 and 1.0.1 versions must be
-excluded from Renovate's candidate releases for consumers of the new line.
-That exclusion does not prevent future major updates or their automerge.
-Use the [Common consumer preset](https://github.com/apeiros-innovations/renovate-config/blob/main/docs/common-tooling.md)
-after generic tooling presets. Existing consumers on `main` or the historical
-1.x line need an explicit first migration to the new release.
+Use the [Common Renovate preset](https://github.com/apeiros-innovations/renovate-config/blob/main/docs/common-tooling.md)
+after generic tooling presets. It groups Common workflow updates and permits
+all update levels to automerge after required CI passes. For consumers on 0.x,
+it excludes the two historical 1.x releases while allowing future major
+releases. Existing `main` or historical 1.x consumers need an explicit initial
+migration. Local Lefthook remotes can be updated independently; they are not a
+prerequisite for adopting the CI workflows.
 
-Pin Lefthook remotes to the same release tag as the workflow's version comment:
+Publishing a release does not itself schedule the self-hosted Renovate job.
+Release-triggered scheduling remains a separate integration.
 
-```yaml
-remotes:
-  - git_url: https://github.com/apeiros-innovations/common.git
-    # renovate: datasource=github-tags depName=apeiros-innovations/common
-    ref: v0.1.0
-    configs:
-      - lefthook.base.yaml
-      - lefthook.github.yaml
-      - lefthook/shellcheck.yaml
-```
-
-Renovate's GitHub Actions manager updates the workflow SHA and version comment;
-the organization's annotated manager updates the Lefthook tag. Group these
-updates under one Common dependency update, permit all version levels to
-automerge, and require the consumer's CI gate to pass. Tool version updates
-remain separate Mise dependencies. Publishing a release does not by itself
-schedule the self-hosted Renovate job; release-triggered scheduling is a separate
-integration.
-
-References: [Lefthook run](https://lefthook.dev/usage/commands/run/),
-[Mise lockfiles](https://mise.jdx.dev/dev-tools/mise-lock.html),
-[Release Please version overrides](https://github.com/googleapis/release-please#how-do-i-change-the-version-number),
-and [Renovate GitHub Actions](https://docs.renovatebot.com/modules/manager/github-actions/).
+References: [Git pathspecs](https://git-scm.com/docs/gitglossary#Documentation/gitglossary.txt-aiddefpathspecapathspec),
+[Mise locked tools](https://mise.jdx.dev/dev-tools/mise-lock.html),
+[markdownlint-cli2](https://github.com/DavidAnson/markdownlint-cli2),
+and [reusing workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows).

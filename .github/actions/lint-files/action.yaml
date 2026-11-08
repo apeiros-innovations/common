@@ -1,0 +1,20 @@
+---
+name: Lint files
+description: Select tracked files with native Git pathspecs and locate the selected Common release.
+inputs:
+  files:
+    description: Newline-separated Git pathspecs, including optional exclusion pathspecs.
+    required: true
+  shell-only:
+    description: Keep only shell extensions or files with a shell shebang within the selected scope.
+    default: "false"
+outputs:
+  any:
+    description: Whether any existing regular files matched.
+  file-list:
+    description: Path to a NUL-delimited list for xargs -0.
+  common-directory:
+    description: Directory of the Common release containing this action and its locked tools and default configs.
+runs:
+  using: node24
+  main: index.mjs

@@ -1,0 +1,57 @@
+---
+name: ShellCheck
+on:
+  workflow_call:
+    inputs:
+      files:
+        description: Newline-separated Git pathspecs selecting tracked files; exclusion pathspecs are supported.
+        type: string
+        default: |
+          :(glob)**/*
+          :(glob,exclude)**/node_modules/**
+          :(glob,exclude)**/vendor/**
+          :(glob,exclude)**/.venv/**
+          :(exclude).mise/locks/**
+      config:
+        description: Repository-relative configuration override; empty uses the selected Common release's defaults.
+        type: string
+        default: ""
+permissions:
+  contents: read
+jobs:
+  lint:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      MISE_ENV: ci
+      MISE_ENABLE_TOOLS: aqua:koalaman/shellcheck
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Select applicable files
+        id: files
+        uses: $/.github/actions/lint-files
+        with:
+          files: ${{ inputs.files }}
+          shell-only: "true"
+      - name: Install locked tools from Common
+        if: steps.files.outputs.any == 'true'
+        uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c  # v5.2.6
+        env:
+          MISE_TRUSTED_CONFIG_PATHS: ${{ steps.files.outputs.common-directory }}
+        with:
+          working_directory: ${{ steps.files.outputs.common-directory }}
+          install_args: --locked aqua:koalaman/shellcheck
+          cache: false
+          add_shims_to_path: false
+          env: false
+      - name: ShellCheck
+        if: steps.files.outputs.any == 'true'
+        shell: bash
+        env:
+          LINT_FILES: ${{ steps.files.outputs.file-list }}
+          LINT_CONFIG: ${{ inputs.config || format('{0}/.shellcheckrc', steps.files.outputs.common-directory) }}
+        run: |
+          xargs -0 -r shellcheck --rcfile="$LINT_CONFIG" -- < "$LINT_FILES"
