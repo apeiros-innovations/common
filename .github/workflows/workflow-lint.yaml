@@ -1,101 +1,45 @@
+---
+# Compatibility entry point; new callers should compose individual lint workflows.
 name: Workflow lint
 on:
   workflow_call:
+    inputs:
+      runs-on:
+        description: JSON Linux runner label, label array, or group/labels mapping; empty selects by caller visibility.
+        type: string
+        default: ""
 permissions:
   contents: read
-env:
-  MISE_ENV: ci
-
 jobs:
+  actionlint:
+    uses: $/.github/workflows/actionlint.yaml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+  shellcheck:
+    uses: $/.github/workflows/shellcheck.yaml
+    with:
+      runs-on: ${{ inputs.runs-on }}
+  zizmor:
+    uses: $/.github/workflows/zizmor.yaml
+    with:
+      runs-on: ${{ inputs.runs-on }}
   lint:
-    runs-on:
-      group: gha-shared
-      labels: gha-linux-k8s
-    timeout-minutes: 10
+    if: ${{ always() }}
+    needs: [actionlint, shellcheck, zizmor]
+    # https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#github-context
+    runs-on: ${{ fromJSON(inputs.runs-on || (github.event.repository.private && '{"group":"gha-shared","labels":"gha-linux-k8s"}' || '"ubuntu-24.04"')) }}
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-      # Compare event commits locally; manual/scheduled runs retain full validation.
-      # https://github.com/dorny/paths-filter#supported-workflows
-      - name: Detect workflow changes
-        id: actionlint-changes
-        if: >-
-          contains(fromJSON('["pull_request", "push", "merge_group"]'), github.event_name) && (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '' && (github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before) != '0000000000000000000000000000000000000000'
-        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d  # v4.0.3
-        with:
-          token: ""
-          base: ${{ github.event.pull_request.base.sha || github.event.merge_group.base_sha || github.event.before }}
-          ref: ${{ github.sha }}
-          filters: |
-            workflows:
-              - '.github/workflows/**'
-              - '**/action.{yaml,yml}'
-              - '.github/actionlint.{yaml,yml}'
-              - '.shellcheckrc'
-              - '.mise/**'
-              - '.miserc.toml'
-      - name: Install ShellCheck archive support
+      - name: Require all workflow checks
         shell: bash
+        env:
+          ACTIONLINT_RESULT: ${{ needs.actionlint.result }}
+          SHELLCHECK_RESULT: ${{ needs.shellcheck.result }}
+          ZIZMOR_RESULT: ${{ needs.zizmor.result }}
         run: |
-          if ! command -v xz >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo apt-get install --yes --no-install-recommends xz-utils
-          fi
-      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c  # v5.2.6
-        with:
-          install: false
-          cache: false
-          add_shims_to_path: false
-          env: false
-          export_path: false
-      - name: Read tool versions from mise
-        id: tool-versions
-        shell: bash
-        run: |
-          versions=$(env -u MISE_ENABLE_TOOLS mise ls --current --json | jq -c 'map_values(.[0].version)')
-          echo "versions=$versions" >> "$GITHUB_OUTPUT"
-      - name: Set up Python for workflow checks
-        if: steps.actionlint-changes.outputs.workflows != 'false'
-        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
-        with:
-          python-version: ${{ fromJSON(steps.tool-versions.outputs.versions)['python'] }}
-      - name: Lint workflows with reviewdog
-        if: steps.actionlint-changes.outputs.workflows != 'false'
-        uses: reviewdog/action-actionlint/dockerless@619a81ec64ff8c0211cd6146eb2b21e8f1d7f440  # v1.81.1
-        with:
-          reporter: github-check
-          filter_mode: nofilter
-          fail_level: any
-      - name: Check shell scripts with reviewdog
-        uses: reviewdog/action-shellcheck@d0b8d5fd7fad6afdb6e1b6ce1778892be4d1f427  # v1.34.1
-        with:
-          reporter: github-check
-          filter_mode: nofilter
-          fail_level: any
-          check_all_files_with_shebangs: true
-          pattern: |
-            *.sh
-            *.bash
-            *.bats
-          exclude: |
-            */.git/*
-            */node_modules/*
-            */vendor/*
-            */.venv/*
-            */.mise/locks/*
-            */_output/*
-            */dist/*
-      - name: Audit workflow security
-        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd  # v0.8.1
-        with:
-          version: ${{ fromJSON(steps.tool-versions.outputs.versions)['aqua:zizmorcore/zizmor'] }}
-          inputs: .github
-          advanced-security: false
-          annotations: true
-    permissions:
-      contents: read
-      checks: write
-      pull-requests: write
+          for result in "$ACTIONLINT_RESULT" "$SHELLCHECK_RESULT" "$ZIZMOR_RESULT"; do
+            if [[ "$result" != success ]]; then
+              echo "::error::A required workflow check did not succeed ($result)."
+              exit 1
+            fi
+          done
