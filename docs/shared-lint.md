@@ -268,6 +268,32 @@ Common's CI calls the five workflows directly, without running the wrapper again
 Its YAML scope includes the new interfaces and the compatibility wrapper;
 expansion to other legacy YAML is a separate cleanup.
 
+### Auditing private action dependencies
+
+GitHub's permission to download a private shared action does not give the
+caller's `GITHUB_TOKEN` API access to that repository. Zizmor needs API access
+for its online audits. To audit private dependencies, use an existing GitHub
+App installed on the required repositories:
+
+```yaml
+jobs:
+  zizmor:
+    uses: apeiros-innovations/common/.github/workflows/zizmor.yaml@<release-commit-sha> # v1.1.0
+    with:
+      audit-repositories: actions
+    secrets:
+      audit-app-client-id: ${{ secrets.BOT_CLIENT_ID }}
+      audit-app-private-key: ${{ secrets.BOT_APP_PRIVATE_KEY }}
+```
+
+The token has only `contents: read` on the named repositories in the caller's
+owner and is revoked after the job. It is created only when an online audit
+needs to run, after tool installation. Omit `audit-repositories` to use the
+default token. Requesting private access without credentials fails the check.
+
+See [Zizmor's private-repository troubleshooting](https://docs.zizmor.sh/troubleshooting/)
+and [GitHub App token inputs](https://github.com/actions/create-github-app-token#inputs).
+
 ## Releases and Renovate
 
 Release Please owns the changelog, tags, and GitHub releases. The composable
