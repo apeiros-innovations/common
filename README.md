@@ -412,3 +412,20 @@ Upstream references:
 - [Mise configuration](https://mise.jdx.dev/configuration.html)
 - [Mise lockfiles](https://mise.jdx.dev/dev-tools/mise-lock.html)
 - [Mise config values](https://mise.jdx.dev/cli/config/get.html)
+
+### Auditing private action dependencies
+
+GitHub can distribute a private shared action to a caller without granting the
+caller's `GITHUB_TOKEN` API access to that repository. Zizmor's online audits need
+that API access. For private dependencies, pass `audit-repositories` to the
+Zizmor workflow and explicitly map `audit-app-client-id` and
+`audit-app-private-key` to an existing GitHub App installed on those repositories.
+The workflow creates a token with only `contents: read`, scopes it to the named
+repositories in the caller's owner, and revokes it when the job finishes. It is
+created only for a selected online audit, after tool installation. Empty
+`audit-repositories` keeps the default token; an explicitly requested private
+audit fails if credentials are missing. No secret inheritance or write token is
+required.
+
+See [Zizmor's private-repository troubleshooting](https://docs.zizmor.sh/troubleshooting/)
+and [GitHub App token permissions](https://github.com/actions/create-github-app-token#inputs).
