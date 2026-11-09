@@ -14,7 +14,7 @@ concurrency:
 jobs:
   test:
     name: Test shared actions and select linters
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     outputs:
       yamllint: ${{ steps.yamllint.outputs.any }}
@@ -108,7 +108,7 @@ jobs:
     name: Build Success
     if: ${{ always() }}
     needs: [test, yamllint, markdownlint, shellcheck, actionlint, zizmor]
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     permissions:
       contents: read

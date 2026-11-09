@@ -20,7 +20,7 @@ jobs:
       (github.event.state == 'success' &&
       contains(fromJSON('["renovate/artifacts", "renovate/stability-days", "renovate/merge-confidence", "renovate/config-validation"]'), github.event.context) &&
       contains(fromJSON('["autoforgex[bot]", "renovate[bot]"]'), github.event.sender.login))
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 5
     steps:
       - name: Retry the required CI check
