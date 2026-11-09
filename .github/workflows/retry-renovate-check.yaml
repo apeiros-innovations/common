@@ -1,8 +1,8 @@
 ---
 name: Retry Renovate CI check
 on:
-  status:
-  workflow_run: # zizmor: ignore[dangerous-triggers] -- Trusted default-branch code; no PR checkout or artifact execution.
+  status: {}
+  workflow_run:  # zizmor: ignore[dangerous-triggers] -- Trusted default-branch code; no PR checkout or artifact execution.
     workflows: ["CI"]
     types: [completed]
 permissions:
@@ -20,9 +20,7 @@ jobs:
       (github.event.state == 'success' &&
       contains(fromJSON('["renovate/artifacts", "renovate/stability-days", "renovate/merge-confidence", "renovate/config-validation"]'), github.event.context) &&
       contains(fromJSON('["autoforgex[bot]", "renovate[bot]"]'), github.event.sender.login))
-    runs-on:
-      group: gha-shared
-      labels: gha-linux-k8s
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Retry the required CI check

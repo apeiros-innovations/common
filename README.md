@@ -12,6 +12,10 @@ Markdown, shell, workflow syntax, and workflow security checks. Each runs its
 linter directly with file scopes, locked tools, and defaults from Common.
 Lefthook remains an independent local Git-hook integration.
 
+Common's own jobs and public workflow callers use standard GitHub-hosted Ubuntu
+runners. Private callers retain the existing self-hosted default. Every reusable
+workflow accepts a JSON `runs-on` override; see [runner selection](docs/shared-lint.md#runner-selection).
+
 ## Retiring the pull request title check
 
 Standalone PR-title callers and starter templates are being removed to reduce

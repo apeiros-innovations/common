@@ -2,22 +2,32 @@
 # Compatibility entry point; new callers should compose individual lint workflows.
 name: Workflow lint
 on:
-  workflow_call: {}
+  workflow_call:
+    inputs:
+      runs-on:
+        description: JSON Linux runner label, label array, or group/labels mapping; empty selects by caller visibility.
+        type: string
+        default: ""
 permissions:
   contents: read
 jobs:
   actionlint:
     uses: $/.github/workflows/actionlint.yaml
+    with:
+      runs-on: ${{ inputs.runs-on }}
   shellcheck:
     uses: $/.github/workflows/shellcheck.yaml
+    with:
+      runs-on: ${{ inputs.runs-on }}
   zizmor:
     uses: $/.github/workflows/zizmor.yaml
+    with:
+      runs-on: ${{ inputs.runs-on }}
   lint:
     if: ${{ always() }}
     needs: [actionlint, shellcheck, zizmor]
-    runs-on:
-      group: gha-shared
-      labels: gha-linux-k8s
+    # https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#github-context
+    runs-on: ${{ fromJSON(inputs.runs-on || (github.event.repository.private && '{"group":"gha-shared","labels":"gha-linux-k8s"}' || '"ubuntu-24.04"')) }}
     timeout-minutes: 5
     steps:
       - name: Require all workflow checks
