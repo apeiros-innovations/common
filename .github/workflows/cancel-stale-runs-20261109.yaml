@@ -1,0 +1,130 @@
+---
+name: Cancel obsolete Common runs (one-time)
+on:
+  push:
+    branches: [maintenance/cancel-stale-common-runs-20261109]
+    paths: [.github/workflows/cancel-stale-runs-20261109.yaml]
+permissions: {}
+jobs:
+  cancel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel and verify the 28 inspected obsolete runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import time
+          import urllib.error
+          import urllib.request
+          
+          repo = "apeiros-innovations/common"
+          if os.environ["GITHUB_REPOSITORY"] != repo:
+              raise SystemExit("Unexpected repository")
+          targets = {
+              "42630818538": "898d8c5c56d102b15391b724b6a8e27432ae2a48",
+              "42630817861": "f0bc07a4f2bae8f7b4e6af8ef5f27aac3200ddfe",
+              "42630804160": "61bed396b90eddf8e34c7472653bd999bf4f44db",
+              "42626572518": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42626564953": "42a395996b97f2941f57eb208c119476d9aed22a",
+              "42626551754": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42626526045": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42626075421": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42626065007": "e4da4c7bd28271278717191da44fb10764b4c6b6",
+              "42626057836": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42608715233": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42608700742": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42586510683": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42579826101": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42579544900": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42579536845": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42573314645": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42566744941": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42566744931": "cae56c8667a2b30c65b8d7a81305f40de03956ad",
+              "42566697448": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42548723452": "2c4f18c4405be034cb1e938636b4d397146d652a",
+              "42493200258": "5eaf6727e1c59627af61b25803dfaa4c5e8bb136",
+              "42490995261": "12ad3ab3abbdd451da94fde97f5654eb4ad8cf21",
+              "42475994871": "0f958073e83760a41a11709afde8735bda15b69f",
+              "42475993147": "326b4a82652c9fe3a515a57deb5c1874e5350a7b",
+              "42439774501": "dc6dcb9583c1ec1db4e285608df66a4ae33ac2f3",
+              "42439418580": "0f958073e83760a41a11709afde8735bda15b69f",
+              "42438853282": "4eb4436091ca0b155a86d981404570d3ad05c022"
+          }
+          protected = {42630863901, 42630863824}
+          if protected.intersection(int(run_id) for run_id in targets):
+              raise SystemExit("Protected run present in cancellation list")
+          
+          def api(run_id, action=None):
+              url = f"https://api.github.com/repos/{repo}/actions/runs/{run_id}"
+              if action:
+                  url += "/" + action
+              req = urllib.request.Request(
+                  url,
+                  method="POST" if action else "GET",
+                  headers={
+                      "Authorization": "Bearer " + os.environ["GH_TOKEN"],
+                      "Accept": "application/vnd.github+json",
+                      "X-GitHub-Api-Version": "2022-11-28",
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      payload = response.read()
+                      return json.loads(payload) if payload else {}
+              except urllib.error.HTTPError as error:
+                  if action and error.code == 409:
+                      print(f"{run_id}: {action} returned 409; will verify status", flush=True)
+                      return {}
+                  raise
+          
+          # Only these inspected obsolete run IDs may be cancelled.
+          for run_id, expected_sha in targets.items():
+              run = api(run_id)
+              if run["head_sha"] != expected_sha:
+                  raise SystemExit(f"{run_id}: snapshot SHA mismatch")
+              if run["status"] == "completed":
+                  print(f"{run_id}: already {run['conclusion']}", flush=True)
+                  continue
+              print(f"{run_id}: cancelling {run['name']} ({run['status']})", flush=True)
+              api(run_id, "cancel")
+          
+          # GitHub's force-cancel endpoint is necessary when always() jobs survive
+          # normal cancellation. See the REST workflow-runs documentation.
+          time.sleep(15)
+          for run_id in targets:
+              run = api(run_id)
+              if run["status"] != "completed":
+                  print(f"{run_id}: still {run['status']}; force-cancelling", flush=True)
+                  api(run_id, "force-cancel")
+          
+          remaining = set(targets)
+          final = {}
+          for attempt in range(12):
+              for run_id in list(remaining):
+                  run = api(run_id)
+                  if run["status"] == "completed":
+                      remaining.remove(run_id)
+                      final[run_id] = run
+                      print(f"{run_id}: confirmed {run['conclusion']}", flush=True)
+              if not remaining:
+                  break
+              time.sleep(5)
+          
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8") as summary:
+              summary.write("## Obsolete Common runs\n\n")
+              summary.write("| Run | Workflow | Conclusion |\n| --- | --- | --- |\n")
+              for run_id, run in final.items():
+                  summary.write(
+                      f"| [{run_id}]({run['html_url']}) | {run['name']} | {run['conclusion']} |\n"
+                  )
+              summary.write("\nPreserved latest main CI and release runs: 42630863901, 42630863824.\n")
+          if remaining:
+              raise SystemExit("Still unfinished: " + ", ".join(sorted(remaining)))
+          PY
