@@ -130,9 +130,7 @@ For a consumer, the Markdown portion of this pattern is:
 ```yaml
 jobs:
   changes:
-    runs-on:
-      group: gha-shared
-      labels: gha-linux-k8s
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     outputs:
@@ -185,36 +183,69 @@ including transitive dependencies; reusable workflow calls still need full SHA
 pins. Lockfile adoption and its Renovate update path remain separate work. Any
 lockfile change already invalidates these lint selections.
 
-## Self-hosted runners
+## Runner selection
 
-All workflows in Common use the organization's self-hosted Linux runners:
+Common's own CI, release, retry and maintenance jobs use the standard
+GitHub-hosted `ubuntu-24.04` runner. Standard hosted runner compute is free for
+public repositories; larger runners are billed even when the repository is public.
+
+All five reusable linters, the `workflow-lint.yaml` compatibility wrapper, and
+the retained `pr-title-check.yaml` accept an optional `runs-on` string input.
+The input is JSON representing a Linux runner label, label array, or native
+`group`/`labels` mapping. An empty input selects a default using the **calling
+repository's** visibility:
+
+| Caller | Default runner |
+| ------ | -------------- |
+| Public repository | `ubuntu-24.04` |
+| Private repository | Group `gha-shared`, label `gha-linux-k8s` |
+
+This preserves existing private Apeiros consumers without moving their jobs to
+billable hosted compute. Private consumers outside Apeiros must select their own
+runner explicitly. The wrapper forwards the override to every delegated linter
+and uses it for its final aggregate job. An invalid JSON input fails workflow
+evaluation rather than silently selecting a different runner.
+
+Select a standard hosted runner explicitly:
 
 ```yaml
-runs-on:
-  group: gha-shared
-  labels: gha-linux-k8s
+jobs:
+  yaml:
+    uses: apeiros-innovations/common/.github/workflows/yamllint.yaml@<release-commit-sha> # v1.1.0
+    with:
+      runs-on: '"ubuntu-24.04"'
 ```
 
-There is no GitHub-hosted fallback. Reusable workflows use runner access from the
-calling repository; the caller must have access to `gha-shared`. Publishing
-Common publicly does not grant outside repositories access to these runners.
+Select a consumer-owned runner group:
 
-Foundry currently declares `allowsPublicRepositories: false` for `gha-shared`.
-Private Apeiros callers can use these workflows, but public callers, including
-Common's own CI while Common remains public, cannot use that runner group.
-This change does not broaden runner-group access. Resolve Common's own runner
-access before merging this migration: making Common private requires migrating
-its public consumers first; keeping it public requires a separately approved
-self-hosted runner arrangement for public-repository jobs.
+```yaml
+jobs:
+  workflows:
+    uses: apeiros-innovations/common/.github/workflows/workflow-lint.yaml@<release-commit-sha> # v1.1.0
+    with:
+      runs-on: '{"group":"my-linux-runners","labels":"linux-x64"}'
+```
 
-Public repositories cannot consume private shared actions or reusable
-workflows through cross-repository `uses` references. Public-repository jobs
-that execute untrusted contributions need an isolated runner pool; do not open
-the shared internal runner group to public repositories to bypass this limit.
-Ephemeral runners alone do not isolate their network, credentials, or host.
+For a label array, use `runs-on: '["self-hosted","linux","x64"]'` with
+conventional self-hosted runners. ARC scale sets use their configured labels;
+do not add the unsupported `self-hosted` label to an ARC selector. Selected
+runners must support these Linux jobs and Common's locked tool platforms.
+Consumers can also pass a JSON repository variable through
+`runs-on: ${{ vars.COMMON_RUNS_ON }}`. Their own preflight and aggregate jobs
+still need their own `runs-on` selection, as shown in the public-runner example above.
 
-See GitHub's [runner access rules](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#how-reusable-workflows-use-runners)
-and [self-hosted runner security guidance](https://docs.github.com/en/actions/reference/security/secure-use#hardening-for-self-hosted-runners).
+GitHub evaluates runner access and hosted-runner billing in the caller's context.
+Calling this public repository does not make hosted compute free for a private
+caller or grant access to Apeiros self-hosted runners. Existing consumers need
+the Common release containing this input before they can pass it; old SHA pins
+keep their previous behavior. Foundry's internal `gha-shared` group continues to
+disallow public repositories.
+
+See GitHub's [runner access rules](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#how-reusable-workflows-use-runners),
+[caller context](https://docs.github.com/en/actions/reference/workflows-and-actions/reusing-workflow-configurations#github-context),
+[runner selection syntax](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#jobsjob_idruns-on),
+[JSON expressions](https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#fromjson),
+and [Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
 
 ## Versions and permissions
 
@@ -228,10 +259,14 @@ The workflows require only `contents: read`. Checkout does not persist
 credentials. Zizmor receives the read-only token for online audits; other
 linters need no token or secrets. No workflow requests OIDC or write access.
 
-`workflow-lint.yaml` remains available for existing callers. New callers compose
-the individual workflows. Common's CI calls the five workflows directly, without
-running the old combined job a second time. Its initial YAML scope qualifies the
-new workflow interfaces; expansion to legacy YAML is a separate cleanup.
+`workflow-lint.yaml` remains as a compatibility wrapper for existing callers. It
+delegates to the individual Actionlint, ShellCheck, and Zizmor workflows, using
+Common's locked tools and defaults. Its final `lint` job preserves the aggregate
+check and fails if any delegated job fails or is cancelled. New callers compose
+the individual workflows to set independent scopes and configuration overrides.
+Common's CI calls the five workflows directly, without running the wrapper again.
+Its YAML scope includes the new interfaces and the compatibility wrapper;
+expansion to other legacy YAML is a separate cleanup.
 
 ## Releases and Renovate
 
