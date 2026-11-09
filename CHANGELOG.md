@@ -1,5 +1,34 @@
 # Changelog
 
+## [1.1.0](https://github.com/apeiros-innovations/common/compare/v1.0.1...v1.1.0) (2026-11-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* **github-action:** Update action ubuntu (24.04 ➔ 26.04) ([#103](https://github.com/apeiros-innovations/common/issues/103))
+* **mise:** update oxfmt to 0.77.0 ([#101](https://github.com/apeiros-innovations/common/issues/101))
+* **mise:** update oxfmt to 0.76.0 ([#94](https://github.com/apeiros-innovations/common/issues/94))
+* **mise:** update oxfmt to 0.75.0 ([#84](https://github.com/apeiros-innovations/common/issues/84))
+
+### Features
+
+* add composable lint workflows and start 0.x tooling releases ([#96](https://github.com/apeiros-innovations/common/issues/96)) ([0f95807](https://github.com/apeiros-innovations/common/commit/0f958073e83760a41a11709afde8735bda15b69f))
+* configure shared workflow runners and unblock public CI ([#99](https://github.com/apeiros-innovations/common/issues/99)) ([b84ad9a](https://github.com/apeiros-innovations/common/commit/b84ad9a962eb0bb513406016a4f44eae13ae5445))
+* **mise:** update oxfmt to 0.75.0 ([#84](https://github.com/apeiros-innovations/common/issues/84)) ([006afc4](https://github.com/apeiros-innovations/common/commit/006afc4f669fb06cae69b216875aedeadb09317d))
+* **mise:** update oxfmt to 0.76.0 ([#94](https://github.com/apeiros-innovations/common/issues/94)) ([b1f982f](https://github.com/apeiros-innovations/common/commit/b1f982fdc345ebdd059f71ad39d4a531d24e9685))
+* **mise:** update oxfmt to 0.77.0 ([#101](https://github.com/apeiros-innovations/common/issues/101)) ([14a1ed3](https://github.com/apeiros-innovations/common/commit/14a1ed37e8bed4a2b8eea7120f12d2476402f328))
+
+
+### Bug Fixes
+
+* **ci:** make tool downloads resilient and support private action audits ([#104](https://github.com/apeiros-innovations/common/issues/104)) ([d2cad15](https://github.com/apeiros-innovations/common/commit/d2cad159509c963f5629f05ca5cdfea915ad2c5b))
+* target the next Common release at 1.1.0 ([#97](https://github.com/apeiros-innovations/common/issues/97)) ([12ad3ab](https://github.com/apeiros-innovations/common/commit/12ad3ab3abbdd451da94fde97f5654eb4ad8cf21))
+
+
+### Continuous Integration
+
+* **github-action:** Update action ubuntu (24.04 ➔ 26.04) ([#103](https://github.com/apeiros-innovations/common/issues/103)) ([aeb537e](https://github.com/apeiros-innovations/common/commit/aeb537e6da8d5bdb09f132e6dd371c4fc8c41bc3))
+
 ## [1.0.1](https://github.com/apeiros-innovations/common/compare/v1.0.0...v1.0.1) (2026-10-29)
 
 
