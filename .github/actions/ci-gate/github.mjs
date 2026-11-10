@@ -1,6 +1,7 @@
 import fs from "node:fs";
 
-export const renovateLogins = new Set(["autoforgex[bot]", "renovate[bot]"]);
+const dedicatedRenovateLogin = "kumitate-renovate[bot]";
+export const renovateLogins = new Set(["autoforgex[bot]", "renovate[bot]", dedicatedRenovateLogin]);
 export const artifactContext = "renovate/artifacts";
 export const readinessContexts = new Set([
   artifactContext,
@@ -16,6 +17,14 @@ export function isRenovatePr(pr, repository) {
     pr.head?.ref?.startsWith("renovate/") &&
     pr.head.repo?.full_name === repository &&
     pr.base?.repo?.full_name === repository
+  );
+}
+
+export function isRenovateStatusPublisher(publisher, author) {
+  // PR authors do not change when the dedicated app takes over existing branches.
+  // Only that successor may publish statuses for another recognized Renovate bot.
+  return (
+    renovateLogins.has(author) && (publisher === author || publisher === dedicatedRenovateLogin)
   );
 }
 
@@ -81,7 +90,8 @@ export async function renovateReadiness(client, sha, login) {
   // Renovate reports artifacts when it updates a branch. A later GitHub base
   // merge can have no status; missing metadata is not a failed build.
   for (const [context, status] of latest) {
-    if (status.creator?.login !== login) errors.push(`${context}: unexpected status publisher`);
+    if (!isRenovateStatusPublisher(status.creator?.login, login))
+      errors.push(`${context}: unexpected status publisher`);
     else if (status.state !== "success") errors.push(`${context}: not successful`);
   }
   return errors;

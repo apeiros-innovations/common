@@ -10,6 +10,7 @@ import { retry, retryCompleted } from "../../.github/actions/retry-renovate-chec
 const repository = "apeiros-innovations/example";
 const sha = "a".repeat(40);
 const login = "autoforgex[bot]";
+const kumitateLogin = "kumitate-renovate[bot]";
 const event = { sha, state: "success", context: "renovate/artifacts", sender: { login } };
 const pr = {
   number: 7,
@@ -95,6 +96,43 @@ test("only the final blocked job is retried; dependency PRs are never merged", a
   const { client, writes } = fixture();
   assert.deepEqual(await retry({ event, client, repository }), [101]);
   assert.deepEqual(writes, ["/actions/jobs/101/rerun"]);
+});
+
+test("the dedicated app retries its own PRs and migrated legacy PRs", async () => {
+  const successorEvent = { ...event, sender: { login: kumitateLogin } };
+  const statuses = [{ ...green[0], creator: { login: kumitateLogin } }];
+  for (const author of [login, "renovate[bot]", kumitateLogin]) {
+    const current = { ...pr, user: { login: author, type: "Bot" } };
+    const { client, writes } = fixture({ prs: [current], current, statuses });
+    assert.deepEqual(await retry({ event: successorEvent, client, repository }), [101]);
+    assert.deepEqual(writes, ["/actions/jobs/101/rerun"]);
+  }
+  const completed = fixture({ statuses });
+  assert.deepEqual(
+    await retryCompleted({
+      event: { workflow_run: run },
+      client: completed.client,
+      repository,
+    }),
+    [101],
+  );
+});
+
+test("migration retries cannot hide newer failed readiness or trust a predecessor on a new PR", async () => {
+  for (const state of ["failure", "pending"]) {
+    const { client, writes } = fixture({
+      statuses: [{ ...green[0], state, creator: { login: kumitateLogin } }, ...green],
+    });
+    assert.deepEqual(
+      await retry({ event: { ...event, sender: { login: kumitateLogin } }, client, repository }),
+      [],
+    );
+    assert.deepEqual(writes, []);
+  }
+  const current = { ...pr, user: { login: kumitateLogin, type: "Bot" } };
+  const { client, writes } = fixture({ prs: [current], current });
+  assert.deepEqual(await retry({ event, client, repository }), []);
+  assert.deepEqual(writes, []);
 });
 
 test("unrelated events, publishers and old PR heads do not write", async () => {
