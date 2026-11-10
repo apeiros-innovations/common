@@ -6,13 +6,13 @@ Shared lint workflows, local Git hooks, and tool configuration for Apeiros repos
 
 Choose the checks your repository needs:
 
-| Workflow | Checks |
-| --- | --- |
-| [yamllint](.github/workflows/yamllint.yaml) | YAML files |
+| Workflow                                            | Checks                          |
+| --------------------------------------------------- | ------------------------------- |
+| [yamllint](.github/workflows/yamllint.yaml)         | YAML files                      |
 | [markdownlint](.github/workflows/markdownlint.yaml) | Markdown with markdownlint-cli2 |
-| [shellcheck](.github/workflows/shellcheck.yaml) | Shell scripts |
-| [actionlint](.github/workflows/actionlint.yaml) | GitHub Actions workflow syntax |
-| [zizmor](.github/workflows/zizmor.yaml) | GitHub Actions security |
+| [shellcheck](.github/workflows/shellcheck.yaml)     | Shell scripts                   |
+| [actionlint](.github/workflows/actionlint.yaml)     | GitHub Actions workflow syntax  |
+| [zizmor](.github/workflows/zizmor.yaml)             | GitHub Actions security         |
 
 Each workflow installs its tools from the selected Common release and checks
 the affected file scope. Callers can override file filters, configuration, and
@@ -20,6 +20,24 @@ runners. CI does not require Lefthook or a local Mise configuration.
 
 Start with the [workflow guide](docs/shared-lint.md) for usage examples,
 change detection, required checks, and runner selection.
+
+### Renovate readiness
+
+The CI gate recognizes dependency PRs from `autoforgex[bot]`, `renovate[bot]`, and
+`kumitate-renovate[bot]` on same-repository `renovate/` branches. The dedicated
+Kumitate app can publish readiness for existing PRs opened by either legacy bot;
+their PR authors stay unchanged during the account migration. A legacy bot cannot
+publish readiness for a PR opened by the dedicated app. The newest reported
+failure or pending hold remains blocking, and unrelated publishers are rejected.
+
+When upgrading a repository to the dedicated app, update both its shared
+`ci-gate` and `retry-renovate-check` action pins to a release containing this
+support. Include `kumitate-renovate[bot]` in the retry workflow's status-event
+sender filter as well. Test the shared gate and retry actions with:
+
+```sh
+node --test tests/ci-gate/*.test.mjs
+```
 
 ## Local Git hooks
 

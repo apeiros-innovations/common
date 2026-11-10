@@ -15,6 +15,7 @@ import {
 const repository = "apeiros-innovations/example";
 const sha = "a".repeat(40);
 const login = "autoforgex[bot]";
+const kumitateLogin = "kumitate-renovate[bot]";
 const status = (context = "renovate/artifacts", state = "success", creator = login) => ({
   context,
   state,
@@ -122,6 +123,70 @@ test("missing metadata is allowed; reported failures and pending holds block rea
     [],
   );
   await assert.rejects(() => renovateReadiness(client([]), "../main", login));
+});
+
+test("Kumitate Renovate PRs are recognized and their failed readiness remains blocking", async () => {
+  const pr = {
+    user: { login: kumitateLogin, type: "Bot" },
+    head: { sha, ref: "renovate/tools", repo: { full_name: repository } },
+    base: { repo: { full_name: repository } },
+  };
+  assert.equal(isRenovatePr(pr, repository), true);
+  for (const state of ["pending", "failure"]) {
+    const client = { pages: async () => [status("renovate/artifacts", state, kumitateLogin)] };
+    assert.ok((await renovateReadiness(client, sha, kumitateLogin)).length);
+  }
+});
+
+test("the dedicated app can publish readiness for legacy PRs without trusting other actors", async () => {
+  const client = (statuses) => ({ pages: async () => statuses });
+  for (const author of [login, "renovate[bot]"]) {
+    assert.deepEqual(
+      await renovateReadiness(
+        client([
+          status("renovate/artifacts", "success", kumitateLogin),
+          status("renovate/stability-days", "success", author),
+        ]),
+        sha,
+        author,
+      ),
+      [],
+    );
+    for (const state of ["failure", "pending"]) {
+      assert.ok(
+        (
+          await renovateReadiness(
+            client([
+              status("renovate/artifacts", state, kumitateLogin),
+              status("renovate/artifacts", "success", author),
+            ]),
+            sha,
+            author,
+          )
+        ).length,
+      );
+    }
+  }
+  for (const publisher of [login, "renovate[bot]", "other[bot]", "human"]) {
+    assert.ok(
+      (
+        await renovateReadiness(
+          client([status("renovate/artifacts", "success", publisher)]),
+          sha,
+          kumitateLogin,
+        )
+      ).length,
+    );
+  }
+  assert.ok(
+    (
+      await renovateReadiness(
+        client([status("renovate/artifacts", "success", "other[bot]")]),
+        sha,
+        login,
+      )
+    ).length,
+  );
 });
 
 test("GitHub client paginates, bounds requests and never follows credential redirects", async () => {

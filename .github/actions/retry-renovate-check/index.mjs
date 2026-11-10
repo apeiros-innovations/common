@@ -4,6 +4,7 @@ import {
   fail,
   githubClient,
   isRenovatePr,
+  isRenovateStatusPublisher,
   readEvent,
   readinessContexts,
   renovateLogins,
@@ -25,19 +26,18 @@ export async function retry({ event, client, repository, workflow = "ci.yaml", c
       pr.state === "open" &&
       pr.head.sha === event.sha &&
       isRenovatePr(pr, repository) &&
-      pr.user.login === event.sender.login,
+      isRenovateStatusPublisher(event.sender.login, pr.user.login),
   );
-  if (
-    matching.length === 0 ||
-    (await renovateReadiness(client, event.sha, event.sender.login)).length > 0
-  )
-    return [];
+  const ready = [];
+  for (const pr of matching)
+    if ((await renovateReadiness(client, event.sha, pr.user.login)).length === 0) ready.push(pr);
+  if (ready.length === 0) return [];
   const runs = await client.pages(
     `/actions/workflows/${workflow}/runs?event=pull_request&head_sha=${event.sha}`,
     "workflow_runs",
   );
   const retried = [];
-  for (const pr of matching) {
+  for (const pr of ready) {
     // Never retry an old attempt or a workflow from a different PR/branch.
     const run = runs
       .filter(
