@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/apeiros-innovations/common/compare/v1.1.0...v1.1.1) (2026-11-10)
+
+
+### Bug Fixes
+
+* **ci:** support dedicated Kumitate Renovate identity ([#105](https://github.com/apeiros-innovations/common/issues/105)) ([5a3f93e](https://github.com/apeiros-innovations/common/commit/5a3f93ebf345ab7041a024e85b356e5f3488fa26))
+
 ## [1.1.0](https://github.com/apeiros-innovations/common/compare/v1.0.1...v1.1.0) (2026-11-09)
 
 
