@@ -84,7 +84,7 @@ def select(cwd, policy, event_name, event, policy_path=".github/ci-impact.json")
             return found & diff([":(top,glob)**", *excludes]) if excludes else found
 
         changed = diff([])
-        if policy_path in changed:
+        if policy_path in changed or any(file.startswith(".github/ci-impact/") for file in changed):
             return full("dependency policy changed")
         mise_files = set(policy.get("mise_files", [".mise/config.toml", ".mise/mise.lock"]))
         changed_tools = set()

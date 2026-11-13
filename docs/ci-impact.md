@@ -63,6 +63,10 @@ and platform lock/checksum changes select the jobs declaring that tool. Pure
 formatting changes do not. Do not exclude settings or task files as local-only
 without checking whether CI loads them.
 
+For multiple entrypoints, store their policies in `.github/ci-impact/`. A change
+to any policy in this directory selects every family, including callers of a
+modified reusable workflow.
+
 Unclassified files, unclassified tools, changed policy, unavailable history,
 and failed comparisons select everything. Malformed policy fails selection and
 must fail the required gate. This is intentionally conservative.
