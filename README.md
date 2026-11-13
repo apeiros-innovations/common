@@ -18,6 +18,8 @@ Each workflow installs its tools from the selected Common release and checks
 the affected file scope. Callers can override file filters, configuration, and
 runners. CI does not require Lefthook or a local Mise configuration.
 
+See [workflow selection](docs/workflow-selection.md) for repository path filters and Mise development profiles.
+
 Start with the [workflow guide](docs/shared-lint.md) for usage examples,
 change detection, required checks, and runner selection.
 

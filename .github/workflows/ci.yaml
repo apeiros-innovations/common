@@ -46,7 +46,6 @@ jobs:
             .github/workflows/workflow-lint.yaml
             .github/zizmor.yaml
             .github/actions/lint-files/action.yaml
-            .github/actions/select-checks/action.yaml
       - name: Select Markdown lint
         id: markdownlint
         uses: $/.github/actions/lint-files
@@ -74,8 +73,6 @@ jobs:
           cache: false
       - name: Check aggregation, readiness, and retry safety
         run: node --test tests/ci-gate/*.test.mjs tests/lint-files/*.test.mjs
-      - name: Test dependency selection against Git histories
-        run: python3 -m unittest discover -s tests/select-checks -v
   yamllint:
     needs: test
     if: needs.test.outputs.yamllint == 'true'
