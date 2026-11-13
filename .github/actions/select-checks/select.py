@@ -48,6 +48,8 @@ def validate(policy):
     for name, rule in policy["jobs"].items():
         if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", name) or not isinstance(rule, dict):
             raise ValueError("Invalid job rule")
+        if not isinstance(rule.get("raw_mise", False), bool):
+            raise ValueError("raw_mise must be boolean")
         for key in ("paths", "tools", "needs"):
             if not strings(rule.get(key, [])):
                 raise ValueError("Invalid job " + key)
@@ -100,7 +102,9 @@ def select(cwd, policy, event_name, event, policy_path=".github/ci-impact.json")
         selected = {}
         mapped_tools = set()
         for name, rule in jobs.items():
-            paths = match(rule.get("paths", [])) - mise_files
+            paths = match(rule.get("paths", []))
+            if not rule.get("raw_mise", False):
+                paths -= mise_files
             covered |= paths
             tool_names = set(rule.get("tools", []))
             mapped_tools |= tool_names

@@ -1,3 +1,4 @@
+---
 name: Select checks
 description: Select CI jobs from native Git pathspecs and semantic Mise tool changes.
 inputs:

@@ -135,6 +135,12 @@ class SelectionTests(unittest.TestCase):
         self.write('README.md', 'new'); self.commit()
         self.assertTrue(self.plan()['docs'])
 
+    def test_raw_manifest_validation(self):
+        self.policy["jobs"]["docs"].update(raw_mise=True, paths=[".mise/config.toml"])
+        p = self.root / ".mise/config.toml"
+        p.write_text(p.read_text() + "\n# formatting\n"); self.commit()
+        self.assertEqual(self.plan(), {"build": False, "docs": True, "versions": False})
+
     def test_invalid_policy_fails(self):
         self.policy['jobs']['build']['needs'] = ['typo']
         with self.assertRaises(ValueError): self.plan()

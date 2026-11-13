@@ -51,6 +51,10 @@ exclusions. A matching job dependency wins over `ignore_paths`. Avoid blanket
 Markdown exclusions: Markdown can be build input, embedded data, or test fixtures.
 New source areas should be mapped in the same PR that introduces them.
 
+A job that formats or validates the tool manifest itself can set `"raw_mise": true`
+and include those files in `paths`; then even formatting-only and local-tool
+changes select that job. Semantic consumers leave this option false.
+
 By default `.mise/config.toml` and `.mise/mise.lock` are parsed semantically.
 A `mise_files` array can list additional TOML configuration and lock files used
 by CI. Changes to any non-tool settings, tasks, environment, parser errors, or
