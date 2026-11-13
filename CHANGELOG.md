@@ -1,5 +1,24 @@
 # Changelog
 
+## [2.0.0](https://github.com/apeiros-innovations/common/compare/v1.1.1...v2.0.0) (2026-11-13)
+
+
+### ⚠ BREAKING CHANGES
+
+* **mise:** update oxfmt to 0.78.0 ([#109](https://github.com/apeiros-innovations/common/issues/109))
+* **mise:** update tflint to 0.66.0 ([#107](https://github.com/apeiros-innovations/common/issues/107))
+
+### Features
+
+* **mise:** update oxfmt to 0.78.0 ([#109](https://github.com/apeiros-innovations/common/issues/109)) ([0eca538](https://github.com/apeiros-innovations/common/commit/0eca538ff3311b0ca5688d4603ef383547abec1d))
+* **mise:** update tflint to 0.66.0 ([#107](https://github.com/apeiros-innovations/common/issues/107)) ([353e776](https://github.com/apeiros-innovations/common/commit/353e776632fa157685c27d1db1f17325bfffd4d2))
+
+
+### Bug Fixes
+
+* **ci:** align runner routing with Foundry scale sets ([a6e5601](https://github.com/apeiros-innovations/common/commit/a6e560130f54d2d72032bccf0c60d56f82abdb21))
+* **ci:** remove retired runner labels ([#110](https://github.com/apeiros-innovations/common/issues/110)) ([a6e5601](https://github.com/apeiros-innovations/common/commit/a6e560130f54d2d72032bccf0c60d56f82abdb21))
+
 ## [1.1.1](https://github.com/apeiros-innovations/common/compare/v1.1.0...v1.1.1) (2026-11-10)
 
 
