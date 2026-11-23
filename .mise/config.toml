@@ -16,15 +16,15 @@ python = "3.14.10"
 node = "26.13.1"
 go = "1.27.4"
 dotnet = "10.0.401"
-pnpm = "12.20.0"
+pnpm = "12.21.0"
 
 # Common
 "npm:oxfmt" = "0.79.0"
-"npm:cspell" = "10.4.1"
+"npm:cspell" = "10.5.2"
 "npm:@commitlint/cli" = "21.2.4"
 "npm:@commitlint/config-conventional" = "21.2.4"
 "npm:markdownlint-cli2" = "0.24.1"
-"aqua:astral-sh/uv" = "0.13.8"
+"aqua:astral-sh/uv" = "0.13.9"
 "aqua:mvdan/sh" = "3.14.1"
 "aqua:betterleaks/betterleaks" = "1.10.1"
 "aqua:evilmartians/lefthook" = "2.2.2"
@@ -33,8 +33,8 @@ pnpm = "12.20.0"
 "aqua:dotenv-linter/dotenv-linter" = "4.0.0"
 "aqua:zizmorcore/zizmor" = "1.32.0"
 
-"npm:oxlint" = "1.93.0"
-"aqua:astral-sh/ruff" = "0.17.5"
+"npm:oxlint" = "1.94.0"
+"aqua:astral-sh/ruff" = "0.17.6"
 
 
 # Go
@@ -52,7 +52,7 @@ pnpm = "12.20.0"
 "aqua:terraform-linters/tflint" = "0.66.0"
 "aqua:gruntwork-io/terragrunt" = "1.2.2"
 "aqua:google/osv-scanner" = { version = "2.7.1", slsa_signer_identity = "https://github.com/slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@refs/tags/v2.1.0", slsa_signer_issuer = "https://token.actions.githubusercontent.com" }
-"dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.100" }
+"dotnet:Microsoft.CST.DevSkim.CLI" = { version = "1.0.103" }
 "aqua:kjanat/actionlint" = "1.17.1"
 
 "pipx:poetry" = { version = "2.5.1", depends = ["python", "aqua:astral-sh/uv"] }
@@ -62,7 +62,7 @@ pnpm = "12.20.0"
   "aqua:astral-sh/uv",
 ] }
 
-"pipx:djlint" = { version = "1.50.0", depends = [
+"pipx:djlint" = { version = "1.54.0", depends = [
   "python",
   "aqua:astral-sh/ruff",
 ] }
@@ -71,7 +71,7 @@ pnpm = "12.20.0"
   "aqua:astral-sh/uv",
 ] }
 
-"npm:renovate" = { version = "44.237.2", allow_builds = [
+"npm:renovate" = { version = "44.256.0", allow_builds = [
   "re2",
 ], trust_policy_excludes = [
   "@yarnpkg/libzip@3.2.2",

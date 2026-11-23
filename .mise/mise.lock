@@ -50,37 +50,37 @@ url_api = "https://api.github.com/repos/aquasecurity/trivy/releases/assets/51433
 provenance = "cosign"
 
 [[tools."aqua:astral-sh/ruff"]]
-version = "0.17.5"
+version = "0.17.6"
 backend = "aqua:astral-sh/ruff"
-specifiers = ["0.17.5"]
+specifiers = ["0.17.6"]
 
 [tools."aqua:astral-sh/ruff"."platforms.linux-x64"]
-checksum = "sha256:7d261fc981a784668e19e9fa6ad437bfd95b67f2dc263fc1eab87d54d72fcc90"
-url = "https://github.com/astral-sh/ruff/releases/download/0.17.5/ruff-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/740497139"
+checksum = "sha256:94b33791f48cd54ab35ad673a443a5c001d3e6d87effeaba9899070b700d45f3"
+url = "https://github.com/astral-sh/ruff/releases/download/0.17.6/ruff-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/768307340"
 provenance = "github-attestations"
 
 [tools."aqua:astral-sh/ruff"."platforms.macos-arm64"]
-checksum = "sha256:4ffadabec5c5fee1ddb2eecac0787ffe6fa18c665b73da9258b84211f40c5829"
-url = "https://github.com/astral-sh/ruff/releases/download/0.17.5/ruff-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/740496814"
+checksum = "sha256:72a886253072cd1bb6a5978a33a5a7add848ee315a8b0f1589f164a11c26328d"
+url = "https://github.com/astral-sh/ruff/releases/download/0.17.6/ruff-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/ruff/releases/assets/768306954"
 provenance = "github-attestations"
 
 [[tools."aqua:astral-sh/uv"]]
-version = "0.13.8"
+version = "0.13.9"
 backend = "aqua:astral-sh/uv"
-specifiers = ["0.13.8"]
+specifiers = ["0.13.9"]
 
 [tools."aqua:astral-sh/uv"."platforms.linux-x64"]
-checksum = "sha256:5acfd9177cfecf0bf87578f059728215ccc884388988f55f7a65041b57387d91"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/740313966"
+checksum = "sha256:a7fbaff2b9a271d85c1bdb540941090fd1ce011797b4abeb48e4dcd39c2471d5"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.9/uv-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/758513954"
 provenance = "github-attestations"
 
 [tools."aqua:astral-sh/uv"."platforms.macos-arm64"]
-checksum = "sha256:6b71028a6b904f2ae3340ef52e595512de807d06c0a20eaef2f692581b246558"
-url = "https://github.com/astral-sh/uv/releases/download/0.13.8/uv-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/740313603"
+checksum = "sha256:5aeca67f2283f75235de40d0bd9c0a5bbc5fce23b6d48b3bf9fa1b2db08382ca"
+url = "https://github.com/astral-sh/uv/releases/download/0.13.9/uv-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/astral-sh/uv/releases/assets/758513631"
 provenance = "github-attestations"
 
 [[tools."aqua:betterleaks/betterleaks"]]
@@ -488,9 +488,9 @@ backend = "core:dotnet"
 specifiers = ["10.0.401"]
 
 [[tools."dotnet:Microsoft.CST.DevSkim.CLI"]]
-version = "1.0.100"
+version = "1.0.103"
 backend = "dotnet:Microsoft.CST.DevSkim.CLI"
-specifiers = ["1.0.100"]
+specifiers = ["1.0.103"]
 
 [[tools.go]]
 version = "1.27.4"
@@ -580,10 +580,10 @@ backend = "npm:@commitlint/config-conventional"
 specifiers = ["21.2.4"]
 
 [[tools."npm:cspell"]]
-version = "10.4.1"
-aube = { path = "locks/npm-cspell/10.4.1", digest = "sha256:2f85ebdcb49e757a6e8c3f04295411004a8c18a7cc9f87a062aacfa4ec51b392" }
+version = "10.5.2"
+aube = { path = "locks/npm-cspell/10.5.2", digest = "sha256:9ce539c630ffd0a9ad7b745cc864d23264502522c3def8d3d60977811435411a" }
 backend = "npm:cspell"
-specifiers = ["10.4.1"]
+specifiers = ["10.5.2"]
 
 [[tools."npm:markdownlint-cli2"]]
 version = "0.24.1"
@@ -598,16 +598,16 @@ backend = "npm:oxfmt"
 specifiers = ["0.79.0"]
 
 [[tools."npm:oxlint"]]
-version = "1.93.0"
-aube = { path = "locks/npm-oxlint/1.93.0", digest = "sha256:3f84da90d1a47ab7459824c66884d9a093c089c2f79bf391575aef880c7b3d32" }
+version = "1.94.0"
+aube = { path = "locks/npm-oxlint/1.94.0", digest = "sha256:a253bc49b893f7edcd437bab50c99b8fa79125d40299bb35205607a7ceea494d" }
 backend = "npm:oxlint"
-specifiers = ["1.93.0"]
+specifiers = ["1.94.0"]
 
 [[tools."npm:renovate"]]
-version = "44.237.2"
-aube = { path = "locks/npm-renovate/44.237.2~026f02c4", digest = "sha256:defd02418b59117482a6aaf0ac57a3693f9fe411d4d4e4370fefcc0a05a63151" }
+version = "44.256.0"
+aube = { path = "locks/npm-renovate/44.256.0~026f02c4", digest = "sha256:cc89da83612720696021c23b25817576bb7445ebfe5e37fbe8a6ecf43367e0cf" }
 backend = "npm:renovate"
-specifiers = ["44.237.2"]
+specifiers = ["44.256.0"]
 
 [tools."npm:renovate".options]
 allow_builds = '["re2"]'
@@ -624,9 +624,9 @@ specifiers = ["1.33.0"]
 uv = { path = "locks/pipx-django-upgrade/1.33.0", digest = "sha256:2f7fde51fe9d2651bf52a50a707c4cfbf9eb928f45d8e0585d62c98c5c83b81e" }
 
 [[tools."pipx:djlint"]]
-version = "1.50.0"
+version = "1.54.0"
 backend = "pipx:djlint"
-specifiers = ["1.50.0"]
+specifiers = ["1.54.0"]
 
 [[tools."pipx:poetry"]]
 version = "2.5.1"
@@ -641,20 +641,20 @@ specifiers = ["1.38.0"]
 uv = { path = "locks/pipx-yamllint/1.38.0", digest = "sha256:fba8ceb5b631619a452f5d17701d9f5ad43f42be1f4de5b6f5398fd35d4ce773" }
 
 [[tools.pnpm]]
-version = "12.20.0"
+version = "12.21.0"
 backend = "aqua:pnpm/pnpm"
-specifiers = ["12.20.0"]
+specifiers = ["12.21.0"]
 
 [tools.pnpm."platforms.linux-x64"]
-checksum = "sha256:568fd50dd174a57e80efacc04be1d6a228bb41fbebe557f2ef63a1c3a721a5f4"
-url = "https://github.com/pnpm/pnpm/releases/download/v12.20.0/pnpm-linux-x64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/737389475"
+checksum = "sha256:84c4773bcf4a217f4083cd7b2a91e4cee6103cf42426c1282ef37d308f55a410"
+url = "https://github.com/pnpm/pnpm/releases/download/v12.21.0/pnpm-linux-x64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/744357264"
 provenance = "github-attestations"
 
 [tools.pnpm."platforms.macos-arm64"]
-checksum = "sha256:a4b75f08d0cc73fc10606a0ffc45e4dc46674729e993586a9dae57a8218c5ced"
-url = "https://github.com/pnpm/pnpm/releases/download/v12.20.0/pnpm-darwin-arm64.tar.gz"
-url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/737389482"
+checksum = "sha256:5c4d73018e00dd602531ce714625594fb693cbe110e6719df2b043b0ae62ab1a"
+url = "https://github.com/pnpm/pnpm/releases/download/v12.21.0/pnpm-darwin-arm64.tar.gz"
+url_api = "https://api.github.com/repos/pnpm/pnpm/releases/assets/744357270"
 provenance = "github-attestations"
 
 [[tools.python]]
