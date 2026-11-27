@@ -1,5 +1,20 @@
 # Changelog
 
+## [3.0.0](https://github.com/apeiros-innovations/common/compare/v2.0.0...v3.0.0) (2026-11-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **mise:** update oxfmt to 0.80.0 ([#126](https://github.com/apeiros-innovations/common/issues/126))
+* **mise:** update oxfmt to 0.79.0 ([#120](https://github.com/apeiros-innovations/common/issues/120))
+* **mise:** update terraform-docs to 0.25.1 ([#115](https://github.com/apeiros-innovations/common/issues/115))
+
+### Features
+
+* **mise:** update oxfmt to 0.79.0 ([#120](https://github.com/apeiros-innovations/common/issues/120)) ([d8d4f58](https://github.com/apeiros-innovations/common/commit/d8d4f5815f64a70448e5a2a635e7e5c88d0d0a76))
+* **mise:** update oxfmt to 0.80.0 ([#126](https://github.com/apeiros-innovations/common/issues/126)) ([18a9ba1](https://github.com/apeiros-innovations/common/commit/18a9ba1b8b5c61e8fe3d3e3acc791ff6a8d920f3))
+* **mise:** update terraform-docs to 0.25.1 ([#115](https://github.com/apeiros-innovations/common/issues/115)) ([bc5b7b9](https://github.com/apeiros-innovations/common/commit/bc5b7b918e4ba815e25d4ed679eb36a7724a66f6))
+
 ## [2.0.0](https://github.com/apeiros-innovations/common/compare/v1.1.1...v2.0.0) (2026-11-13)
 
 
